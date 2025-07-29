@@ -6,6 +6,9 @@ TagManager:
   tags:
   - interactText
   - DrillPart
+  - DrillPartWheel
+  - DrillPartHead
+  - DrillPartBody
   layers:
   - Default
   - TransparentFX

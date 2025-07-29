@@ -36,14 +36,6 @@ public class InteractableItem : MonoBehaviour
     {
         if (isHeld)
         {
-            // Make the item follow the camera with an offset
-            transform.position = Vector3.Lerp(transform.position, 
-                playerCamera.position + playerCamera.forward * holdOffset.z + playerCamera.up * holdOffset.y, 
-                Time.deltaTime * 10f);
-            
-            // Rotate the item to face the camera
-            transform.rotation = Quaternion.LookRotation(transform.position - playerCamera.position);
-            
             // Check if player releases E
             if (Input.GetKeyUp(KeyCode.E))
             {
@@ -68,6 +60,17 @@ public class InteractableItem : MonoBehaviour
     {
         if (isHeld) return;
         
+        // Store the current world position and rotation
+        Vector3 worldPosition = transform.position;
+        Quaternion worldRotation = transform.rotation;
+        
+        // Parent to the new parent (camera/hand)
+        transform.SetParent(newParent, true); // Keep world position and rotation
+        
+        // Explicitly set the position and rotation to maintain them
+        transform.position = worldPosition;
+        transform.rotation = worldRotation;
+        
         isHeld = true;
         isHighlighted = false;
         
@@ -77,9 +80,7 @@ public class InteractableItem : MonoBehaviour
             rb.useGravity = false;
         }
         
-        transform.SetParent(newParent);
-        
-        if (interactText)
+        if (interactText != null)
         {
             interactText.enabled = false;
         }

@@ -9,6 +9,7 @@ TagManager:
   - DrillPartWheel
   - DrillPartHead
   - DrillPartBody
+  - Cube
   layers:
   - Default
   - TransparentFX

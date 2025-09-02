@@ -4,10 +4,15 @@ using UnityEngine.InputSystem;
 public class LookAndClickInteraction : MonoBehaviour
 {
     public Camera playerCamera;                // assign your FPS camera in Inspector
-    public float interactRange = 1f;           // how far you can look and interact
+    public float interactRange = 0.3f;           // how far you can look and interact
     public InputActionReference clickAction;   // assign your "Click" action
 
     public int holdCount = 0;
+
+    // [Header("Drop Settings")]
+    // public float dropScale = 0.3f;
+
+    // public Vector3 dropOffset = Vector3.up;
 
     void OnEnable()
     {
@@ -37,6 +42,17 @@ public class LookAndClickInteraction : MonoBehaviour
                     if (holdCount == 100)
                     {
                         Debug.Log("Mining Cube");
+
+                        // Drop the item
+
+                        Dropped dropscript = hit.collider.GetComponent<Dropped>();
+                        if (dropscript != null)
+                        {
+                            dropscript.DropItem(hit.collider.gameObject);
+                        }
+
+                        //Destroy(miniObject.GetComponent<LookAndClickInteraction>());
+
                         hit.collider.gameObject.SetActive(false);
                         holdCount = 0;
                     }

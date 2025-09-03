@@ -22598,6 +22598,7 @@ GameObject:
   - component: {fileID: 814643394}
   - component: {fileID: 814643398}
   - component: {fileID: 814643399}
+  - component: {fileID: 814643400}
   m_Layer: 0
   m_Name: Stone
   m_TagString: Stone
@@ -22722,6 +22723,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   holdCount: 0
+--- !u!114 &814643400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 814643393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edacc80fcb5beb443ae8c967bdeb3c86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dropScale: 0.3
+  dropOffset: {x: 0, y: 1, z: 0}
 --- !u!43 &869875050
 Mesh:
   m_ObjectHideFlags: 0
@@ -22901,6 +22916,7 @@ GameObject:
   - component: {fileID: 899308791}
   - component: {fileID: 899308790}
   - component: {fileID: 899308795}
+  - component: {fileID: 899308796}
   m_Layer: 0
   m_Name: Stone2
   m_TagString: Iron
@@ -23025,6 +23041,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   holdCount: 0
+--- !u!114 &899308796
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899308789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edacc80fcb5beb443ae8c967bdeb3c86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dropScale: 0.3
+  dropOffset: {x: 0, y: 1, z: 0}
 --- !u!1 &1000728745
 GameObject:
   m_ObjectHideFlags: 0
@@ -60648,6 +60678,7 @@ GameObject:
   - component: {fileID: 1851146044}
   - component: {fileID: 1851146043}
   - component: {fileID: 1851146047}
+  - component: {fileID: 1851146048}
   m_Layer: 0
   m_Name: Cylinder (1)
   m_TagString: Gold
@@ -60759,6 +60790,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   holdCount: 0
+--- !u!114 &1851146048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1851146042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edacc80fcb5beb443ae8c967bdeb3c86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dropScale: 0.3
+  dropOffset: {x: 0, y: 1, z: 0}
 --- !u!1 &1878121009
 GameObject:
   m_ObjectHideFlags: 0

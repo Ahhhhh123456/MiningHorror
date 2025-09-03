@@ -24244,6 +24244,7 @@ MonoBehaviour:
   playerCamera: {fileID: 1126370294}
   interactRange: 5
   clickAction: {fileID: -6987561939814216150, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  eButtonAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &1134299828
 GameObject:
   m_ObjectHideFlags: 0
@@ -50865,7 +50866,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1526504856}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fdf94bfd5f57cd444a9f169ed5b6174f, type: 3}
   m_Name: 

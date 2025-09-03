@@ -11,6 +11,7 @@ public class Dropped : MonoBehaviour
     {
         Debug.Log("Dropping Item");
         GameObject droppedItem = Instantiate(item, transform.position + dropOffset, Quaternion.identity);
+        droppedItem.tag = "Dropped";
         droppedItem.transform.localScale *= dropScale;
 
         Rigidbody rb = droppedItem.AddComponent<Rigidbody>();
@@ -20,5 +21,11 @@ public class Dropped : MonoBehaviour
 
     }
 
+    public void PickedUp(GameObject item)
+    {
+        Debug.Log("Picked Up Item");
+        Destroy(item);
+
+    }
 
 }

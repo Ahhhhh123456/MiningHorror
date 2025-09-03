@@ -12,6 +12,7 @@ TagManager:
   - Stone
   - Iron
   - Gold
+  - Dropped
   layers:
   - Default
   - TransparentFX

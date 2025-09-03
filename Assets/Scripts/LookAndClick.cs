@@ -7,8 +7,6 @@ public class LookAndClickInteraction : MonoBehaviour
     public float interactRange = 1f;           // how far you can look and interact
     public InputActionReference clickAction;   // assign your "Click" action
 
-    public int holdCount = 0;
-
     void OnEnable()
     {
         clickAction.action.Enable();
@@ -21,7 +19,6 @@ public class LookAndClickInteraction : MonoBehaviour
 
     void Update()
     {
-        // Only run if button is held
         if (clickAction.action.IsPressed())
         {
             Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
@@ -29,38 +26,20 @@ public class LookAndClickInteraction : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit, interactRange))
             {
-                if (hit.collider.CompareTag("Cube"))
+                MineType mineTypeScript = hit.collider.GetComponent<MineType>();
+                if (mineTypeScript != null)
                 {
-                    //hit.collider.GetComponent<Renderer>().enabled = false;
-                    holdCount += 1;
-                    Debug.Log(holdCount);
-                    if (holdCount == 100)
-                    {
-                        Debug.Log("Mining Cube");
-
-                        // Drop the item
-
-                        Dropped dropscript = hit.collider.GetComponent<Dropped>();
-                        if (dropscript != null)
-                        {
-                            dropscript.DropItem(hit.collider.gameObject);
-                        }
-
-                        //Destroy(miniObject.GetComponent<LookAndClickInteraction>());
-
-                        hit.collider.gameObject.SetActive(false);
-                        holdCount = 0;
-                    }
-
+                    mineTypeScript.Mining(); // don’t pass item, it already knows itself
                 }
+                
+    
             }
         }
 
-        if (clickAction.action.WasReleasedThisFrame() && holdCount != 100)
+        if (clickAction.action.WasReleasedThisFrame())
         {
             Debug.Log("Stopped Mining Cube");
-            holdCount = 0;
         }
-
     }
+
 }

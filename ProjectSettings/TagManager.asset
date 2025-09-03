@@ -9,7 +9,9 @@ TagManager:
   - DrillPartWheel
   - DrillPartHead
   - DrillPartBody
-  - Cube
+  - Stone
+  - Iron
+  - Gold
   layers:
   - Default
   - TransparentFX

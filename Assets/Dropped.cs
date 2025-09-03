@@ -9,7 +9,7 @@ public class Dropped : MonoBehaviour
 
     public void DropItem(GameObject item)
     {
-        Debug.Log("Dropping Item");
+        //Debug.Log("Dropping Item");
         GameObject droppedItem = Instantiate(item, transform.position + dropOffset, Quaternion.identity);
         droppedItem.transform.localScale *= dropScale;
 

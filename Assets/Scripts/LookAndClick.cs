@@ -7,7 +7,7 @@ public class LookAndClickInteraction : MonoBehaviour
     public float interactRange = 0.3f;           // how far you can look and interact
     public InputActionReference clickAction;   // assign your "Click" action
 
-    public int holdCount = 0;
+    //public int holdCount = 0;
 
     // [Header("Drop Settings")]
     // public float dropScale = 0.3f;
@@ -34,18 +34,30 @@ public class LookAndClickInteraction : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit, interactRange))
             {
-                if (hit.collider.CompareTag("Cube"))
+
+
+                if (hit.collider.GetComponent<MeshRenderer>() == true)
                 {
                     //hit.collider.GetComponent<Renderer>().enabled = false;
-                    holdCount += 1;
-                    Debug.Log(holdCount);
-                    if (holdCount == 100)
+
+                    MineType mineTypeScript = hit.collider.GetComponent<MineType>();
+                    if (mineTypeScript != null)
                     {
-                        Debug.Log("Mining Cube");
+                        Debug.Log(mineTypeScript);
+                        mineTypeScript.Mining(hit.collider.gameObject);
+
+                        
+                    }
+                    
+                    // holdCount += 1;
+                    // Debug.Log(holdCount);
+                    // if (holdCount == 100)
+                    // {
+                        //Debug.Log("Mining Cube");
 
                         // Drop the item
 
-                        Dropped dropscript = hit.collider.GetComponent<Dropped>();
+                        // Dropped dropscript = hit.collider.GetComponent<Dropped>();
                         if (dropscript != null)
                         {
                             dropscript.DropItem(hit.collider.gameObject);
@@ -54,18 +66,18 @@ public class LookAndClickInteraction : MonoBehaviour
                         //Destroy(miniObject.GetComponent<LookAndClickInteraction>());
 
                         hit.collider.gameObject.SetActive(false);
-                        holdCount = 0;
-                    }
+                        //holdCount = 0;
+                    // }
 
                 }
             }
         }
 
-        if (clickAction.action.WasReleasedThisFrame() && holdCount != 100)
-        {
-            Debug.Log("Stopped Mining Cube");
-            holdCount = 0;
-        }
+        // if (clickAction.action.WasReleasedThisFrame())
+        // {
+        //     Debug.Log("Stopped Mining Cube");
+        //     holdCount = 0;
+        // }
 
     }
 }

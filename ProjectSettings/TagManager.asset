@@ -9,7 +9,7 @@ TagManager:
   - DrillPartWheel
   - DrillPartHead
   - DrillPartBody
-  - Cube
+  - Mineable
   layers:
   - Default
   - TransparentFX

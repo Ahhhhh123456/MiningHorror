@@ -12,11 +12,30 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 velocity;
     private bool isGrounded;
 
+    private PlayerInventory inventory;
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         controller = GetComponent<CharacterController>();
+        inventory = GetComponent<PlayerInventory>();
+    }
+
+    public void updateMoveSpeed()
+    { 
+        if (inventory.playerWeight > 10f)
+        {
+            moveSpeed = 1f; 
+        }
+        else if (inventory.playerWeight > 5f)
+        {
+            moveSpeed = 3f; 
+        }
+        else
+        {
+            moveSpeed = 5f; 
+        }
     }
 
     // Update is called once per frame
@@ -40,7 +59,7 @@ public class PlayerMovement : MonoBehaviour
         // Movement
         float moveX = Input.GetAxis("Horizontal");
         float moveY = Input.GetAxis("Vertical");
-        
+
         float currentSpeed = moveSpeed;
         Vector3 move = transform.right * moveX + transform.forward * moveY; // Movement direction relative to camera
 

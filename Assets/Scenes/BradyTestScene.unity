@@ -22599,7 +22599,7 @@ GameObject:
   - component: {fileID: 814643398}
   - component: {fileID: 814643399}
   - component: {fileID: 814643400}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Stone
   m_TagString: Stone
   m_Icon: {fileID: 0}
@@ -22917,7 +22917,7 @@ GameObject:
   - component: {fileID: 899308790}
   - component: {fileID: 899308795}
   - component: {fileID: 899308796}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Iron
   m_TagString: Iron
   m_Icon: {fileID: 0}
@@ -60681,7 +60681,7 @@ GameObject:
   - component: {fileID: 1851146043}
   - component: {fileID: 1851146047}
   - component: {fileID: 1851146048}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Gold
   m_TagString: Gold
   m_Icon: {fileID: 0}

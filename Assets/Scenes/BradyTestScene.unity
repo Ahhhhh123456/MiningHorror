@@ -22918,7 +22918,7 @@ GameObject:
   - component: {fileID: 899308795}
   - component: {fileID: 899308796}
   m_Layer: 0
-  m_Name: Stone2
+  m_Name: Iron
   m_TagString: Iron
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -50690,7 +50690,7 @@ GameObject:
   - component: {fileID: 1526504857}
   - component: {fileID: 1526504863}
   - component: {fileID: 1526504864}
-  - component: {fileID: 1526504866}
+  - component: {fileID: 1526504865}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -50876,7 +50876,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   holdPosition: {fileID: 659245281}
---- !u!114 &1526504866
+--- !u!114 &1526504865
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -50885,10 +50885,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1526504856}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 998928c8c68f89147be4f333510e2bc9, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c070e1eafaf7104f8090758439ea834, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clickAction: {fileID: -6987561939814216150, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  inventory: []
+  playerWeight: 0
 --- !u!43 &1594340142
 Mesh:
   m_ObjectHideFlags: 0
@@ -60681,7 +60682,7 @@ GameObject:
   - component: {fileID: 1851146047}
   - component: {fileID: 1851146048}
   m_Layer: 0
-  m_Name: Cylinder (1)
+  m_Name: Gold
   m_TagString: Gold
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

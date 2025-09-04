@@ -9,6 +9,15 @@ public class LookAndClickInteraction : MonoBehaviour
 
     public InputActionReference eButtonAction;   // assign your "E button" action
 
+    // Variables to track mining state and reset if let go
+    private MineType mineType;
+    private MineType currentMineTarget;
+
+    public void Start()
+    {
+        mineType = FindObjectOfType<MineType>();
+    }
+
     void OnEnable()
     {
         clickAction.action.Enable();
@@ -40,7 +49,17 @@ public class LookAndClickInteraction : MonoBehaviour
 
             }
         }
-        
+
+        if (clickAction.action.WasReleasedThisFrame())
+        {
+            if (currentMineTarget != null)
+            {
+                currentMineTarget.holdCount = 0;
+                Debug.Log("Stopped Mining Cube");
+                currentMineTarget = null; // clear reference
+            }
+        }
+
         if (clickAction.action.IsPressed())
         {
             Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
@@ -51,16 +70,12 @@ public class LookAndClickInteraction : MonoBehaviour
                 MineType mineTypeScript = hit.collider.GetComponent<MineType>();
                 if (mineTypeScript != null)
                 {
-                    mineTypeScript.Mining(); // don’t pass item, it already knows itself
+                    currentMineTarget = mineTypeScript;
+                    mineTypeScript.Mining();
                 }
 
 
             }
-        }
-
-        if (clickAction.action.WasReleasedThisFrame())
-        {
-            Debug.Log("Stopped Mining Cube");
         }
     }
 

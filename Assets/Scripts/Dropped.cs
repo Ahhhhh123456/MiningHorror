@@ -9,8 +9,9 @@ public class Dropped : MonoBehaviour
 
     public void DropItem(GameObject item)
     {
-        Debug.Log("Dropping Item");
+        
         GameObject droppedItem = Instantiate(item, transform.position + dropOffset, Quaternion.identity);
+        droppedItem.name = item.name;
         droppedItem.tag = "Dropped";
         droppedItem.transform.localScale *= dropScale;
 
@@ -24,6 +25,13 @@ public class Dropped : MonoBehaviour
     public void PickedUp(GameObject item)
     {
         Debug.Log("Picked Up Item");
+        PlayerInventory inventoryScript = FindObjectOfType<PlayerInventory>();
+        if (inventoryScript != null)
+        {
+            Debug.Log(item.name);
+            inventoryScript.UpdateInventory(item.name);
+        }
+        
         Destroy(item);
 
     }

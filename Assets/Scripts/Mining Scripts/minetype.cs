@@ -12,11 +12,15 @@ public class MineType : MonoBehaviour
 
     public int holdCount = 0;
 
+    [Header("Effects")]
+    public ParticleSystem breakParticles; 
+
+
     public void Mining()
     {
         string tag = gameObject.tag;
         holdCount += 1;
-
+                
         Debug.Log("Count:" + holdCount);
         if (rockTypes.ContainsKey(tag))
         {
@@ -24,11 +28,19 @@ public class MineType : MonoBehaviour
 
             if (holdCount == data.durability)
             {
+                if (breakParticles != null)
+                {
+                    Debug.Log("Playing break particles");
+                    breakParticles.Play();
+                }
+
                 Dropped dropscript = GetComponent<Dropped>();
                 if (dropscript != null)
                 {
                     dropscript.DropItem(gameObject);
                 }
+
+
                 //Debug.Log("Mining complete for: " + tag);
                 gameObject.SetActive(false);
 

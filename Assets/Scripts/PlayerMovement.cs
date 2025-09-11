@@ -1,70 +1,94 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class PlayerMovement : MonoBehaviour
+[RequireComponent(typeof(CharacterController))]
+public class PlayerMovement : NetworkBehaviour
 {
-    public float moveSpeed = 5f;
+    [Header("Movement Settings")]
+    public float walkSpeed = 5f;
     public float sprintSpeed = 8f;
-    public float gravity = -9.81f;
+
+    // Keep a public moveSpeed for compatibility with existing scripts
+    public float moveSpeed = 5f;
+
     public float jumpForce = 5f;
-    public float groundCheck = 0.4f;
+    public float gravity = -9.81f;
+    public float groundCheckDistance = 0.4f;
 
     private CharacterController controller;
     private Vector3 velocity;
     private bool isGrounded;
 
+    private Camera playerCamera;
+    private AudioListener audioListener;
+
     private PlayerInventory inventory;
 
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         controller = GetComponent<CharacterController>();
         inventory = GetComponent<PlayerInventory>();
+
+        playerCamera = GetComponentInChildren<Camera>();
+        audioListener = GetComponentInChildren<AudioListener>();
+
+        // Disable camera/audio for non-local players (avoids multiple AudioListeners)
+        if (!IsOwner)
+        {
+            if (playerCamera) playerCamera.enabled = false;
+            if (audioListener) audioListener.enabled = false;
+        }
+
+        // initialize moveSpeed and sync with inventory if present
+        if (moveSpeed <= 0f) moveSpeed = walkSpeed;
+        updateMoveSpeed();
     }
 
+    // Backwards-compatible method your inventory calls
     public void updateMoveSpeed()
-    { 
+    {
+        if (inventory == null)
+        {
+            moveSpeed = walkSpeed;
+            return;
+        }
+
+        // preserve the weight-based behaviour you had
         if (inventory.playerWeight > 10f)
-        {
-            moveSpeed = 1f; 
-        }
+            moveSpeed = 1f;
         else if (inventory.playerWeight > 5f)
-        {
-            moveSpeed = 3f; 
-        }
+            moveSpeed = 3f;
         else
-        {
-            moveSpeed = 5f; 
-        }
+            moveSpeed = walkSpeed;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // Check ground
-        isGrounded = Physics.Raycast(transform.position, Vector3.down, groundCheck);
+        if (!IsOwner) return; // only local player processes input
+
+        HandleMovement();
+    }
+
+    private void HandleMovement()
+    {
+        // Ground check
+        isGrounded = Physics.Raycast(transform.position, Vector3.down, groundCheckDistance);
+
+        if (isGrounded && velocity.y < 0f)
+            velocity.y = -2f; // stable grounding
 
         // Jump
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-        {
             velocity.y = jumpForce;
-        }
 
         // Gravity
-        if (!isGrounded)
-        {
-            velocity.y += gravity * Time.deltaTime;
-        }
+        velocity.y += gravity * Time.deltaTime;
 
-        // Movement
+        // Movement input
         float moveX = Input.GetAxis("Horizontal");
-        float moveY = Input.GetAxis("Vertical");
+        float moveZ = Input.GetAxis("Vertical");
 
-        float currentSpeed = moveSpeed;
-        Vector3 move = transform.right * moveX + transform.forward * moveY; // Movement direction relative to camera
-
-        // Move character
-        controller.Move(move * currentSpeed * Time.deltaTime + velocity * Time.deltaTime);
+        Vector3 move = transform.right * moveX + transform.forward * moveZ;
+        controller.Move(move * moveSpeed * Time.deltaTime + velocity * Time.deltaTime);
     }
-
 }

@@ -69372,7 +69372,7 @@ GameObject:
   - component: {fileID: 1691511163}
   - component: {fileID: 1691511162}
   m_Layer: 0
-  m_Name: NetworkStartTest
+  m_Name: SteamNetworkStart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

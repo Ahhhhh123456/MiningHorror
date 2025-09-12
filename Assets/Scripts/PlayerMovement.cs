@@ -78,7 +78,7 @@ public class PlayerMovement : NetworkBehaviour
             velocity.y = -2f; // stable grounding
 
         // Jump
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space))
             velocity.y = jumpForce;
 
         // Gravity

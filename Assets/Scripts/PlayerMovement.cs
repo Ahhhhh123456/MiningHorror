@@ -1,12 +1,15 @@
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : NetworkBehaviour
 {
     [Header("Movement Settings")]
     public float walkSpeed = 5f;
-    public float sprintSpeed = 8f;
+    public float sprintSpeed;
+
+    public float previousSpeed;
 
     // Keep a public moveSpeed for compatibility with existing scripts
     public float moveSpeed = 5f;
@@ -23,6 +26,8 @@ public class PlayerMovement : NetworkBehaviour
     private AudioListener audioListener;
 
     private PlayerInventory inventory;
+
+    public InputActionReference sprintAction; // assign your "Sprint" action
 
     void Start()
     {
@@ -42,6 +47,20 @@ public class PlayerMovement : NetworkBehaviour
         // initialize moveSpeed and sync with inventory if present
         if (moveSpeed <= 0f) moveSpeed = walkSpeed;
         updateMoveSpeed();
+    }
+
+    void OnEnable()
+    {
+        sprintAction.action.Enable();
+        sprintAction.action.performed += Sprinting;
+        sprintAction.action.canceled  += StopSprinting;
+    }
+
+    void OnDisable()
+    {
+        sprintAction.action.Disable();
+        sprintAction.action.performed -= Sprinting;
+        sprintAction.action.canceled -= StopSprinting;
     }
 
     // Backwards-compatible method your inventory calls
@@ -69,6 +88,8 @@ public class PlayerMovement : NetworkBehaviour
         HandleMovement();
     }
 
+
+
     private void HandleMovement()
     {
         // Ground check
@@ -90,5 +111,33 @@ public class PlayerMovement : NetworkBehaviour
 
         Vector3 move = transform.right * moveX + transform.forward * moveZ;
         controller.Move(move * moveSpeed * Time.deltaTime + velocity * Time.deltaTime);
+
+        // if (sprintAction.action.IsPressed())
+        // {
+        //     Debug.Log("Sprinting");
+        //     sprintSpeed = walkSpeed * 2f;
+        //     moveSpeed = sprintSpeed;
+
+        // }
+
+        // if (sprintAction.action.WasReleasedThisFrame())
+        // {
+        //     Debug.Log("Stopped Sprinting");
+        //     moveSpeed = walkSpeed;
+        //     Debug.Log("Current Speed: " + moveSpeed);
+        // }
+
+    }
+
+    private void Sprinting(InputAction.CallbackContext context)
+    {
+        moveSpeed *= 2f;
+        Debug.Log("Sprinting with speed: " + moveSpeed);
+    }
+
+    private void StopSprinting(InputAction.CallbackContext context)
+    {
+        moveSpeed /= 2f;
+        Debug.Log("Stopped Sprinting, speed: " + moveSpeed);
     }
 }

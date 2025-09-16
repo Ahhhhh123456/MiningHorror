@@ -13,6 +13,10 @@ public class LookAndClickInteraction : MonoBehaviour
     private MineType mineType;
     private MineType currentMineTarget;
 
+    [Header("Mining Settings")]
+    public float mineInterval = 0.005f; // seconds between mining ticks
+    private float mineTimer = 0f;
+
     public void Start()
     {
         mineType = FindObjectOfType<MineType>();
@@ -30,11 +34,11 @@ public class LookAndClickInteraction : MonoBehaviour
         eButtonAction.action.Disable();
     }
 
-    
+
     void Update()
     {
         if (eButtonAction.action.WasPressedThisFrame())
-        { 
+        {
             Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
             RaycastHit hit;
 
@@ -56,8 +60,9 @@ public class LookAndClickInteraction : MonoBehaviour
             {
                 currentMineTarget.holdCount = 0;
                 Debug.Log("Stopped Mining Cube");
-                currentMineTarget = null; // clear reference
+                currentMineTarget = null;
             }
+            mineTimer = 0f; // reset timer
         }
 
         if (clickAction.action.IsPressed())
@@ -71,12 +76,23 @@ public class LookAndClickInteraction : MonoBehaviour
                 if (mineTypeScript != null)
                 {
                     currentMineTarget = mineTypeScript;
-                    mineTypeScript.Mining();
+
+                    // Update timer
+                    mineTimer += Time.deltaTime;
+
+                    // Call Mining only when enough time has passed
+                    if (mineTimer >= mineInterval)
+                    {
+                        currentMineTarget.Mining();
+                        mineTimer -= mineInterval; // reset timer but keep overflow
+                    }
                 }
 
 
             }
         }
+        
+        
     }
 
 }

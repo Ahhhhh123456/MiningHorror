@@ -5,9 +5,9 @@ public class MineType : MonoBehaviour
 {
     public Dictionary<string, RockData> rockTypes = new Dictionary<string, RockData>()
     {
-        { "Stone", new RockData { durability = 5, weight = 1f } },
-        { "Iron",  new RockData { durability = 10, weight = 4f } },
-        { "Gold",  new RockData { durability = 15, weight = 8f } },
+        { "Stone", new RockData { durability = 100, weight = 1f } },
+        { "Iron",  new RockData { durability = 200, weight = 4f } },
+        { "Gold",  new RockData { durability = 300, weight = 8f } },
     };
 
     public int holdCount = 0;

@@ -6,7 +6,7 @@ public class CaveGeneration : MonoBehaviour
     public GameObject blockPrefab;
     public Material material;
 
-    private float noiseScale = .2f;
+    private float noiseScale = .05f;
     private int caveWidth = 100;
     private int caveHeight = 100;
     private int caveDepth = 100;
@@ -23,7 +23,8 @@ public class CaveGeneration : MonoBehaviour
             {
                 for (int z = 0; z < caveDepth; z++)
                 {
-                    if (Perlin3D(x * noiseScale, y * noiseScale, z * noiseScale) > 0.5f)
+                    float noiseValue = Perlin3D(x * noiseScale, y * 4 * noiseScale, z * noiseScale);
+                    if (noiseValue < 0.45 || noiseValue > 0.55)
                     {
                         blockMesh.transform.position = new Vector3(x, y, z);
                         combine.Add(new CombineInstance

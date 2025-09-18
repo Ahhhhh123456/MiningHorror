@@ -27,7 +27,9 @@ public class PlayerMovement : NetworkBehaviour
 
     private PlayerInventory inventory;
 
-    public InputActionReference sprintAction; // assign your "Sprint" action
+    public InputActionReference sprintAction; 
+
+    public InputActionReference jumpAction;
 
     void Start()
     {
@@ -95,12 +97,12 @@ public class PlayerMovement : NetworkBehaviour
         // Ground check
         isGrounded = Physics.Raycast(transform.position, Vector3.down, groundCheckDistance);
 
-        if (isGrounded && velocity.y < 0f)
-            velocity.y = -2f; // stable grounding
+        // if (isGrounded && velocity.y < 0f)
+        //     velocity.y = -2f; // stable grounding
 
         // Jump
-        if (Input.GetKeyDown(KeyCode.Space))
-            velocity.y = jumpForce;
+        // if (Input.GetKeyDown(KeyCode.Space))
+        //     velocity.y = jumpForce;
 
         // Gravity
         velocity.y += gravity * Time.deltaTime;
@@ -112,20 +114,11 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 move = transform.right * moveX + transform.forward * moveZ;
         controller.Move(move * moveSpeed * Time.deltaTime + velocity * Time.deltaTime);
 
-        // if (sprintAction.action.IsPressed())
-        // {
-        //     Debug.Log("Sprinting");
-        //     sprintSpeed = walkSpeed * 2f;
-        //     moveSpeed = sprintSpeed;
-
-        // }
-
-        // if (sprintAction.action.WasReleasedThisFrame())
-        // {
-        //     Debug.Log("Stopped Sprinting");
-        //     moveSpeed = walkSpeed;
-        //     Debug.Log("Current Speed: " + moveSpeed);
-        // }
+        if (jumpAction.action.WasPressedThisFrame() && isGrounded)
+        {
+            Debug.Log("Jump pressed");
+            velocity.y = jumpForce;
+        }
 
     }
 

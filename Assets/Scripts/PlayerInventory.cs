@@ -29,8 +29,8 @@ public class PlayerInventory : MonoBehaviour
             // update total weight
             playerWeight += data.weight;
 
-            playerMovement.updateMoveSpeed();
-            Debug.Log($"Updated move speed to {playerMovement.moveSpeed} due to weight {playerWeight}");
+            playerMovement.UpdateMoveSpeed();
+            // Debug.Log($"Updated move speed to {playerMovement.moveSpeed} due to weight {playerWeight}");
             Debug.Log($"Picked up {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
             Debug.Log("Inventory now contains: " + string.Join(", ", inventory));
         }

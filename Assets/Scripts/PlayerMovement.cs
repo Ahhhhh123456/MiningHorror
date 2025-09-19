@@ -53,16 +53,20 @@ public class PlayerMovement : NetworkBehaviour
 
     void OnEnable()
     {
+        // Sprinting
         sprintAction.action.Enable();
         sprintAction.action.performed += Sprinting;
-        sprintAction.action.canceled  += StopSprinting;
+        sprintAction.action.canceled += StopSprinting;
+
     }
 
     void OnDisable()
     {
+        // Sprinting
         sprintAction.action.Disable();
         sprintAction.action.performed -= Sprinting;
         sprintAction.action.canceled -= StopSprinting;
+
     }
 
     // Backwards-compatible method your inventory calls
@@ -95,14 +99,9 @@ public class PlayerMovement : NetworkBehaviour
     private void HandleMovement()
     {
         // Ground check
-        isGrounded = Physics.Raycast(transform.position, Vector3.down, groundCheckDistance);
+        isGrounded = controller.isGrounded;
 
-        // if (isGrounded && velocity.y < 0f)
-        //     velocity.y = -2f; // stable grounding
 
-        // Jump
-        // if (Input.GetKeyDown(KeyCode.Space))
-        //     velocity.y = jumpForce;
 
         // Gravity
         velocity.y += gravity * Time.deltaTime;
@@ -114,7 +113,7 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 move = transform.right * moveX + transform.forward * moveZ;
         controller.Move(move * moveSpeed * Time.deltaTime + velocity * Time.deltaTime);
 
-        if (jumpAction.action.WasPressedThisFrame() && isGrounded)
+        if (jumpAction.action.IsPressed() && isGrounded)
         {
             Debug.Log("Jump pressed");
             velocity.y = jumpForce;

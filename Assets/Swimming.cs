@@ -2,24 +2,35 @@ using UnityEngine;
 
 public class Swimming : MonoBehaviour
 {
-    public float buoyancyForce = 2f;   // how strong the float feels
-    public float damping = 1f;         // slows descent
+    public float waterDrag = 5f;        // slows movement in water
+    public float waterAngularDrag = 5f; // slows rotation in water
+    public float defaultDrag = 0f;      // default values on land
+    public float defaultAngularDrag = 0.05f;
 
-    void OnTriggerStay(Collider other)
+    void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
             Rigidbody rb = other.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                // Counter gravity
-                Vector3 force = Vector3.up * buoyancyForce;
+                rb.linearDamping = waterDrag;
+                rb.angularDamping = waterAngularDrag;
+                Debug.Log("Player entered water - drag applied");
+            }
+        }
+    }
 
-                // Add force smoothly
-                rb.AddForce(force, ForceMode.Acceleration);
-
-                // Optional: add drag to make movement smooth
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y * (1f - Time.deltaTime * damping), rb.linearVelocity.z);
+    void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            Rigidbody rb = other.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.linearDamping = defaultDrag;
+                rb.angularDamping = defaultAngularDrag;
+                Debug.Log("Player left water - drag reset");
             }
         }
     }

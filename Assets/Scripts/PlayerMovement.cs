@@ -9,9 +9,9 @@ public class PlayerMovement : NetworkBehaviour
     public float walkSpeed = 5f;
     public float sprintMultiplier = 2f;
     public float jumpForce = 5f;
-    private float moveSpeed;
+    public float moveSpeed;
     public Rigidbody rb;
-    private float verticalVelocity = 0f;
+    public float verticalVelocity = 0f;
 
     private Camera playerCamera;
     private AudioListener audioListener;
@@ -25,11 +25,6 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Ground Check Settings")]
     public LayerMask groundMask;
     private bool isGrounded;
-
-    [Header("Swimming Settings")]
-    public float swimUpSpeed = 2f;     // ascend speed when pressing jump
-    public float swimDownSpeed = 10f;   // slow sinking speed
-    public bool isSwimming = false;
 
     void Start()
     {
@@ -85,26 +80,20 @@ public class PlayerMovement : NetworkBehaviour
 
     void FixedUpdate()
     {
-
-        if (isSwimming)
-        {
-            Swimming();
-        }
-        else
-        {
-            HandleMovement(); // normal walking/jumping
-        }
+        HandleMovement();
     }
 
     public void HandleMovement()
     {
-        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
-        float groundCheckRadius = capsule.radius * 0.9f;
-        float groundCheckOffset = capsule.height / 2f - 0.05f;
+        CapsuleCollider groundChecker = GetComponent<CapsuleCollider>();
+        float groundCheckRadius = groundChecker.radius * 0.9f;
+        float groundCheckOffset = groundChecker.height / 2f - 0.05f;
         Vector3 feetPos = transform.position + Vector3.down * groundCheckOffset;
+
+        // Ground check
         isGrounded = Physics.CheckSphere(feetPos, groundCheckRadius, groundMask);
 
-        // Vertical velocity
+        // Vertical velocity (gravity/jump)
         if (isGrounded && verticalVelocity < 0f)
             verticalVelocity = -2f; // stick to ground
         else
@@ -114,14 +103,38 @@ public class PlayerMovement : NetworkBehaviour
         Vector2 input = moveAction.action.ReadValue<Vector2>();
         Vector3 moveDir = transform.right * input.x + transform.forward * input.y;
         moveDir.y = 0f;
+
+        if (moveDir.sqrMagnitude > 0.01f)
+        {
+            CapsuleCollider WallChecker = GetComponent<CapsuleCollider>();
+
+            Vector3 point1 = transform.position + WallChecker.center + Vector3.up * (WallChecker.height / 2 - WallChecker.radius);
+            Vector3 point2 = transform.position + WallChecker.center - Vector3.up * (WallChecker.height / 2 - WallChecker.radius);
+
+            float checkDistance = 0.1f;
+
+            if (Physics.CapsuleCast(point1, point2, WallChecker.radius, moveDir.normalized, out RaycastHit hit, checkDistance))
+            {
+                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+
+                // If hitting a wall or steep slope, cancel horizontal input
+                if (slopeAngle > 45f)
+                {
+                    moveDir = Vector3.zero;
+                }
+            }
+        }
+
+        // Calculate horizontal velocity
         Vector3 horizontalVelocity = moveDir.normalized * moveSpeed;
 
-        // Apply horizontal velocity while letting collisions slide naturally
+        // Apply horizontal movement
         rb.linearVelocity = new Vector3(horizontalVelocity.x, rb.linearVelocity.y, horizontalVelocity.z);
 
-        // Apply vertical velocity (jump/gravity)
+        // Apply vertical movement
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, verticalVelocity, rb.linearVelocity.z);
     }
+
 
 
     public void UpdateMoveSpeed()
@@ -153,21 +166,4 @@ public class PlayerMovement : NetworkBehaviour
         UpdateMoveSpeed();
     }
 
-    public void Swimming()
-    {
-        // Horizontal movement
-        Vector2 input = moveAction.action.ReadValue<Vector2>();
-        Vector3 moveDir = transform.right * input.x + transform.forward * input.y;
-        moveDir.y = 0f;
-        Vector3 horizontalVelocity = moveDir.normalized * (moveSpeed/ 1.5f); // slower in water
-
-        // Vertical movement
-        if (jumpAction.action.IsPressed())
-            verticalVelocity = swimUpSpeed;   // ascend
-        else
-            verticalVelocity = -swimDownSpeed; // descend slowly
-
-        // Apply final velocity without overwriting physics
-        rb.linearVelocity = new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z);
-    }
 }

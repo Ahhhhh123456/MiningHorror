@@ -7,9 +7,9 @@ public class CaveGeneration : MonoBehaviour
     public Material material;
 
     private float noiseScale = .05f;
-    private int caveWidth = 100;
-    private int caveHeight = 100;
-    private int caveDepth = 100;
+    private int caveWidth = 200;
+    private int caveHeight = 20;
+    private int caveDepth = 200;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -23,8 +23,8 @@ public class CaveGeneration : MonoBehaviour
             {
                 for (int z = 0; z < caveDepth; z++)
                 {
-                    float noiseValue = Perlin3D(x * noiseScale, y * 4 * noiseScale, z * noiseScale);
-                    if (noiseValue < 0.45 || noiseValue > 0.55)
+                    float noiseValue = Perlin3D(x * noiseScale / 2, y * noiseScale, z * noiseScale / 2);
+                    if ((noiseValue < 0.45 || noiseValue > 0.55) || (y == 0 || y == caveHeight - 1) || (x == 0 || x == caveWidth - 1) || (z == 0 || z == caveDepth - 1))
                     {
                         blockMesh.transform.position = new Vector3(x, y, z);
                         combine.Add(new CombineInstance

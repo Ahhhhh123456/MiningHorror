@@ -16,6 +16,7 @@ public class PlayerMovement : NetworkBehaviour
     private Camera playerCamera;
     private AudioListener audioListener;
     private PlayerInventory inventory;
+    private PlayerStamina stamina;
 
     [Header("Movement Input Actions")]
     public InputActionReference sprintAction;
@@ -25,6 +26,7 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Ground Check Settings")]
     public LayerMask groundMask;
     private bool isGrounded;
+    private bool isSprinting = false;
 
     void Start()
     {
@@ -34,7 +36,7 @@ public class PlayerMovement : NetworkBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         inventory = GetComponent<PlayerInventory>();
-
+        stamina = GetComponent<PlayerStamina>();
         playerCamera = GetComponentInChildren<Camera>();
         audioListener = GetComponentInChildren<AudioListener>();
 
@@ -75,6 +77,12 @@ public class PlayerMovement : NetworkBehaviour
         if (jumpAction.action.triggered && isGrounded)
         {
             verticalVelocity = jumpForce;
+        }
+
+        if (isSprinting && rb.linearVelocity.magnitude > 0.1f) // only drain if moving
+        {
+
+            stamina.UseStamina(10f * Time.deltaTime); // drain 10 per second
         }
     }
 
@@ -157,12 +165,15 @@ public class PlayerMovement : NetworkBehaviour
     {
         Debug.Log("Sprinting speed: " + (moveSpeed * sprintMultiplier));
         moveSpeed *= sprintMultiplier;
+        isSprinting = true;
+
     }
 
     private void StopSprinting(InputAction.CallbackContext context)
     {
         Debug.Log("Stopping sprinting speed: " + (moveSpeed / sprintMultiplier));
         // moveSpeed /= sprintMultiplier;
+        isSprinting = false;
         UpdateMoveSpeed();
     }
 

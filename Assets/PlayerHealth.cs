@@ -4,8 +4,8 @@ using TMPro; // Needed for TextMeshProUGUI
 public class PlayerHealth : MonoBehaviour
 {
     [Header("Health Settings")]
-    public int maxHealth = 100;
-    private int currentHealth;
+    public float maxHealth = 100f;
+    private float currentHealth;
 
     [Header("UI")]
     public TextMeshProUGUI healthText; // Drag the HealthText object here
@@ -23,11 +23,11 @@ public class PlayerHealth : MonoBehaviour
         // Press H to simulate taking 10 damage
         if (Input.GetKeyDown(KeyCode.N))
         {
-            TakeDamage(10);
+            TakeDamage(10f);
         }
     }
 
-    public void TakeDamage(int amount)
+    public void TakeDamage(float amount)
     {
         currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
         UpdateHealthUI();
@@ -38,7 +38,8 @@ public class PlayerHealth : MonoBehaviour
     {
         if (healthText != null)
         {
-            healthText.text = "Health: " + currentHealth;
+            healthText.text = "Health: " + currentHealth.ToString("F1");
+
         }
     }
 }

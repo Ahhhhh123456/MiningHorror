@@ -178,6 +178,7 @@ GameObject:
   - component: {fileID: -5411996823341654230}
   - component: {fileID: 7759798385312772693}
   - component: {fileID: 5290257942210531726}
+  - component: {fileID: 1308543640184747798}
   - component: {fileID: 2651751745559808022}
   m_Layer: 0
   m_Name: Player
@@ -489,6 +490,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   healthText: {fileID: 8565444468884964298}
+--- !u!114 &1308543640184747798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2868630179996576008}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b37e85105c14184c9b1001e78f5f0f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxStamina: 100
 --- !u!114 &2651751745559808022
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -659,7 +673,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c193ffe6990261f449387a2451c15c2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseSensitivity: 250
+  mouseSensitivity: 1000
   playerBody: {fileID: 3208011699699359722}
   head: {fileID: 3710924884085334226}
 --- !u!114 &1999198140439621053

@@ -26,7 +26,14 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Ground Check Settings")]
     public LayerMask groundMask;
     private bool isGrounded;
+    private bool wasGrounded = false; // Track previous grounded state
     private bool isSprinting = false;
+
+    [Header("Fall Damage Settings")]
+    public float fallDamageThreshold = -10f; // Minimum downward velocity to start taking damage
+    public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
+    private float previousVerticalVelocity = 0f; // Track previous frame's velocity
+
 
     void Start()
     {
@@ -81,8 +88,12 @@ public class PlayerMovement : NetworkBehaviour
 
         if (isSprinting && rb.linearVelocity.magnitude > 0.1f) // only drain if moving
         {
-
-            stamina.UseStamina(10f * Time.deltaTime); // drain 10 per second
+            if (stamina.currentStamina <= 0f)
+            {
+                Debug.Log("Not enough stamina to sprint.");
+                StopSprinting(new InputAction.CallbackContext());
+            }
+            stamina.UseStamina(100f * Time.deltaTime); // drain 10 per second
         }
     }
 
@@ -99,13 +110,27 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 feetPos = transform.position + Vector3.down * groundCheckOffset;
 
         // Ground check
+        bool wasGrounded = isGrounded;
         isGrounded = Physics.CheckSphere(feetPos, groundCheckRadius, groundMask);
 
-        // Vertical velocity (gravity/jump)
+        // Detect landing
+        bool justLanded = !wasGrounded && isGrounded;
+
+        // Apply fall damage if just landed
+        if (justLanded && verticalVelocity < fallDamageThreshold)
+        {
+            FallDamage(verticalVelocity);
+        }
+
+        // Gravity / vertical velocity
         if (isGrounded && verticalVelocity < 0f)
-            verticalVelocity = -2f; // stick to ground
+        {
+            verticalVelocity = -2f; // small downward force to stick to ground
+        }
         else
+        {
             verticalVelocity += Physics.gravity.y * Time.fixedDeltaTime;
+        }
 
         // Horizontal input
         Vector2 input = moveAction.action.ReadValue<Vector2>();
@@ -114,14 +139,14 @@ public class PlayerMovement : NetworkBehaviour
 
         if (moveDir.sqrMagnitude > 0.01f)
         {
-            CapsuleCollider WallChecker = GetComponent<CapsuleCollider>();
+            CapsuleCollider wallChecker = GetComponent<CapsuleCollider>();
 
-            Vector3 point1 = transform.position + WallChecker.center + Vector3.up * (WallChecker.height / 2 - WallChecker.radius);
-            Vector3 point2 = transform.position + WallChecker.center - Vector3.up * (WallChecker.height / 2 - WallChecker.radius);
+            Vector3 point1 = transform.position + wallChecker.center + Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
+            Vector3 point2 = transform.position + wallChecker.center - Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
 
             float checkDistance = 0.1f;
 
-            if (Physics.CapsuleCast(point1, point2, WallChecker.radius, moveDir.normalized, out RaycastHit hit, checkDistance))
+            if (Physics.CapsuleCast(point1, point2, wallChecker.radius, moveDir.normalized, out RaycastHit hit, checkDistance))
             {
                 float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
 
@@ -136,12 +161,10 @@ public class PlayerMovement : NetworkBehaviour
         // Calculate horizontal velocity
         Vector3 horizontalVelocity = moveDir.normalized * moveSpeed;
 
-        // Apply horizontal movement
-        rb.linearVelocity = new Vector3(horizontalVelocity.x, rb.linearVelocity.y, horizontalVelocity.z);
-
-        // Apply vertical movement
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, verticalVelocity, rb.linearVelocity.z);
+        // Apply movement
+        rb.linearVelocity = new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z);
     }
+
 
 
 
@@ -163,7 +186,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private void StartSprinting(InputAction.CallbackContext context)
     {
-        Debug.Log("Sprinting speed: " + (moveSpeed * sprintMultiplier));
+        //Debug.Log("Sprinting speed: " + (moveSpeed * sprintMultiplier));
         moveSpeed *= sprintMultiplier;
         isSprinting = true;
 
@@ -177,4 +200,15 @@ public class PlayerMovement : NetworkBehaviour
         UpdateMoveSpeed();
     }
 
+    private void FallDamage(float impactVelocity)
+    {
+        float damage = Mathf.Abs(impactVelocity) * fallDamageMultiplier;
+        Debug.Log("Fall damage taken: " + damage);
+
+        PlayerHealth health = GetComponent<PlayerHealth>();
+        if (health != null)
+        {
+            health.TakeDamage(damage);
+        }
+    }
 }

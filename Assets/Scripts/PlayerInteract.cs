@@ -1,11 +1,15 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerInteract : MonoBehaviour
 {
     [SerializeField] private float interactionDistance = 3f;
     [SerializeField] private LayerMask interactableLayer;
     [SerializeField] private Transform holdPosition;
-    
+
+    [Header("Input")]
+    public InputActionReference interactAction; // assign "E" action in Inspector
+
     private Camera playerCamera;
     private InteractableItem currentInteractable;
     private bool isHoldingItem = false;
@@ -13,6 +17,16 @@ public class PlayerInteract : MonoBehaviour
     private void Start()
     {
         playerCamera = Camera.main;
+    }
+
+    private void OnEnable()
+    {
+        interactAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        interactAction.action.Disable();
     }
 
     private void Update()
@@ -24,7 +38,7 @@ public class PlayerInteract : MonoBehaviour
     {
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
         RaycastHit hit;
-        
+
         if (!isHoldingItem)
         {
             // Check for interactable objects
@@ -37,13 +51,13 @@ public class PlayerInteract : MonoBehaviour
                     {
                         if (currentInteractable != null)
                             currentInteractable.Highlight(false);
-                        
+
                         currentInteractable = interactable;
                         currentInteractable.Highlight(true);
                     }
-                    
-                    // Check for E key hold
-                    if (Input.GetKey(KeyCode.E))
+
+                    // Check for E button press
+                    if (interactAction.action.WasPressedThisFrame())
                     {
                         interactable.PickUp(holdPosition);
                         isHoldingItem = true;
@@ -61,10 +75,11 @@ public class PlayerInteract : MonoBehaviour
                 currentInteractable = null;
             }
         }
-        else if (Input.GetKeyUp(KeyCode.E) && currentInteractable != null)
+        else if (interactAction.action.WasReleasedThisFrame() && currentInteractable != null)
         {
-            // This will be handled by the InteractableItem's Update
+            // Release handled in DropItem()
             isHoldingItem = false;
+            currentInteractable.DropItem();
         }
     }
 }

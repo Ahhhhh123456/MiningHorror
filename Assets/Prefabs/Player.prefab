@@ -414,6 +414,8 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 64
+  fallDamageThreshold: -10
+  fallDamageMultiplier: 2
 --- !u!114 &198249775049122658
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -421,7 +423,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2868630179996576008}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 00d640c38a5f95e4ebc6fd60bba88f62, type: 3}
   m_Name: 
@@ -536,7 +538,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxStamina: 100
+  currentStamina: 0
   staminaFill: {fileID: 4489525563195134154}
+  regenRate: 15
+  regenDelay: 2
 --- !u!114 &2651751745559808022
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -554,6 +559,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   holdPosition: {fileID: 9092255657916260260}
+  interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &3533892669661502311
 GameObject:
   m_ObjectHideFlags: 0
@@ -727,6 +733,11 @@ MonoBehaviour:
   clickAction: {fileID: -6987561939814216150, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   eButtonAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   mineInterval: 0.005
+  interactionDistance: 3
+  interactableLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  holdPosition: {fileID: 9092255657916260260}
 --- !u!1 &5053155765883827625
 GameObject:
   m_ObjectHideFlags: 0

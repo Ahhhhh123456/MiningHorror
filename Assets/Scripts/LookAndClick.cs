@@ -22,6 +22,14 @@ public class LookAndClickInteraction : MonoBehaviour
         mineType = FindObjectOfType<MineType>();
     }
 
+    [Header("Holding Settings")]
+
+    [SerializeField] private float interactionDistance = 3f;
+    [SerializeField] private LayerMask interactableLayer;
+    [SerializeField] private Transform holdPosition;
+    private InteractableItem currentInteractable;
+    private bool isHoldingItem = false;
+
     void OnEnable()
     {
         clickAction.action.Enable();
@@ -39,21 +47,68 @@ public class LookAndClickInteraction : MonoBehaviour
     {
         if (eButtonAction.action.WasPressedThisFrame())
         {
-            Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, interactRange))
-            {
-                Dropped dropScript = hit.collider.GetComponent<Dropped>();
-                if (dropScript != null)
-                {
-                    dropScript.PickedUp(hit.collider.gameObject);
-                }
-
-
-            }
+            HandleInteraction();
         }
 
+        Mining();
+    }
+
+    private void HandleInteraction()
+    {
+        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
+        {
+            InteractableItem interactable = hit.collider.GetComponent<InteractableItem>();
+            if (interactable != null)
+            {
+                // Highlight switching
+                if (currentInteractable != interactable)
+                {
+                    if (currentInteractable != null)
+                        currentInteractable.Highlight(false);
+
+                    currentInteractable = interactable;
+                    currentInteractable.Highlight(true);
+                }
+
+                // Press E to pick up (auto-swap if holding another)
+                if (eButtonAction.action.WasPressedThisFrame())
+                {
+                    if (isHoldingItem && currentInteractable != interactable)
+                    {
+                        currentInteractable.DropItem(); // or SnapItem() if that's your snap logic
+                        isHoldingItem = false;
+                    }
+
+                    interactable.PickUp(holdPosition);
+                    isHoldingItem = true;
+                    Debug.Log("Picked up " + interactable.gameObject.name);
+                    return; // stop here so Dropped doesn't also trigger
+                }
+            }
+
+            // Pick up dropped objects (only if not part of interactableLayer)
+            Dropped dropScript = hit.collider.GetComponent<Dropped>();
+            if (dropScript != null && eButtonAction.action.WasPressedThisFrame())
+            {
+                dropScript.PickedUp(hit.collider.gameObject);
+                Debug.Log("Picked up dropped " + dropScript.gameObject.name);
+                return;
+            }
+        }
+        else if (currentInteractable != null)
+        {
+            currentInteractable.Highlight(false);
+            currentInteractable = null;
+        }
+    }
+
+
+
+    private void Mining()
+    {
         if (clickAction.action.WasReleasedThisFrame())
         {
             if (currentMineTarget != null)
@@ -91,8 +146,5 @@ public class LookAndClickInteraction : MonoBehaviour
 
             }
         }
-        
-        
     }
-
 }

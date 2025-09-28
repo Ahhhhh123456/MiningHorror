@@ -59,7 +59,7 @@ public class PlayerInteract : MonoBehaviour
                     // Check for E button press
                     if (interactAction.action.WasPressedThisFrame())
                     {
-                        interactable.PickUp(holdPosition);
+                        interactable.PickUpItem(holdPosition);
                         isHoldingItem = true;
                     }
                 }

@@ -212,7 +212,6 @@ GameObject:
   - component: {fileID: 7759798385312772693}
   - component: {fileID: 5290257942210531726}
   - component: {fileID: 1308543640184747798}
-  - component: {fileID: 2651751745559808022}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -542,24 +541,6 @@ MonoBehaviour:
   staminaFill: {fileID: 4489525563195134154}
   regenRate: 15
   regenDelay: 2
---- !u!114 &2651751745559808022
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2868630179996576008}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdf94bfd5f57cd444a9f169ed5b6174f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  interactionDistance: 0
-  interactableLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  holdPosition: {fileID: 9092255657916260260}
-  interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &3533892669661502311
 GameObject:
   m_ObjectHideFlags: 0

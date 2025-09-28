@@ -38,7 +38,7 @@ public class InteractableItem : MonoBehaviour
     }
 
     // Called by PlayerInteract when E is pressed
-    public void PickUp(Transform newParent)
+    public void PickUpItem(Transform newParent)
     {
         if (isHeld) return;
 

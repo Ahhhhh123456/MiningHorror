@@ -159,6 +159,37 @@ MonoBehaviour:
     y: 0
     width: 1
     height: 1
+--- !u!1 &2117564163206466720
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3633124843668525593}
+  m_Layer: 0
+  m_Name: PickaxePosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3633124843668525593
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2117564163206466720}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.5, y: 0.5, z: 0.5, w: 0.5}
+  m_LocalPosition: {x: 0.338, y: -0.085, z: 0.41999996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 487305302858325815}
+  m_LocalEulerAnglesHint: {x: -90, y: 90, z: 0}
 --- !u!1 &2322167645473824275
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,7 +215,7 @@ Transform:
   m_GameObject: {fileID: 2322167645473824275}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.126, z: 0.42}
+  m_LocalPosition: {x: 0, y: -0.351, z: 1.889}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -451,17 +482,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   InventoryItems: []
   holdPosition: {fileID: 9092255657916260260}
+  pickaxePosition: {fileID: 3633124843668525593}
   currentHeldItem: {fileID: 0}
+  playerWeight: 0
   prefabEntries:
-  - itemName: WheelOne
-    prefab: {fileID: 4047717071593987417, guid: c10262f5647c4d2498ee84e2fc7e3b76, type: 3}
-  - itemName: WheelTwo
+  - itemName: Wheel
     prefab: {fileID: 2566687869174024086, guid: 8d5704fd71f25ba4da8d9b1b4229fc25, type: 3}
+    holdRotation: {x: 0, y: 0, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: DrillBody
     prefab: {fileID: 2307880310891379278, guid: ead79a91a6c6f4d46978540391e6867b, type: 3}
+    holdRotation: {x: 0, y: 0, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: DrillHead
     prefab: {fileID: 1002401744675609544, guid: 5d9e7a0a7eddea44f8d25ce0a2984db8, type: 3}
-  playerWeight: 0
+    holdRotation: {x: 0, y: 0, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
+  - itemName: Pickaxe
+    prefab: {fileID: 3153184520594772525, guid: 056679d8d44c41a4ca77fc23e6f41973, type: 3}
+    holdRotation: {x: 0, y: 0, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &-5411996823341654230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -588,6 +628,7 @@ Transform:
   m_Children:
   - {fileID: 6490814148441201301}
   - {fileID: 9092255657916260260}
+  - {fileID: 3633124843668525593}
   m_Father: {fileID: 3710924884085334226}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &3792367845407628134
@@ -734,7 +775,6 @@ MonoBehaviour:
   interactableLayer:
     serializedVersion: 2
     m_Bits: 128
-  holdPosition: {fileID: 9092255657916260260}
 --- !u!1 &5053155765883827625
 GameObject:
   m_ObjectHideFlags: 0

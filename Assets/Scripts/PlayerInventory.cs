@@ -9,10 +9,8 @@ public class PlayerInventory : MonoBehaviour
 
     public List<string> InventoryItems = new List<string>();
     public Transform holdPosition;
+    public Transform pickaxePosition;
     public GameObject currentHeldItem;
-
-    [Header("Prefab Assignments")]
-    public List<ItemPrefabEntry> prefabEntries; // drag prefabs in Inspector
     private Dictionary<string, GameObject> prefabLookup;
 
     public float playerWeight = 0f;
@@ -22,11 +20,16 @@ public class PlayerInventory : MonoBehaviour
 
     private ItemType itemType;
 
+    [Header("Prefab Assignments")]
+    public List<ItemPrefabEntry> prefabEntries; // drag prefabs in Inspector
+
     [System.Serializable]
     public class ItemPrefabEntry
     {
         public string itemName;
         public GameObject prefab;
+        public Vector3 holdRotation = Vector3.zero; // Euler rotation when held
+        public Vector3 holdPositionOffset = Vector3.zero; // optional offset for fine-tuning
     }
 
     public void Start()
@@ -53,17 +56,11 @@ public class PlayerInventory : MonoBehaviour
         {
             data = mineType.rockTypes[itemName];
 
-            // If item exists, increment count; otherwise, add with count 1
             if (InventoryOreCount.ContainsKey(itemName))
-            {
                 InventoryOreCount[itemName]++;
-            }
             else
-            {
                 InventoryOreCount[itemName] = 1;
-            }
 
-            // Update total weight
             playerWeight += data.weight;
             playerMovement.UpdateMoveSpeed();
 
@@ -78,28 +75,28 @@ public class PlayerInventory : MonoBehaviour
             Debug.LogWarning("Unknown item: " + itemName);
         }
 
-        if (itemType.itemWeights.ContainsKey(itemName))
+        // General items
+        if (itemType.itemDatabase.ContainsKey(itemName))
         {
-            float itemWeight = itemType.itemWeights[itemName];
+            float itemWeight = itemType.itemDatabase[itemName].weight;
 
-            // Add item to list (duplicates allowed)
             InventoryItems.Add(itemName);
-
-            // Update weight
             playerWeight += itemWeight;
             playerMovement.UpdateMoveSpeed();
 
             Debug.Log($"Picked up {itemName} (Weight {itemWeight}). Total weight: {playerWeight}");
-
-            // Print all items as a comma-separated list
             Debug.Log("Items in inventory: " + string.Join(", ", InventoryItems));
         }
-
+        else
+        {
+            Debug.LogWarning($"Unknown item in itemDatabase: {itemName}");
+        }
     }
+
 
     public void RemoveFromInventory(string itemName)
     {
-        // Remove from Ore Inventory
+        // Ore Inventory
         if (InventoryOreCount.ContainsKey(itemName))
         {
             RockData data = mineType.rockTypes[itemName];
@@ -108,20 +105,20 @@ public class PlayerInventory : MonoBehaviour
             if (InventoryOreCount[itemName] <= 0)
                 InventoryOreCount.Remove(itemName);
 
-            // Update weight
             playerWeight -= data.weight;
             playerMovement.UpdateMoveSpeed();
 
             Debug.Log($"Dropped {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
         }
-        // Remove from general items
+
+        // General items
         if (InventoryItems.Contains(itemName))
         {
             InventoryItems.Remove(itemName);
 
-            if (itemType.itemWeights.ContainsKey(itemName))
+            if (itemType.itemDatabase.ContainsKey(itemName))
             {
-                float itemWeight = itemType.itemWeights[itemName];
+                float itemWeight = itemType.itemDatabase[itemName].weight;
                 playerWeight -= itemWeight;
                 playerMovement.UpdateMoveSpeed();
             }
@@ -129,50 +126,58 @@ public class PlayerInventory : MonoBehaviour
             Debug.Log($"Dropped {itemName}. Items left: " + string.Join(", ", InventoryItems));
         }
     }
+
     
     public void SelectSlot(int index)
     {
-        // Destroy currently held item regardless
         if (currentHeldItem != null)
         {
             Destroy(currentHeldItem);
             currentHeldItem = null;
         }
 
-        // Check if slot has an item
-        if (index < InventoryItems.Count)
+        if (index >= InventoryItems.Count) return;
+
+        string itemName = InventoryItems[index];
+
+        if (!prefabLookup.TryGetValue(itemName, out GameObject prefab)) return;
+
+        // Find the corresponding prefab entry to get rotation/offset
+        ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
+
+        // Determine hold position (default vs pickaxe/tool)
+        Transform targetHoldPosition = holdPosition;
+        if (itemType.itemDatabase.ContainsKey(itemName))
         {
-            string itemName = InventoryItems[index];
-
-            // Make sure prefab exists
-            if (prefabLookup.TryGetValue(itemName, out GameObject prefab))
-            {
-                currentHeldItem = Instantiate(prefab, holdPosition);
-                currentHeldItem.transform.localPosition = new Vector3(0f, 0f, 1f); // in front
-                currentHeldItem.transform.localRotation = Quaternion.identity;
-
-                Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
-                if (rb != null)
-                {
-                    rb.isKinematic = true;
-                    rb.useGravity = false;
-                }
-
-                MeshCollider mc = currentHeldItem.GetComponent<MeshCollider>();
-                if (mc != null)
-                    mc.convex = true;
-            }
-            else
-            {
-                Debug.LogWarning($"No prefab found for {itemName}");
-            }
+            ItemCategory category = itemType.itemDatabase[itemName].category;
+            if (category == ItemCategory.Tool)
+                targetHoldPosition = pickaxePosition;
         }
-        else
+
+        // Instantiate item
+        currentHeldItem = Instantiate(prefab, targetHoldPosition);
+        currentHeldItem.name = prefab.name; // remove (Clone)
+
+        // Apply position offset
+        currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
+
+        // Apply rotation
+        currentHeldItem.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
+
+        // Physics setup
+        Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
+        if (rb != null)
         {
-            // Slot is empty → hands are now empty
-            Debug.Log("Switched to empty slot");
+            rb.isKinematic = true;
+            rb.useGravity = false;
         }
+
+        // Disable colliders while holding
+        Collider[] colliders = currentHeldItem.GetComponents<Collider>();
+        foreach (var col in colliders)
+            col.enabled = false;
     }
+
 
 
 }

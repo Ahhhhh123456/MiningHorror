@@ -40,7 +40,7 @@ public class First_Person_Camera : MonoBehaviour
 
         // Vertical look (pitch) on the Head
         xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+        xRotation = Mathf.Clamp(xRotation, -50f, 50f);
         head.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
         // Horizontal look (yaw) on the Rigidbody

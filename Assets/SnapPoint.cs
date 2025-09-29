@@ -3,40 +3,50 @@ using UnityEngine;
 public class SnapPoint : MonoBehaviour
 {
     [Header("Snap Settings")]
-    public bool isOccupied = false;
     public float snapRadius = 0.5f;
-    public bool releaseHoldAfterSnap = true;
 
-    private void Update()
+    private GameObject snappedItem;
+
+    void Update()
     {
-        if (isOccupied) return;
-
         PlayerInventory playerInventory = FindObjectOfType<PlayerInventory>();
-        if (playerInventory == null || playerInventory.currentHeldItem == null) return;
+        if (playerInventory == null) return;
 
-        GameObject heldItem = playerInventory.currentHeldItem;
-        float distance = Vector3.Distance(heldItem.transform.position, transform.position);
-
-        if (distance <= snapRadius)
+        // If nothing is snapped and player is holding something
+        if (snappedItem == null && playerInventory.currentHeldItem != null)
         {
-            SnapItem(heldItem, playerInventory);
+            GameObject heldItem = playerInventory.currentHeldItem;
+            float distance = Vector3.Distance(heldItem.transform.position, transform.position);
+
+            if (distance <= snapRadius)
+            {
+                SnapItem(heldItem, playerInventory);
+            }
+        }
+        // If something is snapped and player presses E near it, unsnap
+        else if (snappedItem != null && Input.GetKeyDown(KeyCode.E))
+        {
+            float distance = Vector3.Distance(playerInventory.transform.position, transform.position);
+            if (distance <= 2f) // player close enough
+            {
+                UnsnapItem(playerInventory);
+            }
         }
     }
 
     private void SnapItem(GameObject item, PlayerInventory playerInventory)
     {
-        // Remove from inventory first
         string itemName = item.name.Replace("(Clone)", "");
         playerInventory.RemoveFromInventory(itemName);
 
-        // Detach from camera/hold position
+        // Detach from camera
         item.transform.SetParent(null);
 
-        // Move and rotate into place
+        // Position at snap point
         item.transform.position = transform.position;
         item.transform.rotation = transform.rotation;
 
-        // Make it kinematic so it stays in place
+        // Lock in place
         Rigidbody rb = item.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -44,13 +54,37 @@ public class SnapPoint : MonoBehaviour
             rb.useGravity = false;
         }
 
-        isOccupied = true;
-
-        // Release hold reference
+        snappedItem = item;
         if (playerInventory.currentHeldItem == item)
             playerInventory.currentHeldItem = null;
 
-        Debug.Log($"Item {itemName} snapped into place and removed from inventory!");
+        Debug.Log($"Item {itemName} snapped into place!");
+    }
+
+    private void UnsnapItem(PlayerInventory playerInventory)
+    {
+        if (snappedItem == null) return;
+
+        string itemName = snappedItem.name.Replace("(Clone)", "");
+
+        // Unlock physics
+        Rigidbody rb = snappedItem.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+        }
+
+        // Give back to player inventory
+        playerInventory.UpdateInventory(itemName); // <- make sure this exists
+        playerInventory.currentHeldItem = snappedItem;
+        snappedItem.transform.SetParent(playerInventory.holdPosition);
+        snappedItem.transform.localPosition = Vector3.zero;
+        snappedItem.transform.localRotation = Quaternion.identity;
+
+        Debug.Log($"Item {itemName} unsnapped and returned to player!");
+
+        snappedItem = null;
     }
 
     private void OnDrawGizmosSelected()

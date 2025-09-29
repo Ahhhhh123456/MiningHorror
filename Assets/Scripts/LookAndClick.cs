@@ -27,7 +27,6 @@ public class LookAndClickInteraction : MonoBehaviour
 
     [SerializeField] private float interactionDistance = 3f;
     [SerializeField] private LayerMask interactableLayer;
-    [SerializeField] private Transform holdPosition;
     
     private PlayerInventory playerInventory;
 
@@ -118,7 +117,6 @@ public class LookAndClickInteraction : MonoBehaviour
             if (dropScript != null && eButtonAction.action.WasPressedThisFrame())
             {
                 dropScript.PickedUp(hit.collider.gameObject);
-                Debug.Log("Picked up dropped " + dropScript.gameObject.name);
                 return;
             }
         }

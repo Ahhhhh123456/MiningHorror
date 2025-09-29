@@ -9,7 +9,7 @@ public class PlayerInventory : MonoBehaviour
 
     public List<string> InventoryItems = new List<string>();
     public Transform holdPosition;
-    private GameObject currentHeldItem;
+    public GameObject currentHeldItem;
 
     [Header("Prefab Assignments")]
     public List<ItemPrefabEntry> prefabEntries; // drag prefabs in Inspector
@@ -96,19 +96,59 @@ public class PlayerInventory : MonoBehaviour
         }
 
     }
+
+    public void RemoveFromInventory(string itemName)
+    {
+        // Remove from Ore Inventory
+        if (InventoryOreCount.ContainsKey(itemName))
+        {
+            RockData data = mineType.rockTypes[itemName];
+
+            InventoryOreCount[itemName]--;
+            if (InventoryOreCount[itemName] <= 0)
+                InventoryOreCount.Remove(itemName);
+
+            // Update weight
+            playerWeight -= data.weight;
+            playerMovement.UpdateMoveSpeed();
+
+            Debug.Log($"Dropped {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
+        }
+        // Remove from general items
+        if (InventoryItems.Contains(itemName))
+        {
+            InventoryItems.Remove(itemName);
+
+            if (itemType.itemWeights.ContainsKey(itemName))
+            {
+                float itemWeight = itemType.itemWeights[itemName];
+                playerWeight -= itemWeight;
+                playerMovement.UpdateMoveSpeed();
+            }
+
+            Debug.Log($"Dropped {itemName}. Items left: " + string.Join(", ", InventoryItems));
+        }
+    }
     
     public void SelectSlot(int index)
     {
+        // Destroy currently held item regardless
+        if (currentHeldItem != null)
+        {
+            Destroy(currentHeldItem);
+            currentHeldItem = null;
+        }
+
+        // Check if slot has an item
         if (index < InventoryItems.Count)
         {
             string itemName = InventoryItems[index];
-            if (currentHeldItem != null)
-                Destroy(currentHeldItem);
 
+            // Make sure prefab exists
             if (prefabLookup.TryGetValue(itemName, out GameObject prefab))
             {
                 currentHeldItem = Instantiate(prefab, holdPosition);
-                currentHeldItem.transform.localPosition = new Vector3(0f, 0f, 1f); // in front of camera
+                currentHeldItem.transform.localPosition = new Vector3(0f, 0f, 1f); // in front
                 currentHeldItem.transform.localRotation = Quaternion.identity;
 
                 Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
@@ -127,6 +167,12 @@ public class PlayerInventory : MonoBehaviour
                 Debug.LogWarning($"No prefab found for {itemName}");
             }
         }
+        else
+        {
+            // Slot is empty → hands are now empty
+            Debug.Log("Switched to empty slot");
+        }
     }
+
 
 }

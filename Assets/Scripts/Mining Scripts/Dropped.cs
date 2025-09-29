@@ -30,7 +30,7 @@ public class Dropped : MonoBehaviour
         {
             if (item.CompareTag("Dropped") == true)
             {
-                if (inventoryScript.InventoryItems.Count >= 3)
+                if (inventoryScript.InventoryItems.Count >= 4)
                 {
                     Debug.Log("Inventory is full! Cannot add " + item.name);
                     return;

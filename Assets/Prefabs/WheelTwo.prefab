@@ -19,7 +19,7 @@ GameObject:
   - component: {fileID: 2058298836897790949}
   m_Layer: 7
   m_Name: WheelTwo
-  m_TagString: DrillPartWheel
+  m_TagString: Dropped
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

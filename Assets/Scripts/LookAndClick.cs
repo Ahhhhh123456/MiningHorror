@@ -11,6 +11,9 @@ public class LookAndClickInteraction : MonoBehaviour
 
     public InputActionReference slot1Action; // assign "1" key in Input Actions
     public InputActionReference slot2Action; // assign "2" key
+    public InputActionReference slot3Action; // assign "3" key
+    public InputActionReference slot4Action; // assign "4" key
+    public InputActionReference dropAction; // assign "G" key in Input Actions
 
     // Variables to track mining state and reset if let go
     private MineType mineType;
@@ -45,6 +48,9 @@ public class LookAndClickInteraction : MonoBehaviour
         eButtonAction.action.Enable();
         slot1Action.action.Enable();
         slot2Action.action.Enable();
+        slot3Action.action.Enable();
+        slot4Action.action.Enable();
+        dropAction.action.Enable();
     }
 
     void OnDisable()
@@ -53,6 +59,9 @@ public class LookAndClickInteraction : MonoBehaviour
         eButtonAction.action.Disable();
         slot1Action.action.Disable();
         slot2Action.action.Disable();
+        slot3Action.action.Disable();
+        slot4Action.action.Disable();
+        dropAction.action.Disable();
     }
 
 
@@ -63,6 +72,19 @@ public class LookAndClickInteraction : MonoBehaviour
             HandleInteraction();
         }
 
+        if (dropAction.action.WasPressedThisFrame())
+        {
+            DropCurrentItem();
+        }
+
+        ChooseInventorySlot();
+
+        Mining();
+    }
+
+
+    private void ChooseInventorySlot()
+    {  
         if (slot1Action.action.WasPressedThisFrame())
         {
             playerInventory.SelectSlot(0); // first item in list
@@ -71,10 +93,15 @@ public class LookAndClickInteraction : MonoBehaviour
         {
             playerInventory.SelectSlot(1); // second item in list
         }
-
-        Mining();
+        if (slot3Action.action.WasPressedThisFrame())
+        {
+            playerInventory.SelectSlot(2); // third item in list
+        }
+        if (slot4Action.action.WasPressedThisFrame())
+        {
+            playerInventory.SelectSlot(3); // fourth item in list
+        }
     }
-
     private void HandleInteraction()
     {
         if (isHoldingItem)
@@ -87,7 +114,7 @@ public class LookAndClickInteraction : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
         {
-  
+
             if (dropScript != null && eButtonAction.action.WasPressedThisFrame())
             {
                 dropScript.PickedUp(hit.collider.gameObject);
@@ -98,6 +125,37 @@ public class LookAndClickInteraction : MonoBehaviour
 
     }
 
+    public void DropCurrentItem()
+    {
+        if (playerInventory.currentHeldItem != null)
+        {
+            string itemName = playerInventory.currentHeldItem.name.Replace("(Clone)", ""); // clean up name
+
+            // Remove from inventory
+            playerInventory.RemoveFromInventory(itemName);
+
+            // Detach from player
+            playerInventory.currentHeldItem.transform.SetParent(null);
+
+            // Enable physics so it drops
+            Rigidbody rb = playerInventory.currentHeldItem.GetComponent<Rigidbody>();
+            if (rb == null) rb = playerInventory.currentHeldItem.AddComponent<Rigidbody>();
+            rb.isKinematic = false;
+            rb.useGravity = true;
+
+            // Optional: give it a small forward push
+            rb.AddForce(Camera.main.transform.forward * 2f, ForceMode.Impulse);
+
+            // Clear reference
+            playerInventory.currentHeldItem = null;
+
+            Debug.Log($"Dropped {itemName}");
+        }
+        else
+        {
+            Debug.Log("No item to drop");
+        }
+    }
 
 
     private void Mining()

@@ -451,6 +451,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   InventoryItems: []
   holdPosition: {fileID: 9092255657916260260}
+  currentHeldItem: {fileID: 0}
   prefabEntries:
   - itemName: WheelOne
     prefab: {fileID: 4047717071593987417, guid: c10262f5647c4d2498ee84e2fc7e3b76, type: 3}
@@ -725,6 +726,9 @@ MonoBehaviour:
   eButtonAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   slot1Action: {fileID: 2411907206095950430, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   slot2Action: {fileID: 7476244043514120974, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  slot3Action: {fileID: -6885762802666635314, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  slot4Action: {fileID: -2742271709846591488, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  dropAction: {fileID: 5844052175466972657, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   mineInterval: 0.005
   interactionDistance: 3
   interactableLayer:

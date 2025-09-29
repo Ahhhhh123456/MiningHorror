@@ -19,7 +19,7 @@ GameObject:
   - component: {fileID: 5340825811642975199}
   m_Layer: 7
   m_Name: DrillHead
-  m_TagString: DrillPartHead
+  m_TagString: Dropped
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -9,6 +9,9 @@ public class LookAndClickInteraction : MonoBehaviour
 
     public InputActionReference eButtonAction;   // assign your "E button" action
 
+    public InputActionReference slot1Action; // assign "1" key in Input Actions
+    public InputActionReference slot2Action; // assign "2" key
+
     // Variables to track mining state and reset if let go
     private MineType mineType;
     private MineType currentMineTarget;
@@ -22,7 +25,8 @@ public class LookAndClickInteraction : MonoBehaviour
     [SerializeField] private float interactionDistance = 3f;
     [SerializeField] private LayerMask interactableLayer;
     [SerializeField] private Transform holdPosition;
-    private InteractableItem currentInteractable;
+    
+    private PlayerInventory playerInventory;
 
     private Dropped dropScript;
     private bool isHoldingItem = false;
@@ -31,6 +35,7 @@ public class LookAndClickInteraction : MonoBehaviour
     {
         mineType = FindObjectOfType<MineType>();
         dropScript = FindObjectOfType<Dropped>();
+        playerInventory = FindObjectOfType<PlayerInventory>();
     }
 
 
@@ -38,12 +43,16 @@ public class LookAndClickInteraction : MonoBehaviour
     {
         clickAction.action.Enable();
         eButtonAction.action.Enable();
+        slot1Action.action.Enable();
+        slot2Action.action.Enable();
     }
 
     void OnDisable()
     {
         clickAction.action.Disable();
         eButtonAction.action.Disable();
+        slot1Action.action.Disable();
+        slot2Action.action.Disable();
     }
 
 
@@ -54,54 +63,31 @@ public class LookAndClickInteraction : MonoBehaviour
             HandleInteraction();
         }
 
+        if (slot1Action.action.WasPressedThisFrame())
+        {
+            playerInventory.SelectSlot(0); // first item in list
+        }
+        if (slot2Action.action.WasPressedThisFrame())
+        {
+            playerInventory.SelectSlot(1); // second item in list
+        }
+
         Mining();
     }
 
     private void HandleInteraction()
     {
-        if (isHoldingItem && currentInteractable != null)
+        if (isHoldingItem)
         {
-            currentInteractable.DropItem();
-            currentInteractable.Highlight(false);
-            currentInteractable = null;
-            isHoldingItem = false;
-            return;
+            Debug.Log("Already holding an item, can't pick up another.");
+            return; // exit early
         }
-
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
         {
-            InteractableItem interactable = hit.collider.GetComponent<InteractableItem>();
-            if (interactable != null)
-            {
-                // Highlight switching
-                if (currentInteractable != interactable)
-                {
-                    if (currentInteractable != null)
-                        currentInteractable.Highlight(false);
-
-                    currentInteractable = interactable;
-                    currentInteractable.Highlight(true);
-                }
-
-                // Press E to pick up (auto-swap if holding another)
-                if (isHoldingItem && currentInteractable != interactable)
-                {
-                    currentInteractable.DropItem(); // or SnapItem() if that's your snap logic
-                    isHoldingItem = false;
-                }
-
-                interactable.PickUpItem(holdPosition);
-                dropScript.PickedUp(hit.collider.gameObject);
-                
-                isHoldingItem = true;
-                Debug.Log("Picked up " + interactable.gameObject.name);
-                return; // stop here so Dropped doesn't also trigger
-            }
-
-            // Pick up dropped objects (only if not part of interactableLayer)
+  
             if (dropScript != null && eButtonAction.action.WasPressedThisFrame())
             {
                 dropScript.PickedUp(hit.collider.gameObject);
@@ -109,11 +95,7 @@ public class LookAndClickInteraction : MonoBehaviour
                 return;
             }
         }
-        else if (currentInteractable != null)
-        {
-            currentInteractable.Highlight(false);
-            currentInteractable = null;
-        }
+
     }
 
 

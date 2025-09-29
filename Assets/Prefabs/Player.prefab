@@ -449,7 +449,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c070e1eafaf7104f8090758439ea834, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inventory: []
+  InventoryItems: []
+  holdPosition: {fileID: 9092255657916260260}
+  prefabEntries:
+  - itemName: WheelOne
+    prefab: {fileID: 4047717071593987417, guid: c10262f5647c4d2498ee84e2fc7e3b76, type: 3}
+  - itemName: WheelTwo
+    prefab: {fileID: 2566687869174024086, guid: 8d5704fd71f25ba4da8d9b1b4229fc25, type: 3}
+  - itemName: DrillBody
+    prefab: {fileID: 2307880310891379278, guid: ead79a91a6c6f4d46978540391e6867b, type: 3}
+  - itemName: DrillHead
+    prefab: {fileID: 1002401744675609544, guid: 5d9e7a0a7eddea44f8d25ce0a2984db8, type: 3}
   playerWeight: 0
 --- !u!114 &-5411996823341654230
 MonoBehaviour:
@@ -713,6 +723,8 @@ MonoBehaviour:
   interactRange: 5
   clickAction: {fileID: -6987561939814216150, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   eButtonAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  slot1Action: {fileID: 2411907206095950430, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  slot2Action: {fileID: 7476244043514120974, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   mineInterval: 0.005
   interactionDistance: 3
   interactableLayer:

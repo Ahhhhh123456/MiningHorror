@@ -5,10 +5,10 @@ public class ItemType : MonoBehaviour
     public Dictionary<string, float> itemWeights = new Dictionary<string, float>()
     {
         {"Pickaxe", 5f},
-        {"BetterDrillBodyInteractable", 10f},
-        {"BetterDrillHeadInteractable", 10f},
-        {"WheelOneInteractable", 8.5f},
-        {"WheelTwoInteractable", 8.5f}
+        {"DrillBody", 10f},
+        {"DrillHead", 10f},
+        {"WheelOne", 8.5f},
+        {"WheelTwo", 8.5f}
 
     };
 }

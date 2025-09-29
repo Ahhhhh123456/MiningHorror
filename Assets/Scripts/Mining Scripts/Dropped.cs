@@ -28,11 +28,20 @@ public class Dropped : MonoBehaviour
         PlayerInventory inventoryScript = FindObjectOfType<PlayerInventory>();
         if (inventoryScript != null)
         {
-            Debug.Log(item.name);
-            inventoryScript.UpdateInventory(item.name);
+            if (item.CompareTag("Dropped") == true)
+            {
+                if (inventoryScript.InventoryItems.Count >= 3)
+                {
+                    Debug.Log("Inventory is full! Cannot add " + item.name);
+                    return;
+                }
+                Debug.Log(item.name);
+                inventoryScript.UpdateInventory(item.name);
+                Destroy(item);
+            }
         }
         
-        Destroy(item);
+        
 
     }
 

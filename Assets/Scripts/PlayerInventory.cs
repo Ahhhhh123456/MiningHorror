@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using System.Collections.Generic;
 
 public class PlayerInventory : MonoBehaviour
@@ -7,6 +8,12 @@ public class PlayerInventory : MonoBehaviour
     public Dictionary<string, int> InventoryOreCount = new Dictionary<string, int>();
 
     public List<string> InventoryItems = new List<string>();
+    public Transform holdPosition;
+    private GameObject currentHeldItem;
+
+    [Header("Prefab Assignments")]
+    public List<ItemPrefabEntry> prefabEntries; // drag prefabs in Inspector
+    private Dictionary<string, GameObject> prefabLookup;
 
     public float playerWeight = 0f;
 
@@ -15,6 +22,13 @@ public class PlayerInventory : MonoBehaviour
 
     private ItemType itemType;
 
+    [System.Serializable]
+    public class ItemPrefabEntry
+    {
+        public string itemName;
+        public GameObject prefab;
+    }
+
     public void Start()
     {
         mineType = FindObjectOfType<MineType>();
@@ -22,6 +36,15 @@ public class PlayerInventory : MonoBehaviour
         itemType = FindObjectOfType<ItemType>();
     }
 
+    private void Awake()
+    {
+        // Build dictionary from inspector entries
+        prefabLookup = new Dictionary<string, GameObject>();
+        foreach (var entry in prefabEntries)
+        {
+            prefabLookup[entry.itemName] = entry.prefab;
+        }
+    }
     public void UpdateInventory(string itemName)
     {
         // Ore Inventory
@@ -73,4 +96,37 @@ public class PlayerInventory : MonoBehaviour
         }
 
     }
+    
+    public void SelectSlot(int index)
+    {
+        if (index < InventoryItems.Count)
+        {
+            string itemName = InventoryItems[index];
+            if (currentHeldItem != null)
+                Destroy(currentHeldItem);
+
+            if (prefabLookup.TryGetValue(itemName, out GameObject prefab))
+            {
+                currentHeldItem = Instantiate(prefab, holdPosition);
+                currentHeldItem.transform.localPosition = new Vector3(0f, 0f, 1f); // in front of camera
+                currentHeldItem.transform.localRotation = Quaternion.identity;
+
+                Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.isKinematic = true;
+                    rb.useGravity = false;
+                }
+
+                MeshCollider mc = currentHeldItem.GetComponent<MeshCollider>();
+                if (mc != null)
+                    mc.convex = true;
+            }
+            else
+            {
+                Debug.LogWarning($"No prefab found for {itemName}");
+            }
+        }
+    }
+
 }

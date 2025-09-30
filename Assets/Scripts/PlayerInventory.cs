@@ -173,9 +173,9 @@ public class PlayerInventory : MonoBehaviour
         }
 
         // Disable colliders while holding
-        Collider[] colliders = currentHeldItem.GetComponents<Collider>();
-        foreach (var col in colliders)
-            col.enabled = false;
+        // Collider[] colliders = currentHeldItem.GetComponents<Collider>();
+        // foreach (var col in colliders)
+        //     col.enabled = false;
     }
 
 

@@ -183,13 +183,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2117564163206466720}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.5, y: 0.5, z: 0.5, w: 0.5}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.338, y: -0.085, z: 0.41999996}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 487305302858325815}
-  m_LocalEulerAnglesHint: {x: -90, y: 90, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2322167645473824275
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,6 +446,8 @@ MonoBehaviour:
     m_Bits: 64
   fallDamageThreshold: -10
   fallDamageMultiplier: 2
+  ladderDetectionRadius: 1
+  ladderClimbSpeed: 3
 --- !u!114 &198249775049122658
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -500,8 +502,12 @@ MonoBehaviour:
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Pickaxe
     prefab: {fileID: 3153184520594772525, guid: 056679d8d44c41a4ca77fc23e6f41973, type: 3}
-    holdRotation: {x: 0, y: 0, z: 0}
+    holdRotation: {x: -90, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
+  - itemName: Ladder
+    prefab: {fileID: 2995874846724104720, guid: abf59c89b524b3d49aa4aabaad7eae14, type: 3}
+    holdRotation: {x: 0, y: 90, z: -10}
+    holdPositionOffset: {x: 0, y: 3, z: 0}
 --- !u!114 &-5411996823341654230
 MonoBehaviour:
   m_ObjectHideFlags: 0

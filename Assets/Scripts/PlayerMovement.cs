@@ -34,6 +34,13 @@ public class PlayerMovement : NetworkBehaviour
     public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
     private float previousVerticalVelocity = 0f; // Track previous frame's velocity
 
+    [Header("Ladder Climbing Settings")]
+    public float ladderDetectionRadius = 1f; // How close the player needs to be to grab the ladder
+    public float ladderClimbSpeed = 3f;     // Speed at which the player climbs
+
+    private bool isClimbing = false;
+    private Transform currentLadder;
+
 
     void Start()
     {
@@ -104,6 +111,8 @@ public class PlayerMovement : NetworkBehaviour
 
     public void HandleMovement()
     {
+        LadderClimb();
+
         CapsuleCollider groundChecker = GetComponent<CapsuleCollider>();
         float groundCheckRadius = groundChecker.radius * 0.9f;
         float groundCheckOffset = groundChecker.height / 2f - 0.05f;
@@ -211,4 +220,44 @@ public class PlayerMovement : NetworkBehaviour
             health.TakeDamage(damage);
         }
     }
+
+
+    private void LadderClimb()
+    {
+        // Reset climbing state
+        isClimbing = false;
+        currentLadder = null;
+
+        // Detect nearby ladders using OverlapSphere
+        Collider[] hits = Physics.OverlapSphere(transform.position, ladderDetectionRadius);
+        foreach (var hit in hits)
+        {
+            if (hit.name.StartsWith("Ladder"))
+            {
+                isClimbing = true;
+                currentLadder = hit.transform;
+                break;
+            }
+        }
+
+        if (isClimbing && currentLadder != null)
+        {
+            // Disable gravity while climbing
+            verticalVelocity = 0f;
+
+            // Get vertical input (W/S or up/down)
+            Vector2 input = moveAction.action.ReadValue<Vector2>();
+            verticalVelocity = input.y * ladderClimbSpeed;
+
+            // Keep X/Z position unchanged to allow free movement around ladder
+            Vector3 climbPosition = new Vector3(
+                transform.position.x, // keep current X
+                transform.position.y + verticalVelocity * Time.fixedDeltaTime, // move Y
+                transform.position.z  // keep current Z
+            );
+
+            rb.MovePosition(climbPosition);
+        }
+    }
+
 }

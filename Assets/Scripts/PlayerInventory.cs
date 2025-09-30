@@ -1,10 +1,14 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
-
+using TMPro;
 public class PlayerInventory : MonoBehaviour
 {
     // Dictionary: key = item name, value = count
+    [Header("Inventory UI (Ores)")]
+    public TextMeshProUGUI OreText;
+    public TextMeshProUGUI ItemText;
+
     public Dictionary<string, int> InventoryOreCount = new Dictionary<string, int>();
 
     public List<string> InventoryItems = new List<string>();
@@ -69,6 +73,7 @@ public class PlayerInventory : MonoBehaviour
             {
                 Debug.Log($"Item: {kvp.Key}, Count: {kvp.Value}");
             }
+            UpdateOreUIText();
         }
         else
         {
@@ -86,11 +91,15 @@ public class PlayerInventory : MonoBehaviour
 
             Debug.Log($"Picked up {itemName} (Weight {itemWeight}). Total weight: {playerWeight}");
             Debug.Log("Items in inventory: " + string.Join(", ", InventoryItems));
+            UpdateItemUIText();
         }
         else
         {
             Debug.LogWarning($"Unknown item in itemDatabase: {itemName}");
         }
+
+        // UpdateOreUIText();
+        // UpdateItemUIText();
     }
 
 
@@ -109,6 +118,7 @@ public class PlayerInventory : MonoBehaviour
             playerMovement.UpdateMoveSpeed();
 
             Debug.Log($"Dropped {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
+            UpdateOreUIText();
         }
 
         // General items
@@ -122,12 +132,12 @@ public class PlayerInventory : MonoBehaviour
                 playerWeight -= itemWeight;
                 playerMovement.UpdateMoveSpeed();
             }
-
+            UpdateItemUIText();
             Debug.Log($"Dropped {itemName}. Items left: " + string.Join(", ", InventoryItems));
         }
     }
 
-    
+
     public void SelectSlot(int index)
     {
         if (currentHeldItem != null)
@@ -178,6 +188,46 @@ public class PlayerInventory : MonoBehaviour
         //     col.enabled = false;
     }
 
+    private void UpdateOreUIText()
+    {
+        if (OreText == null) return;
 
+        if (InventoryOreCount.Count == 0)
+        {
+            OreText.text = "No ores";
+            return;
+        }
+
+        // Build "OreName xCount" lines
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        foreach (var kvp in InventoryOreCount)
+        {
+            sb.AppendLine($"{kvp.Key} x{kvp.Value}");
+        }
+
+        OreText.text = sb.ToString();
+    }
+
+    private void UpdateItemUIText()
+    {
+        if (ItemText == null) return;
+
+        if (InventoryItems.Count == 0)
+        {
+            ItemText.text = "No items";
+            return;
+        }
+
+        List<string> slotDisplays = new List<string>();
+        for (int i = 0; i < InventoryItems.Count; i++)
+        {
+            string itemName = InventoryItems[i];
+            int slotNumber = i + 1; // slots usually start at 1 instead of 0
+            slotDisplays.Add($"{slotNumber}: {itemName}");
+        }
+
+        // Show horizontally with separators
+        ItemText.text = string.Join(" | ", slotDisplays);
+    }
 
 }

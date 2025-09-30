@@ -17,16 +17,6 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("PlayerHealth script started. Initial health: " + currentHealth);
     }
     
-    
-    void Update()
-    {
-        // Press H to simulate taking 10 damage
-        if (Input.GetKeyDown(KeyCode.N))
-        {
-            TakeDamage(10f);
-        }
-    }
-
     public void TakeDamage(float amount)
     {
         currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);

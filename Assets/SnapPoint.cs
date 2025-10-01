@@ -75,8 +75,10 @@ public class SnapPoint : MonoBehaviour
             rb.useGravity = true;
         }
 
-        // Give back to player inventory
-        playerInventory.UpdateInventory(itemName); // <- make sure this exists
+        // Give back to player inventory (server-authoritative)
+        if (playerInventory.IsOwner) // only the owning player requests the add
+            playerInventory.AddItemServer(itemName);
+
         playerInventory.currentHeldItem = snappedItem;
         snappedItem.transform.SetParent(playerInventory.holdPosition);
         snappedItem.transform.localPosition = Vector3.zero;
@@ -86,6 +88,7 @@ public class SnapPoint : MonoBehaviour
 
         snappedItem = null;
     }
+
 
     private void OnDrawGizmosSelected()
     {

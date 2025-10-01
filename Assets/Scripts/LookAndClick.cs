@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-
-public class LookAndClickInteraction : MonoBehaviour
+using Unity.Netcode;
+public class LookAndClickInteraction : NetworkBehaviour
 {
     public Camera playerCamera;                // assign your FPS camera in Inspector
     public float interactRange = 1f;           // how far you can look and interact
@@ -103,25 +103,44 @@ public class LookAndClickInteraction : MonoBehaviour
     }
     private void HandleInteraction()
     {
+
+        Debug.Log("E button pressed");
+
         if (isHoldingItem)
         {
             Debug.Log("Already holding an item, can't pick up another.");
             return; // exit early
         }
+        
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
         {
-
-            if (dropScript != null && eButtonAction.action.WasPressedThisFrame())
+            // if (dropScript != null && eButtonAction.action.WasPressedThisFrame() && hit.collider.CompareTag("Dropped"))
+            // {
+            //     // Instead of picking up locally, call the networked method
+            //     Debug.Log("Picking up item: " + hit.collider.gameObject.name);
+            //     dropScript.PickedUp(hit.collider.gameObject);
+            //     return;
+            // }
+            if (eButtonAction.action.WasPressedThisFrame() && hit.collider.CompareTag("Dropped"))
             {
-                dropScript.PickedUp(hit.collider.gameObject);
-                return;
+                Dropped hitDrop = hit.collider.GetComponent<Dropped>();
+                if (hitDrop != null)
+                {
+                    Debug.Log("Picking up item: " + hit.collider.gameObject.name);
+                    hitDrop.PickedUp(hit.collider.gameObject);
+                    return;
+                }
+            }
+            else
+            {
+                Debug.Log("Hit object is not a dropped item or dropScript is null.");
             }
         }
-
     }
+
 
     public void DropCurrentItem()
     {
@@ -187,7 +206,7 @@ public class LookAndClickInteraction : MonoBehaviour
                     // Call Mining only when enough time has passed
                     if (mineTimer >= mineInterval)
                     {
-                        currentMineTarget.Mining();
+                        currentMineTarget.MiningOre();
                         mineTimer -= mineInterval; // reset timer but keep overflow
                     }
                 }

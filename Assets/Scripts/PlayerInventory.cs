@@ -22,7 +22,7 @@ public class PlayerInventory : MonoBehaviour
     private MineType mineType;
     private PlayerMovement playerMovement;
 
-    private ItemType itemType;
+    public ItemType itemType;
 
     [Header("Prefab Assignments")]
     public List<ItemPrefabEntry> prefabEntries; // drag prefabs in Inspector
@@ -52,35 +52,26 @@ public class PlayerInventory : MonoBehaviour
             prefabLookup[entry.itemName] = entry.prefab;
         }
     }
-    public void UpdateInventory(string itemName)
+    public void UpdateInventory(string itemName, OreData oreData = null)
     {
-        // Ore Inventory
-        RockData data;
-        if (mineType.rockTypes.ContainsKey(itemName))
+        // --- ORE INVENTORY ---
+        if (oreData != null) // pass in correct oreData from the dropped prefab
         {
-            data = mineType.rockTypes[itemName];
+            string oreName = oreData.oreName;
 
-            if (InventoryOreCount.ContainsKey(itemName))
-                InventoryOreCount[itemName]++;
+            if (InventoryOreCount.ContainsKey(oreName))
+                InventoryOreCount[oreName]++;
             else
-                InventoryOreCount[itemName] = 1;
+                InventoryOreCount[oreName] = 1;
 
-            playerWeight += data.weight;
+            playerWeight += oreData.weight;
             playerMovement.UpdateMoveSpeed();
 
-            Debug.Log($"Picked up {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
-            foreach (var kvp in InventoryOreCount)
-            {
-                Debug.Log($"Item: {kvp.Key}, Count: {kvp.Value}");
-            }
+            Debug.Log($"Picked up {oreName} (Weight {oreData.weight}). Total weight: {playerWeight}");
             UpdateOreUIText();
         }
-        else
-        {
-            Debug.LogWarning("Unknown item: " + itemName);
-        }
 
-        // General items
+        // --- GENERAL ITEMS ---
         if (itemType.itemDatabase.ContainsKey(itemName))
         {
             float itemWeight = itemType.itemDatabase[itemName].weight;
@@ -93,14 +84,13 @@ public class PlayerInventory : MonoBehaviour
             Debug.Log("Items in inventory: " + string.Join(", ", InventoryItems));
             UpdateItemUIText();
         }
-        else
+        else if (oreData == null) // only warn if it's neither ore nor general item
         {
             Debug.LogWarning($"Unknown item in itemDatabase: {itemName}");
         }
-
-        // UpdateOreUIText();
-        // UpdateItemUIText();
     }
+
+
 
 
     public void RemoveFromInventory(string itemName)
@@ -108,7 +98,7 @@ public class PlayerInventory : MonoBehaviour
         // Ore Inventory
         if (InventoryOreCount.ContainsKey(itemName))
         {
-            RockData data = mineType.rockTypes[itemName];
+            OreData data = mineType.oreData;
 
             InventoryOreCount[itemName]--;
             if (InventoryOreCount[itemName] <= 0)

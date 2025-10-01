@@ -25,7 +25,7 @@ public class LightFlicker : MonoBehaviour
         // Randomly change the intensity of the light to create a flickering effect
         if (GameManager.instance.coalCollected > 0)
         {
-            flickeringLight.intensity = Random.Range(0.75f, 1.25f);
+            flickeringLight.intensity = Random.Range(20.75f, 21.25f);
             torchHead.GetComponent<MeshRenderer>().material = torchMaterial; // Set the torch material to on
 
             // Decrease the intensity of the vignette effect by 0.001f

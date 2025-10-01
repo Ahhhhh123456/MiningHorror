@@ -10,12 +10,16 @@ public class CaveGeneration : MonoBehaviour
     private int caveWidth = 200;
     private int caveHeight = 20;
     private int caveDepth = 200;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    
+    private List<CombineInstance> combine = new List<CombineInstance>();
+
+    public void CreateCave()
     {
-        List<CombineInstance> combine = new List<CombineInstance>();
+
 
         MeshFilter blockMesh = Instantiate(blockPrefab, Vector3.zero, Quaternion.identity).GetComponent<MeshFilter>();
+
+        float offset = Random.Range(0f, 1000f);
 
         for (int x = 0; x < caveWidth; x++)
         {
@@ -23,7 +27,7 @@ public class CaveGeneration : MonoBehaviour
             {
                 for (int z = 0; z < caveDepth; z++)
                 {
-                    float noiseValue = Perlin3D(x * noiseScale / 2, y * noiseScale, z * noiseScale / 2);
+                    float noiseValue = Perlin3D((x + offset) * noiseScale / 2, (y + offset) * noiseScale, (z + offset) * noiseScale / 2);
                     if ((noiseValue < 0.45 || noiseValue > 0.55) || (y == 0 || y == caveHeight - 1) || (x == 0 || x == caveWidth - 1) || (z == 0 || z == caveDepth - 1))
                     {
                         blockMesh.transform.position = new Vector3(x, y, z);
@@ -53,7 +57,7 @@ public class CaveGeneration : MonoBehaviour
             {
                 combineLists[combineLists.Count - 1].Add(combine[i]);
             }
-            
+
         }
 
         Transform meshys = new GameObject("Meshys").transform;
@@ -66,6 +70,17 @@ public class CaveGeneration : MonoBehaviour
             mr.material = material;
             mf.mesh.CombineMeshes(list.ToArray());
         }
+
+    }
+    public void ClearCave()
+    {
+        Transform meshys = GameObject.Find("Meshys")?.transform;
+        if (meshys != null)
+        {
+            DestroyImmediate(meshys.gameObject);
+            DestroyImmediate(GameObject.Find("Sphere(Clone)"));
+        }
+        combine.Clear();
     }
 
     public static float Perlin3D(float x, float y, float z)

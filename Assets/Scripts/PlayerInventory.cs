@@ -54,6 +54,7 @@ public class PlayerInventory : NetworkBehaviour
         }
     }
 
+
     // ✅ Add item (server-only)
     public void AddItemServer(string itemName, OreData oreData = null)
     {
@@ -77,9 +78,16 @@ public class PlayerInventory : NetworkBehaviour
             playerWeight += itemType.itemDatabase[itemName].weight;
         }
 
-        // After server updates, notify client UI
-        UpdateInventoryUIClientRpc();
+        // ✅ Only tell the client who owns this inventory to update their UI
+        UpdateInventoryUIClientRpc(new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new ulong[] { OwnerClientId }
+            }
+        });
     }
+
 
     // ✅ Remove item (server-only)
     public void RemoveItemServer(string itemName, OreData oreData = null)
@@ -188,10 +196,11 @@ public class PlayerInventory : NetworkBehaviour
         UpdateHeldItemClientRpc(index);
     }
 
+
+    // Update visuals for this player
     [ClientRpc]
     private void UpdateHeldItemClientRpc(int index)
     {
-        // Only update visuals for the corresponding player
         if (!IsOwner) return;
 
         // Destroy current held item
@@ -207,29 +216,19 @@ public class PlayerInventory : NetworkBehaviour
 
         if (!prefabLookup.TryGetValue(itemName, out GameObject prefab)) return;
 
-        // Find the corresponding prefab entry to get rotation/offset
         ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
 
-        // Determine hold position (default vs pickaxe/tool)
         Transform targetHoldPosition = holdPosition;
-        if (itemType.itemDatabase.ContainsKey(itemName))
-        {
-            ItemCategory category = itemType.itemDatabase[itemName].category;
-            if (category == ItemCategory.Tool)
-                targetHoldPosition = pickaxePosition;
-        }
+        if (itemType.itemDatabase.ContainsKey(itemName) &&
+            itemType.itemDatabase[itemName].category == ItemCategory.Tool)
+            targetHoldPosition = pickaxePosition;
 
-        // Instantiate item
         currentHeldItem = Instantiate(prefab, targetHoldPosition);
-        currentHeldItem.name = prefab.name; // remove (Clone)
+        currentHeldItem.name = prefab.name;
 
-        // Apply position offset
         currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
-
-        // Apply rotation
         currentHeldItem.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
 
-        // Physics setup
         Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -308,6 +307,8 @@ public class PlayerInventory : NetworkBehaviour
 
         OreText.text = sb.ToString();
     }
+
+        
 
     private void UpdateItemUIText()
     {

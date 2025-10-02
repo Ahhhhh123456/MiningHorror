@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Linq;
 public class Dropped : NetworkBehaviour
 {
     [Header("Drop Settings")]
@@ -34,7 +35,6 @@ public class Dropped : NetworkBehaviour
 
     public void PickedUp(GameObject item)
     {
-        Debug.Log("PickUp Called");
         if (item.TryGetComponent<NetworkObject>(out NetworkObject netObj))
         {
             Debug.Log("NetworkObject found");
@@ -74,12 +74,48 @@ public class Dropped : NetworkBehaviour
 
         // Use server-authoritative add
         if (droppedScript.oreData != null)
+        {
+            Debug.LogWarning($"[Server] Adding {droppedScript.oreData.oreName} to client {senderClientId}'s inventory.");
             inventoryScript.AddItemServer(droppedScript.oreData.oreName, droppedScript.oreData);
+        }
         else
+        {
+            Debug.LogWarning($"[Server] Adding item by prefab name {netObj.name} to client {senderClientId}'s inventory.");
             inventoryScript.AddItemServer(netObj.name);
-
+        }
         // Despawn the dropped object
         netObj.Despawn();
+
+        LogAllPlayerInventories();
+    }
+
+    // Function for Debugging. Shows inventories of all clients
+    private void LogAllPlayerInventories()
+    {
+        Debug.Log("===== All Player Inventories =====");
+
+        foreach (var clientPair in NetworkManager.Singleton.ConnectedClients)
+        {
+            ulong clientId = clientPair.Key;
+            var playerObject = clientPair.Value.PlayerObject;
+
+            if (playerObject == null) continue;
+
+            PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
+            if (inventory == null) continue;
+
+            // Build ore inventory string
+            string ores = inventory.InventoryOreCount.Count == 0 ? "No ores" :
+                string.Join(", ", inventory.InventoryOreCount.Select(kvp => $"{kvp.Key} x{kvp.Value}"));
+
+            // Build item inventory string
+            string items = inventory.InventoryItems.Count == 0 ? "No items" :
+                string.Join(", ", inventory.InventoryItems);
+
+            Debug.Log($"Client {clientId} - Ores: {ores} | Items: {items}");
+        }
+
+        Debug.Log("=================================");
     }
 
 

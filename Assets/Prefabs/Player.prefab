@@ -922,6 +922,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c070e1eafaf7104f8090758439ea834, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   OreText: {fileID: 3156265847334341002}
   ItemText: {fileID: 1791533439355531893}
   InventoryItems: []
@@ -929,6 +930,7 @@ MonoBehaviour:
   pickaxePosition: {fileID: 3633124843668525593}
   currentHeldItem: {fileID: 0}
   playerWeight: 0
+  itemType: {fileID: 0}
   prefabEntries:
   - itemName: Wheel
     prefab: {fileID: 2566687869174024086, guid: 8d5704fd71f25ba4da8d9b1b4229fc25, type: 3}
@@ -1021,8 +1023,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64c55b098705a4448996e6193990fef0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   healthText: {fileID: 8565444468884964298}
+  playerCanvas: {fileID: 8887906785582539688}
 --- !u!114 &1308543640184747798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1035,8 +1039,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b37e85105c14184c9b1001e78f5f0f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   maxStamina: 100
-  currentStamina: 0
+  playerCanvas: {fileID: 8887906785582539688}
+  currentStamina:
+    m_InternalValue: 100
   staminaFill: {fileID: 4489525563195134154}
   regenRate: 15
   regenDelay: 2
@@ -1243,6 +1250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0f2c3d3fe6794743b64db79187623c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   playerCamera: {fileID: 3792367845407628134}
   interactRange: 5
   clickAction: {fileID: -6987561939814216150, guid: 052faaac586de48259a63d0c4782560b, type: 3}

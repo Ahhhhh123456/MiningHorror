@@ -1,61 +1,74 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PlayerStamina : MonoBehaviour
+public class PlayerStamina : NetworkBehaviour
 {
     [Header("Stamina Settings")]
     public float maxStamina = 100f;
-    public float currentStamina;
+    public Canvas playerCanvas;
+    public NetworkVariable<float> currentStamina = new NetworkVariable<float>(
+        100f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     [Header("UI")]
     public Image staminaFill;
 
-    [Header("Regeneration Settings")]
-    public float regenRate = 15f;       // Stamina per second
-    public float regenDelay = 2f;       // Seconds to wait after last use
+    [Header("Regeneration")]
+    public float regenRate = 15f;
+    public float regenDelay = 2f;
     private float regenTimer = 0f;
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
-        currentStamina = maxStamina;
-        UpdateStaminaUI();
+        if (IsServer)
+            currentStamina.Value = maxStamina;
+
+        // Listen for value changes
+        currentStamina.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (!IsOwner)
+            {
+                playerCanvas.gameObject.SetActive(false);
+            }
+
+            UpdateStaminaUI(newVal);
+        };
+
+        // Initial UI update
+        if (IsOwner)
+            UpdateStaminaUI(currentStamina.Value);
     }
 
-    void Update()
+    private void Update()
     {
-        // Only regenerate if not full
-        if (currentStamina < maxStamina)
+        if (!IsServer) return;
+
+        // Regeneration
+        if (currentStamina.Value < maxStamina)
         {
             regenTimer += Time.deltaTime;
-
-            // Start regenerating after delay
             if (regenTimer >= regenDelay)
             {
-                currentStamina += regenRate * Time.deltaTime;
-                currentStamina = Mathf.Clamp(currentStamina, 0, maxStamina);
-                UpdateStaminaUI();
+                currentStamina.Value = Mathf.Clamp(currentStamina.Value + regenRate * Time.deltaTime, 0, maxStamina);
             }
         }
     }
 
-    public void UseStamina(float amount)
+    [ServerRpc(RequireOwnership = false)]
+    public void UseStaminaServerRpc(float amount)
     {
         if (amount <= 0) return;
 
-        currentStamina = Mathf.Clamp(currentStamina - amount, 0, maxStamina);
-        UpdateStaminaUI();
-
-        // Reset regen timer whenever stamina is used
+        currentStamina.Value = Mathf.Clamp(currentStamina.Value - amount, 0, maxStamina);
         regenTimer = 0f;
-
-        Debug.Log("Player used stamina. Current: " + currentStamina);
     }
 
-    private void UpdateStaminaUI()
+    private void UpdateStaminaUI(float value)
     {
         if (staminaFill != null)
-        {
-            staminaFill.fillAmount = currentStamina / maxStamina;
-        }
+            staminaFill.fillAmount = value / maxStamina;
     }
 }

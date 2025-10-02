@@ -95,12 +95,12 @@ public class PlayerMovement : NetworkBehaviour
 
         if (isSprinting && rb.linearVelocity.magnitude > 0.1f) // only drain if moving
         {
-            if (stamina.currentStamina <= 0f)
+            if (stamina.currentStamina.Value <= 0f)
             {
                 Debug.Log("Not enough stamina to sprint.");
                 StopSprinting(new InputAction.CallbackContext());
             }
-            stamina.UseStamina(100f * Time.deltaTime); // drain 10 per second
+            stamina.UseStaminaServerRpc(100f * Time.deltaTime); // drain 10 per second
         }
     }
 
@@ -217,7 +217,7 @@ public class PlayerMovement : NetworkBehaviour
         PlayerHealth health = GetComponent<PlayerHealth>();
         if (health != null)
         {
-            health.TakeDamage(damage);
+            health.TakeDamageServerRpc(damage);
         }
     }
 

@@ -144,36 +144,77 @@ public class LookAndClickInteraction : NetworkBehaviour
 
     public void DropCurrentItem()
     {
+        if (playerInventory.currentSlotIndex < 0) return;
+
+        // Remove from networked inventory & spawn dropped object
+        DropCurrentItemServerRpc(playerInventory.currentSlotIndex);
+
+        // Clear held item locally immediately (optional, visual snappiness)
         if (playerInventory.currentHeldItem != null)
         {
-            string itemName = playerInventory.currentHeldItem.name.Replace("(Clone)", ""); // clean up name
-
-            // Remove from inventory
-            playerInventory.RemoveFromInventory(itemName);
-
-            // Detach from player
-            playerInventory.currentHeldItem.transform.SetParent(null);
-
-            // Enable physics so it drops
-            Rigidbody rb = playerInventory.currentHeldItem.GetComponent<Rigidbody>();
-            if (rb == null) rb = playerInventory.currentHeldItem.AddComponent<Rigidbody>();
-            rb.isKinematic = false;
-            rb.useGravity = true;
-
-            // Optional: give it a small forward push
-            rb.AddForce(Camera.main.transform.forward * 2f, ForceMode.Impulse);
-
-            // Clear reference
+            Destroy(playerInventory.currentHeldItem);
             playerInventory.currentHeldItem = null;
+        }
 
-            Debug.Log($"Dropped {itemName}");
-        }
-        else
-        {
-            Debug.Log("No item to drop");
-        }
+        // Tell server to clear held item for all clients
+        playerInventory.ClearHeldItemServerRpc();
     }
 
+
+    [ServerRpc(RequireOwnership = false)]
+    public void DropCurrentItemServerRpc(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= playerInventory.NetworkItems.Count) return;
+
+        string itemName = playerInventory.NetworkItems[slotIndex].ToString();
+
+        // Remove from networked inventory
+        playerInventory.RemoveFromInventory(itemName);
+
+        // Get the prefab
+        GameObject prefab = playerInventory.GetPrefabForItem(itemName);
+        if (prefab == null) return;
+
+        // Use holdPosition or pickaxePosition for spawn
+        Transform dropTransform = playerInventory.holdPosition;
+
+        if (playerInventory.itemType.itemDatabase.ContainsKey(itemName) &&
+            playerInventory.itemType.itemDatabase[itemName].category == ItemCategory.Tool)
+        {
+            dropTransform = playerInventory.pickaxePosition;
+        }
+
+        Vector3 spawnPos = dropTransform.position;
+        Quaternion spawnRot = dropTransform.rotation;
+
+        // Spawn the dropped item
+        GameObject droppedItem = Instantiate(prefab, spawnPos, spawnRot);
+        droppedItem.name = itemName; // remove (Clone)
+
+        // Add Rigidbody for physics
+        Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
+        if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();
+        rb.isKinematic = false;
+        rb.useGravity = true;
+
+        // Optional: small forward push
+        rb.AddForce(dropTransform.forward * 2f, ForceMode.Impulse);
+
+        // Spawn networked object
+        if (droppedItem.TryGetComponent<NetworkObject>(out NetworkObject netObj))
+            netObj.Spawn();
+    }
+
+
+    [ClientRpc]
+    private void ClearHeldItemClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        if (playerInventory.currentHeldItem != null)
+        {
+            Destroy(playerInventory.currentHeldItem);
+            playerInventory.currentHeldItem = null;
+        }
+    }
 
     private void Mining()
     {

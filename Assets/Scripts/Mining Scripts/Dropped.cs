@@ -23,6 +23,7 @@ public class Dropped : NetworkBehaviour
         }
     }
 
+    // Called From MineType
     public void DropItem()
     {
         Debug.Log("DropItem Called");
@@ -33,6 +34,7 @@ public class Dropped : NetworkBehaviour
         }
     }
 
+    // Called From LookAndClick
     public void PickedUp(GameObject item)
     {
         if (item.TryGetComponent<NetworkObject>(out NetworkObject netObj))
@@ -86,40 +88,7 @@ public class Dropped : NetworkBehaviour
         // Despawn the dropped object
         netObj.Despawn();
 
-        LogAllPlayerInventories();
     }
-
-    // Function for Debugging. Shows inventories of all clients
-    private void LogAllPlayerInventories()
-    {
-        Debug.Log("===== All Player Inventories =====");
-
-        foreach (var clientPair in NetworkManager.Singleton.ConnectedClients)
-        {
-            ulong clientId = clientPair.Key;
-            var playerObject = clientPair.Value.PlayerObject;
-
-            if (playerObject == null) continue;
-
-            PlayerInventory inventory = playerObject.GetComponent<PlayerInventory>();
-            if (inventory == null) continue;
-
-            // Build ore inventory string
-            string ores = inventory.InventoryOreCount.Count == 0 ? "No ores" :
-                string.Join(", ", inventory.InventoryOreCount.Select(kvp => $"{kvp.Key} x{kvp.Value}"));
-
-            // Build item inventory string
-            string items = inventory.InventoryItems.Count == 0 ? "No items" :
-                string.Join(", ", inventory.InventoryItems);
-
-            Debug.Log($"Client {clientId} - Ores: {ores} | Items: {items}");
-        }
-
-        Debug.Log("=================================");
-    }
-
-
-
 
     [ServerRpc(RequireOwnership = false)]
     public void DropItemServerRpc(ServerRpcParams rpcParams = default)

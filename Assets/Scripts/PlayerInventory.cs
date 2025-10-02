@@ -3,6 +3,41 @@ using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
+using System;
+using Unity.Collections;
+
+[Serializable]
+public struct OreEntry : INetworkSerializable, IEquatable<OreEntry>
+{
+    public FixedString32Bytes oreName;
+    public int count;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref oreName);
+        serializer.SerializeValue(ref count);
+    }
+
+    // Required for NetworkList
+    public bool Equals(OreEntry other)
+    {
+        return oreName.Equals(other.oreName) && count == other.count;
+    }
+
+    public override bool Equals(object obj)
+    {
+        return obj is OreEntry other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            return (oreName.GetHashCode() * 397) ^ count;
+        }
+    }
+}
+
 public class PlayerInventory : NetworkBehaviour
 {
     // Dictionary: key = item name, value = count
@@ -10,16 +45,18 @@ public class PlayerInventory : NetworkBehaviour
     public TextMeshProUGUI OreText;
     public TextMeshProUGUI ItemText;
 
-    public Dictionary<string, int> InventoryOreCount = new Dictionary<string, int>();
+    // public Dictionary<string, int> InventoryOreCount = new Dictionary<string, int>();
 
-    public List<string> InventoryItems = new List<string>();
+    // public List<string> InventoryItems = new List<string>();
+    public NetworkList<OreEntry> NetworkOres = new NetworkList<OreEntry>();
+    public NetworkList<FixedString32Bytes> NetworkItems = new NetworkList<FixedString32Bytes>();
     public Transform holdPosition;
     public Transform pickaxePosition;
     public GameObject currentHeldItem;
     private Dictionary<string, GameObject> prefabLookup;
 
     public float playerWeight = 0f;
-
+    public int currentSlotIndex = -1; // track currently held slot
     private MineType mineType;
     private PlayerMovement playerMovement;
 
@@ -57,20 +94,25 @@ public class PlayerInventory : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (inventoryCanvas != null)
-            inventoryCanvas.gameObject.SetActive(IsOwner); // Only show UI for owner
+            inventoryCanvas.gameObject.SetActive(IsOwner);
 
-        // Initialize owner UI immediately
- 
-        UpdateOreUIClientRpc(new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } }
-        });
+        // Subscribe to changes so UI updates automatically
+        NetworkOres.OnListChanged += OnOresChanged;
+        NetworkItems.OnListChanged += OnItemsChanged;
 
-        UpdateItemUIClientRpc(new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } }
-        });
-        
+        // Initialize UI immediately
+        UpdateOreUIText();
+        UpdateItemUIText();
+    }
+
+    private void OnOresChanged(NetworkListEvent<OreEntry> changeEvent)
+    {
+        UpdateOreUIText();
+    }
+
+    private void OnItemsChanged(NetworkListEvent<FixedString32Bytes> changeEvent)
+    {
+        UpdateItemUIText();
     }
 
 
@@ -82,10 +124,28 @@ public class PlayerInventory : NetworkBehaviour
         // Add ores
         if (oreData != null)
         {
-            if (InventoryOreCount.ContainsKey(oreData.oreName))
-                InventoryOreCount[oreData.oreName]++;
-            else
-                InventoryOreCount[oreData.oreName] = 1;
+            // Check if ore already exists in the NetworkList
+            bool found = false;
+            for (int i = 0; i < NetworkOres.Count; i++)
+            {
+                if (NetworkOres[i].oreName.ToString() == oreData.oreName)
+                {
+                    var entry = NetworkOres[i];
+                    entry.count++;
+                    NetworkOres[i] = entry; // Update the NetworkList entry
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                NetworkOres.Add(new OreEntry
+                {
+                    oreName = new FixedString32Bytes(oreData.oreName),
+                    count = 1
+                });
+            }
 
             playerWeight += oreData.weight;
         }
@@ -93,12 +153,11 @@ public class PlayerInventory : NetworkBehaviour
         // Add items
         if (itemType.itemDatabase.ContainsKey(itemName))
         {
-            InventoryItems.Add(itemName);
+            NetworkItems.Add(new FixedString32Bytes(itemName));
             playerWeight += itemType.itemDatabase[itemName].weight;
         }
 
-        // Update the owning player's UI
-        UpdateInventoryUIForOwner();
+        // UI updates are automatic via OnListChanged on the client
     }
 
 
@@ -108,64 +167,51 @@ public class PlayerInventory : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        if (oreData != null && InventoryOreCount.ContainsKey(oreData.oreName))
+        // Remove ore
+        if (oreData != null)
         {
-            InventoryOreCount[oreData.oreName]--;
-            if (InventoryOreCount[oreData.oreName] <= 0)
-                InventoryOreCount.Remove(oreData.oreName);
+            for (int i = 0; i < NetworkOres.Count; i++)
+            {
+                if (NetworkOres[i].oreName.ToString() == oreData.oreName)
+                {
+                    var entry = NetworkOres[i];
+                    entry.count--;
+                    if (entry.count <= 0)
+                        NetworkOres.RemoveAt(i);
+                    else
+                        NetworkOres[i] = entry;
 
-            playerWeight -= oreData.weight;
+                    playerWeight -= oreData.weight;
+                    break;
+                }
+            }
         }
 
-        if (InventoryItems.Contains(itemName))
+        // Remove general item
+        for (int i = 0; i < NetworkItems.Count; i++)
         {
-            InventoryItems.Remove(itemName);
-            if (itemType.itemDatabase.ContainsKey(itemName))
-                playerWeight -= itemType.itemDatabase[itemName].weight;
-        }
+            if (NetworkItems[i].ToString() == itemName)
+            {
+                NetworkItems.RemoveAt(i);
 
-        //UpdateOreUIClientRpc(new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } } });
-        //UpdateItemUIClientRpc(new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } } });
+                if (itemType.itemDatabase.ContainsKey(itemName))
+                    playerWeight -= itemType.itemDatabase[itemName].weight;
+                break;
+            }
+        }
     }
+
 
     [ClientRpc]
     private void UpdateOreUIClientRpc(ClientRpcParams clientRpcParams = default)
     {
-        if (OreText == null) return;
-
-        Debug.Log($"Updating Ore UI for client {OwnerClientId}");
-        Debug.Log($"Client: {OwnerClientId} has ores: " + string.Join(", ", InventoryOreCount));
-        if (InventoryOreCount.Count == 0)
-        {
-            OreText.text = "No ores";
-            return;
-        }
-
-        var sb = new System.Text.StringBuilder();
-        foreach (var kvp in InventoryOreCount)
-            sb.AppendLine($"{kvp.Key} x{kvp.Value}");
-
-        OreText.text = sb.ToString();
+        UpdateOreUIText();
     }
 
     [ClientRpc]
     private void UpdateItemUIClientRpc(ClientRpcParams clientRpcParams = default)
     {
-        if (ItemText == null) return;
-
-        Debug.Log($"Updating Item UI for client {OwnerClientId}");
-        Debug.Log($"Client: {OwnerClientId} has items: " + string.Join(", ", InventoryItems));
-        if (InventoryItems.Count == 0)
-        {
-            ItemText.text = "No items";
-            return;
-        }
-
-        var slots = new List<string>();
-        for (int i = 0; i < InventoryItems.Count; i++)
-            slots.Add($"{i + 1}: {InventoryItems[i]}");
-
-        ItemText.text = string.Join(" | ", slots);
+        UpdateItemUIText();
     }
 
 
@@ -173,37 +219,121 @@ public class PlayerInventory : NetworkBehaviour
     public void RemoveFromInventory(string itemName)
     {
         // Ore Inventory
-        if (InventoryOreCount.ContainsKey(itemName))
+        for (int i = 0; i < NetworkOres.Count; i++)
         {
-            OreData data = mineType.oreData;
+            if (NetworkOres[i].oreName.ToString() == itemName)
+            {
+                var entry = NetworkOres[i];
+                entry.count--;
+                if (entry.count <= 0)
+                {
+                    NetworkOres.RemoveAt(i);
+                }
+                else
+                {
+                    NetworkOres[i] = entry;
+                }
 
-            InventoryOreCount[itemName]--;
-            if (InventoryOreCount[itemName] <= 0)
-                InventoryOreCount.Remove(itemName);
+                // Adjust weight
+                OreData data = mineType.oreData;
+                playerWeight -= data.weight;
+                playerMovement.UpdateMoveSpeed();
 
-            playerWeight -= data.weight;
-            playerMovement.UpdateMoveSpeed();
-
-            Debug.Log($"Dropped {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
-            UpdateOreUIText();
+                Debug.Log($"Dropped {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
+                UpdateOreUIText();
+                break;
+            }
         }
 
         // General items
-        if (InventoryItems.Contains(itemName))
+        for (int i = 0; i < NetworkItems.Count; i++)
         {
-            InventoryItems.Remove(itemName);
-
-            if (itemType.itemDatabase.ContainsKey(itemName))
+            if (NetworkItems[i].ToString() == itemName)
             {
-                float itemWeight = itemType.itemDatabase[itemName].weight;
-                playerWeight -= itemWeight;
-                playerMovement.UpdateMoveSpeed();
+                NetworkItems.RemoveAt(i);
+
+                if (itemType.itemDatabase.ContainsKey(itemName))
+                {
+                    float itemWeight = itemType.itemDatabase[itemName].weight;
+                    playerWeight -= itemWeight;
+                    playerMovement.UpdateMoveSpeed();
+                }
+
+                UpdateItemUIText();
+                Debug.Log($"Dropped {itemName}. Items left: " + string.Join(", ", NetworkItems));
+                break;
             }
-            UpdateItemUIText();
-            Debug.Log($"Dropped {itemName}. Items left: " + string.Join(", ", InventoryItems));
         }
     }
-    private int currentSlotIndex = -1; // track currently held slot
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ClearHeldItemServerRpc()
+    {
+        // Clear the slot
+        currentSlotIndex = -1;
+
+        // Update visuals for this player
+        ClearHeldItemClientRpc();
+    }
+
+    [ClientRpc]
+    private void ClearHeldItemClientRpc()
+    {
+        if (currentHeldItem != null)
+        {
+            Destroy(currentHeldItem);
+            currentHeldItem = null;
+        }
+    }
+
+    private void UpdateInventoryUIForOwner()
+    {
+        var clientRpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new ulong[] { OwnerClientId }
+            }
+        };
+
+        UpdateOreUIClientRpc(clientRpcParams);
+        UpdateItemUIClientRpc(clientRpcParams);
+    }
+
+    private void UpdateOreUIText()
+    {
+        if (OreText == null) return;
+
+        if (NetworkOres.Count == 0)
+        {
+            OreText.text = "No ores";
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder();
+        foreach (var entry in NetworkOres)
+            sb.AppendLine($"{entry.oreName.ToString()} x{entry.count}");
+
+        OreText.text = sb.ToString();
+    }
+
+    private void UpdateItemUIText()
+    {
+        if (ItemText == null) return;
+
+        if (NetworkItems.Count == 0)
+        {
+            ItemText.text = "No items";
+            return;
+        }
+
+        var slots = new List<string>();
+        for (int i = 0; i < NetworkItems.Count; i++)
+            slots.Add($"{i + 1}: {NetworkItems[i].ToString()}");
+
+        ItemText.text = string.Join(" | ", slots);
+    }
+
 
     public void SelectSlot(int index)
     {
@@ -226,28 +356,27 @@ public class PlayerInventory : NetworkBehaviour
     [ClientRpc]
     private void UpdateHeldItemClientRpc(int index)
     {
-        if (!IsOwner) return;
-
-        // Destroy current held item
+        // Destroy current held item if it exists
         if (currentHeldItem != null)
         {
             Destroy(currentHeldItem);
             currentHeldItem = null;
         }
 
-        if (index < 0 || index >= InventoryItems.Count) return;
-
-        string itemName = InventoryItems[index];
+        if (index < 0 || index >= NetworkItems.Count) return;
+        string itemName = NetworkItems[index].ToString();
 
         if (!prefabLookup.TryGetValue(itemName, out GameObject prefab)) return;
 
         ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
 
+        // Determine hold position (tool vs default)
         Transform targetHoldPosition = holdPosition;
         if (itemType.itemDatabase.ContainsKey(itemName) &&
             itemType.itemDatabase[itemName].category == ItemCategory.Tool)
             targetHoldPosition = pickaxePosition;
 
+        // Instantiate the held item for **all clients**
         currentHeldItem = Instantiate(prefab, targetHoldPosition);
         currentHeldItem.name = prefab.name;
 
@@ -261,112 +390,10 @@ public class PlayerInventory : NetworkBehaviour
             rb.useGravity = false;
         }
     }
-
-    private void UpdateInventoryUIForOwner()
+    public GameObject GetPrefabForItem(string itemName)
     {
-        var clientRpcParams = new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new ulong[] { OwnerClientId }
-            }
-        };
-
-        UpdateOreUIClientRpc(clientRpcParams);
-        UpdateItemUIClientRpc(clientRpcParams);
+        if (prefabLookup.TryGetValue(itemName, out GameObject prefab))
+            return prefab;
+        return null;
     }
-    // public void SelectSlot(int index)
-    // {
-    //     if (currentHeldItem != null)
-    //     {
-    //         Destroy(currentHeldItem);
-    //         currentHeldItem = null;
-    //     }
-
-    //     if (index >= InventoryItems.Count) return;
-
-    //     string itemName = InventoryItems[index];
-
-    //     if (!prefabLookup.TryGetValue(itemName, out GameObject prefab)) return;
-
-    //     // Find the corresponding prefab entry to get rotation/offset
-    //     ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
-
-    //     // Determine hold position (default vs pickaxe/tool)
-    //     Transform targetHoldPosition = holdPosition;
-    //     if (itemType.itemDatabase.ContainsKey(itemName))
-    //     {
-    //         ItemCategory category = itemType.itemDatabase[itemName].category;
-    //         if (category == ItemCategory.Tool)
-    //             targetHoldPosition = pickaxePosition;
-    //     }
-
-    //     // Instantiate item
-    //     currentHeldItem = Instantiate(prefab, targetHoldPosition);
-    //     currentHeldItem.name = prefab.name; // remove (Clone)
-
-    //     // Apply position offset
-    //     currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
-
-    //     // Apply rotation
-    //     currentHeldItem.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
-
-    //     // Physics setup
-    //     Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
-    //     if (rb != null)
-    //     {
-    //         rb.isKinematic = true;
-    //         rb.useGravity = false;
-    //     }
-
-    //     // Disable colliders while holding
-    //     // Collider[] colliders = currentHeldItem.GetComponents<Collider>();
-    //     // foreach (var col in colliders)
-    //     //     col.enabled = false;
-    // }
-
-    private void UpdateOreUIText()
-    {
-        if (OreText == null) return;
-
-        if (InventoryOreCount.Count == 0)
-        {
-            OreText.text = "No ores";
-            return;
-        }
-
-        // Build "OreName xCount" lines
-        System.Text.StringBuilder sb = new System.Text.StringBuilder();
-        foreach (var kvp in InventoryOreCount)
-        {
-            sb.AppendLine($"{kvp.Key} x{kvp.Value}");
-        }
-
-        OreText.text = sb.ToString();
-    }
-
-        
-
-    private void UpdateItemUIText()
-    {
-        if (ItemText == null) return;
-
-        if (InventoryItems.Count == 0)
-        {
-            ItemText.text = "No items";
-            return;
-        }
-
-        List<string> slotDisplays = new List<string>();
-        for (int i = 0; i < InventoryItems.Count; i++)
-        {
-            string itemName = InventoryItems[i];
-            int slotNumber = i + 1; // slots usually start at 1 instead of 0
-            slotDisplays.Add($"{slotNumber}: {itemName}");
-        }
-
-        // Show horizontally with separators
-        ItemText.text = string.Join(" | ", slotDisplays);
-    }
-
 }

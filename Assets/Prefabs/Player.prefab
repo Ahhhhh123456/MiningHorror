@@ -677,12 +677,12 @@ GameObject:
   - component: {fileID: 1369087002599987078}
   - component: {fileID: 7445090427059712891}
   - component: {fileID: 5273788399659061711}
-  - component: {fileID: 198249775049122658}
   - component: {fileID: 561839334787172729}
-  - component: {fileID: -5411996823341654230}
-  - component: {fileID: 7759798385312772693}
   - component: {fileID: 5290257942210531726}
   - component: {fileID: 1308543640184747798}
+  - component: {fileID: -5411996823341654230}
+  - component: {fileID: 7759798385312772693}
+  - component: {fileID: 198249775049122658}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -888,28 +888,6 @@ MonoBehaviour:
   fallDamageMultiplier: 2
   ladderDetectionRadius: 1
   ladderClimbSpeed: 3
---- !u!114 &198249775049122658
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2868630179996576008}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00d640c38a5f95e4ebc6fd60bba88f62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  swimUpSpeed: 2
-  swimDownSpeed: 1
-  isSwimming: 0
-  drowningTime: 5
-  head: {fileID: 3710924884085334226}
-  isDrowning: 0
-  rb: {fileID: 0}
-  drowningTimer: 0
-  moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  jumpAction: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!114 &561839334787172729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -925,7 +903,6 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   OreText: {fileID: 3156265847334341002}
   ItemText: {fileID: 1791533439355531893}
-  InventoryItems: []
   holdPosition: {fileID: 9092255657916260260}
   pickaxePosition: {fileID: 3633124843668525593}
   currentHeldItem: {fileID: 0}
@@ -953,6 +930,42 @@ MonoBehaviour:
     prefab: {fileID: 2995874846724104720, guid: abf59c89b524b3d49aa4aabaad7eae14, type: 3}
     holdRotation: {x: 0, y: 90, z: -10}
     holdPositionOffset: {x: 0, y: 3, z: 0}
+--- !u!114 &5290257942210531726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2868630179996576008}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64c55b098705a4448996e6193990fef0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  maxHealth: 100
+  healthText: {fileID: 8565444468884964298}
+  playerCanvas: {fileID: 8887906785582539688}
+--- !u!114 &1308543640184747798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2868630179996576008}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b37e85105c14184c9b1001e78f5f0f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  maxStamina: 100
+  playerCanvas: {fileID: 8887906785582539688}
+  currentStamina:
+    m_InternalValue: 100
+  staminaFill: {fileID: 4489525563195134154}
+  regenRate: 15
+  regenDelay: 2
 --- !u!114 &-5411996823341654230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1012,42 +1025,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hostSteamId: 0
---- !u!114 &5290257942210531726
+--- !u!114 &198249775049122658
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2868630179996576008}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64c55b098705a4448996e6193990fef0, type: 3}
+  m_Script: {fileID: 11500000, guid: 00d640c38a5f95e4ebc6fd60bba88f62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 100
-  healthText: {fileID: 8565444468884964298}
-  playerCanvas: {fileID: 8887906785582539688}
---- !u!114 &1308543640184747798
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2868630179996576008}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b37e85105c14184c9b1001e78f5f0f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  maxStamina: 100
-  playerCanvas: {fileID: 8887906785582539688}
-  currentStamina:
-    m_InternalValue: 100
-  staminaFill: {fileID: 4489525563195134154}
-  regenRate: 15
-  regenDelay: 2
+  swimUpSpeed: 2
+  swimDownSpeed: 1
+  isSwimming: 0
+  drowningTime: 5
+  head: {fileID: 3710924884085334226}
+  isDrowning: 0
+  rb: {fileID: 0}
+  drowningTimer: 0
+  moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  jumpAction: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!1 &3122024311536454830
 GameObject:
   m_ObjectHideFlags: 0

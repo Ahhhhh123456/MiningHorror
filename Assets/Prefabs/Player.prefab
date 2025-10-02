@@ -930,6 +930,7 @@ MonoBehaviour:
   pickaxePosition: {fileID: 3633124843668525593}
   currentHeldItem: {fileID: 0}
   playerWeight: 0
+  inventoryCanvas: {fileID: 8887906785582539688}
   itemType: {fileID: 0}
   prefabEntries:
   - itemName: Wheel

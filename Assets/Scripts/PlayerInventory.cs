@@ -23,6 +23,7 @@ public class PlayerInventory : NetworkBehaviour
     private MineType mineType;
     private PlayerMovement playerMovement;
 
+    public Canvas inventoryCanvas;
     public ItemType itemType;
 
     [Header("Prefab Assignments")]
@@ -53,6 +54,24 @@ public class PlayerInventory : NetworkBehaviour
             prefabLookup[entry.itemName] = entry.prefab;
         }
     }
+    public override void OnNetworkSpawn()
+    {
+        if (inventoryCanvas != null)
+            inventoryCanvas.gameObject.SetActive(IsOwner); // Only show UI for owner
+
+        // Initialize owner UI immediately
+ 
+        UpdateOreUIClientRpc(new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } }
+        });
+
+        UpdateItemUIClientRpc(new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } }
+        });
+        
+    }
 
 
     // ✅ Add item (server-only)
@@ -60,7 +79,7 @@ public class PlayerInventory : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        // Ores
+        // Add ores
         if (oreData != null)
         {
             if (InventoryOreCount.ContainsKey(oreData.oreName))
@@ -71,22 +90,17 @@ public class PlayerInventory : NetworkBehaviour
             playerWeight += oreData.weight;
         }
 
-        // General items
+        // Add items
         if (itemType.itemDatabase.ContainsKey(itemName))
         {
             InventoryItems.Add(itemName);
             playerWeight += itemType.itemDatabase[itemName].weight;
         }
 
-        // ✅ Only tell the client who owns this inventory to update their UI
-        UpdateInventoryUIClientRpc(new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new ulong[] { OwnerClientId }
-            }
-        });
+        // Update the owning player's UI
+        UpdateInventoryUIForOwner();
     }
+
 
 
     // ✅ Remove item (server-only)
@@ -110,39 +124,50 @@ public class PlayerInventory : NetworkBehaviour
                 playerWeight -= itemType.itemDatabase[itemName].weight;
         }
 
-        UpdateInventoryUIClientRpc();
+        //UpdateOreUIClientRpc(new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } } });
+        //UpdateItemUIClientRpc(new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { OwnerClientId } } });
     }
 
-    // ✅ Update UI on the owning client
     [ClientRpc]
-    private void UpdateInventoryUIClientRpc(ClientRpcParams clientRpcParams = default)
+    private void UpdateOreUIClientRpc(ClientRpcParams clientRpcParams = default)
     {
-        if (!IsOwner) return;
+        if (OreText == null) return;
 
-        // Update ores
+        Debug.Log($"Updating Ore UI for client {OwnerClientId}");
+        Debug.Log($"Client: {OwnerClientId} has ores: " + string.Join(", ", InventoryOreCount));
         if (InventoryOreCount.Count == 0)
-            OreText.text = "No ores";
-        else
         {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            foreach (var kvp in InventoryOreCount)
-            {
-                sb.AppendLine($"{kvp.Key} x{kvp.Value}");
-            }
-            OreText.text = sb.ToString();
+            OreText.text = "No ores";
+            return;
         }
 
-        // Update items
-        if (InventoryItems.Count == 0)
-            ItemText.text = "No items";
-        else
-        {
-            List<string> slots = new List<string>();
-            for (int i = 0; i < InventoryItems.Count; i++)
-                slots.Add($"{i + 1}: {InventoryItems[i]}");
-            ItemText.text = string.Join(" | ", slots);
-        }
+        var sb = new System.Text.StringBuilder();
+        foreach (var kvp in InventoryOreCount)
+            sb.AppendLine($"{kvp.Key} x{kvp.Value}");
+
+        OreText.text = sb.ToString();
     }
+
+    [ClientRpc]
+    private void UpdateItemUIClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        if (ItemText == null) return;
+
+        Debug.Log($"Updating Item UI for client {OwnerClientId}");
+        Debug.Log($"Client: {OwnerClientId} has items: " + string.Join(", ", InventoryItems));
+        if (InventoryItems.Count == 0)
+        {
+            ItemText.text = "No items";
+            return;
+        }
+
+        var slots = new List<string>();
+        for (int i = 0; i < InventoryItems.Count; i++)
+            slots.Add($"{i + 1}: {InventoryItems[i]}");
+
+        ItemText.text = string.Join(" | ", slots);
+    }
+
 
 
     public void RemoveFromInventory(string itemName)
@@ -237,7 +262,19 @@ public class PlayerInventory : NetworkBehaviour
         }
     }
 
+    private void UpdateInventoryUIForOwner()
+    {
+        var clientRpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new ulong[] { OwnerClientId }
+            }
+        };
 
+        UpdateOreUIClientRpc(clientRpcParams);
+        UpdateItemUIClientRpc(clientRpcParams);
+    }
     // public void SelectSlot(int index)
     // {
     //     if (currentHeldItem != null)

@@ -77,15 +77,16 @@ public class Dropped : NetworkBehaviour
         // Use server-authoritative add
         if (droppedScript.oreData != null)
         {
-            Debug.LogWarning($"[Server] Adding {droppedScript.oreData.oreName} to client {senderClientId}'s inventory.");
             inventoryScript.AddItemServer(droppedScript.oreData.oreName, droppedScript.oreData);
         }
         else
         {
-            Debug.LogWarning($"[Server] Adding item by prefab name {netObj.name} to client {senderClientId}'s inventory.");
             inventoryScript.AddItemServer(netObj.name);
         }
         // Despawn the dropped object
+
+        Debug.Log($"[Server] Client {senderClientId} is picking up { (droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name) }");
+        
         netObj.Despawn();
 
     }

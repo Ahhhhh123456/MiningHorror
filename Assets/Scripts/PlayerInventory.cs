@@ -105,6 +105,17 @@ public class PlayerInventory : NetworkBehaviour
         UpdateItemUIText();
     }
 
+
+    private void LogAllPlayerInventories()
+    {
+        foreach (var clientPair in NetworkManager.Singleton.ConnectedClients)
+        {
+            ulong clientId = clientPair.Key;
+            var inventory = clientPair.Value.PlayerObject.GetComponent<PlayerInventory>();
+            Debug.Log($"Client {clientId} has {inventory.NetworkOres.Count} ores and {inventory.NetworkItems.Count} items.");
+        }
+    }
+
     private void OnOresChanged(NetworkListEvent<OreEntry> changeEvent)
     {
         UpdateOreUIText();
@@ -119,7 +130,6 @@ public class PlayerInventory : NetworkBehaviour
     // ✅ Add item (server-only)
     public void AddItemServer(string itemName, OreData oreData = null)
     {
-        if (!IsServer) return;
 
         // Add ores
         if (oreData != null)
@@ -156,7 +166,8 @@ public class PlayerInventory : NetworkBehaviour
             NetworkItems.Add(new FixedString32Bytes(itemName));
             playerWeight += itemType.itemDatabase[itemName].weight;
         }
-
+        LogAllPlayerInventories();
+        Debug.Log($"Added {itemName} to inventory. Total weight: {playerWeight}");
         // UI updates are automatic via OnListChanged on the client
     }
 
@@ -182,6 +193,7 @@ public class PlayerInventory : NetworkBehaviour
                         NetworkOres[i] = entry;
 
                     playerWeight -= oreData.weight;
+                    Debug.Log($"Removed {oreData.oreName} from inventory. Total weight: {playerWeight}");
                     break;
                 }
             }
@@ -196,9 +208,12 @@ public class PlayerInventory : NetworkBehaviour
 
                 if (itemType.itemDatabase.ContainsKey(itemName))
                     playerWeight -= itemType.itemDatabase[itemName].weight;
+                Debug.Log($"Removed {itemName} from inventory. Total weight: {playerWeight}");
                 break;
             }
         }
+        
+        LogAllPlayerInventories();
     }
 
 
@@ -240,7 +255,7 @@ public class PlayerInventory : NetworkBehaviour
                 playerMovement.UpdateMoveSpeed();
 
                 Debug.Log($"Dropped {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
-                UpdateOreUIText();
+
                 break;
             }
         }
@@ -260,7 +275,7 @@ public class PlayerInventory : NetworkBehaviour
                 }
 
                 UpdateItemUIText();
-                Debug.Log($"Dropped {itemName}. Items left: " + string.Join(", ", NetworkItems));
+                Debug.Log($" Dropped {itemName}. Total Weight: {playerWeight}. Items left: " + string.Join(", ", NetworkItems));
                 break;
             }
         }

@@ -49,9 +49,10 @@ public class BoxBreak : NetworkBehaviour
                 if (oreName == "Stone")
                 {
                     Debug.Log("Removing stone from player inventory and box.");
-                    playerOreInventory.RemoveFromInventory(oreName); 
+                    playerOreInventory.RemoveFromInventory(oreName);
+                    playerOreInventory.RemoveItemServer(oreName);
                     playerOreInventory.UpdateInventoryUIForOwner();
-                    playerOreInventory.UpdateOreUIClientRpc();
+    
                     boxData.stoneCount -= count;
                 }
                 Debug.Log("Removing Ore");

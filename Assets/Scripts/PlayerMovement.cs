@@ -18,6 +18,8 @@ public class PlayerMovement : NetworkBehaviour
     private PlayerInventory inventory;
     private PlayerStamina stamina;
 
+    private LoadingBar loadingBar;
+
     [Header("Movement Input Actions")]
     public InputActionReference sprintAction;
     public InputActionReference jumpAction;
@@ -51,6 +53,7 @@ public class PlayerMovement : NetworkBehaviour
 
         inventory = GetComponent<PlayerInventory>();
         stamina = GetComponent<PlayerStamina>();
+        loadingBar = GetComponent<LoadingBar>();
         playerCamera = GetComponentInChildren<Camera>();
         audioListener = GetComponentInChildren<AudioListener>();
 
@@ -100,8 +103,16 @@ public class PlayerMovement : NetworkBehaviour
                 Debug.Log("Not enough stamina to sprint.");
                 StopSprinting(new InputAction.CallbackContext());
             }
+            // 🔹 Test loading bar fill while sprinting
+            if (loadingBar != null)
+            {
+                loadingBar.IncreaseLoadServerRpc(50f * Time.deltaTime); 
+                // adjust 50f for speed of fill
+            }
             stamina.UseStaminaServerRpc(100f * Time.deltaTime); // drain 10 per second
         }
+
+
     }
 
     void FixedUpdate()
@@ -208,6 +219,8 @@ public class PlayerMovement : NetworkBehaviour
         isSprinting = false;
         UpdateMoveSpeed();
     }
+
+
 
     private void FallDamage(float impactVelocity)
     {

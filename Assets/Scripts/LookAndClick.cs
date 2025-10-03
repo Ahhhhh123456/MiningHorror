@@ -15,6 +15,11 @@ public class LookAndClickInteraction : NetworkBehaviour
     public InputActionReference slot4Action; // assign "4" key
     public InputActionReference dropAction; // assign "G" key in Input Actions
 
+    // Loading bar dropping and picking items
+    private bool isDropping = false;  // To prevent multiple pickups at once
+    private LoadingBar loadingBar;
+
+
     // Variables to track mining state and reset if let go
     private MineType mineType;
     private MineType currentMineTarget;
@@ -38,6 +43,7 @@ public class LookAndClickInteraction : NetworkBehaviour
         mineType = FindObjectOfType<MineType>();
         dropScript = FindObjectOfType<Dropped>();
         playerInventory = FindObjectOfType<PlayerInventory>();
+        loadingBar = GetComponent<LoadingBar>();
     }
 
 
@@ -50,6 +56,8 @@ public class LookAndClickInteraction : NetworkBehaviour
         slot3Action.action.Enable();
         slot4Action.action.Enable();
         dropAction.action.Enable();
+        dropAction.action.performed += StartDropping;
+        dropAction.action.canceled += StopDropping;
     }
 
     void OnDisable()
@@ -61,6 +69,8 @@ public class LookAndClickInteraction : NetworkBehaviour
         slot3Action.action.Disable();
         slot4Action.action.Disable();
         dropAction.action.Disable();
+        dropAction.action.performed -= StartDropping;
+        dropAction.action.canceled -= StopDropping;
     }
 
 
@@ -71,11 +81,23 @@ public class LookAndClickInteraction : NetworkBehaviour
             HandleInteraction();
         }
 
-        if (dropAction.action.WasPressedThisFrame())
-        {
-            DropCurrentItem();
-        }
+        // if (dropAction.action.WasPressedThisFrame())
+        // {
+        //     DropCurrentItem();
+        // }
 
+        if (isDropping)
+        {
+            if (loadingBar != null)
+            {
+                loadingBar.IncreaseLoadServerRpc(30f * Time.deltaTime);
+                // adjust 30f for speed of fill
+            }
+            else
+            {
+                Debug.LogWarning("LoadingBar component not found on player.");
+            }
+        }
         ChooseInventorySlot();
 
         Mining();
@@ -141,7 +163,17 @@ public class LookAndClickInteraction : NetworkBehaviour
         }
     }
 
+    private void StartDropping(InputAction.CallbackContext context)
+    {
+        Debug.Log("Started dropping item");
+        isDropping = true;
+    }
 
+    private void StopDropping(InputAction.CallbackContext context)
+    {
+        Debug.Log("Stopped dropping item");
+        isDropping = false;
+    }
     public void DropCurrentItem()
     {
         if (playerInventory.currentSlotIndex < 0) return;

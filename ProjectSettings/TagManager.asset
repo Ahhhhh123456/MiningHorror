@@ -13,6 +13,7 @@ TagManager:
   - Iron
   - Gold
   - Dropped
+  - Box
   layers:
   - Default
   - TransparentFX

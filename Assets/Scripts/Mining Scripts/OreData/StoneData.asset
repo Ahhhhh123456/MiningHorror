@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32387b72ed65bf348b20b5c46d2549dd, type: 3}
   m_Name: StoneData
   m_EditorClassIdentifier: 
-  oreName: '"Stone"'
+  oreName: Stone
   durability: 100
   weight: 1
   dropPrefab: {fileID: 5311493799651647255, guid: 0bf4a80f29840bd4e9c5d30125177e94, type: 3}

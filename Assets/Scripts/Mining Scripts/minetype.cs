@@ -6,33 +6,6 @@ public class MineType : NetworkBehaviour
     public OreData oreData; // assign in Inspector per prefab
     public int holdCount = 0;
 
-    // public void MiningOre()
-    // {
-    //     MineServerRpc();
-    // }
-
-    // [ServerRpc(RequireOwnership = false)]
-    // void MineServerRpc(ServerRpcParams rpcParams = default)
-    // {
-    //     holdCount++;
-
-    //     if (holdCount == 1 && oreData.breakingParticles != null)
-    //         PlayParticleClientRpc(oreData.breakingParticles.name, transform.position);
-
-    //     if (holdCount >= oreData.durability)
-    //     {
-    //         if (oreData.fullyBreakParticles != null)
-    //             PlayParticleClientRpc(oreData.fullyBreakParticles.name, transform.position);
-
-    //         Dropped dropscript = GetComponent<Dropped>();
-    //         if (dropscript != null)
-    //             dropscript.DropItemServerRpc();
-
-    //         NetworkObject.Despawn();
-    //         holdCount = 0;
-    //     }
-    // }
-
     public void MiningOre()
     {
         if (IsServer)

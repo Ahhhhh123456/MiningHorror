@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32387b72ed65bf348b20b5c46d2549dd, type: 3}
   m_Name: GoldData
   m_EditorClassIdentifier: 
-  oreName: '"Gold"'
+  oreName: Gold
   durability: 300
   weight: 8
   dropPrefab: {fileID: -9120839814650889323, guid: 02a1ba1ba54f91142af0688cc99b389d, type: 3}

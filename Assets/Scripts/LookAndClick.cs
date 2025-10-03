@@ -35,6 +35,8 @@ public class LookAndClickInteraction : NetworkBehaviour
     
     private PlayerInventory playerInventory;
 
+    private BoxBreak boxBreak;
+
     private Dropped dropScript;
     private bool isHoldingItem = false;
 
@@ -44,6 +46,8 @@ public class LookAndClickInteraction : NetworkBehaviour
         dropScript = FindObjectOfType<Dropped>();
         playerInventory = FindObjectOfType<PlayerInventory>();
         loadingBar = GetComponent<LoadingBar>();
+        boxBreak = FindObjectOfType<BoxBreak>();
+
     }
 
 
@@ -81,10 +85,10 @@ public class LookAndClickInteraction : NetworkBehaviour
             HandleInteraction();
         }
 
-        // if (dropAction.action.WasPressedThisFrame())
-        // {
-        //     DropCurrentItem();
-        // }
+        if (dropAction.action.WasPressedThisFrame())
+        {
+            DropCurrentItem();
+        }
 
         if (isDropping)
         {
@@ -159,6 +163,16 @@ public class LookAndClickInteraction : NetworkBehaviour
             else
             {
                 Debug.Log("Hit object is not a dropped item or dropScript is null.");
+            }
+
+            if (eButtonAction.action.WasPressedThisFrame() && hit.collider.CompareTag("Box"))
+            {
+                BoxBreak boxBreak = hit.collider.GetComponent<BoxBreak>();
+                if (boxBreak != null)
+                {
+                    Debug.Log("BoxBreak script found");
+                    boxBreak.WhoBrokeBox();
+                }
             }
         }
     }

@@ -203,7 +203,7 @@ public class PlayerInventory : NetworkBehaviour
 
 
     [ClientRpc]
-    private void UpdateOreUIClientRpc(ClientRpcParams clientRpcParams = default)
+    public void UpdateOreUIClientRpc(ClientRpcParams clientRpcParams = default)
     {
         UpdateOreUIText();
     }
@@ -215,7 +215,7 @@ public class PlayerInventory : NetworkBehaviour
     }
 
 
-
+    // Called by LookAndClick
     public void RemoveFromInventory(string itemName)
     {
         // Ore Inventory
@@ -286,7 +286,7 @@ public class PlayerInventory : NetworkBehaviour
         }
     }
 
-    private void UpdateInventoryUIForOwner()
+    public void UpdateInventoryUIForOwner()
     {
         var clientRpcParams = new ClientRpcParams
         {

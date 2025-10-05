@@ -44,31 +44,35 @@ public class SnapPoint : NetworkBehaviour
     private void SnapItemServerRpc(ServerRpcParams rpcParams = default)
     {
 
-        if (itemPrefab == null)
-        {
-            Debug.LogWarning("SnapItemServerRpc: itemPrefab is null!");
-            return;
+        if (!IsServer) return;
+
+        ulong senderClientId = rpcParams.Receive.SenderClientId;
+
+
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(senderClientId, out var client))
+        { 
+            Debug.Log($"Player {senderClientId} is snapping an item.");
         }
+        
 
-        // 1. Instantiate the item on the server
-        NetworkObject netObj = Instantiate(itemPrefab, transform.position, transform.rotation).GetComponent<NetworkObject>();
+        // NetworkObject netObj = Instantiate(itemPrefab, position).GetComponent<NetworkObject>();
+        // netObj.Spawn();
+        // if (netObj == null) return;
 
-        // 2. Spawn it to all clients
-        netObj.Spawn();
+            //     // Lock in place
+            //     Rigidbody rb = netObj.GetComponent<Rigidbody>();
+            //     if (rb != null)
+            //     {
+            //         rb.isKinematic = true;
+            //         rb.useGravity = false;
+            //     }
 
-        // 3. Lock physics
-        Rigidbody rb = netObj.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-        }
+            //     netObj.transform.position = transform.position;
+            //     netObj.transform.rotation = transform.rotation;
 
-        snappedItem = netObj;
-
-        Debug.Log($"Item {netObj.name} snapped into place (server) and should be visible to all clients.");
+            //     snappedItem = netObj;
+            //Debug.Log($"Item {netObj.name} snapped into place (server).");
     }
-
 
     [ServerRpc(RequireOwnership = false)]
     private void UnsnapItemServerRpc(ulong itemId, ulong clientId)

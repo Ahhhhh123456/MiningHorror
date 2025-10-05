@@ -106,7 +106,7 @@ public class PlayerInventory : NetworkBehaviour
     }
 
 
-    private void LogAllPlayerInventories()
+    public void LogAllPlayerInventories()
     {
         foreach (var clientPair in NetworkManager.Singleton.ConnectedClients)
         {
@@ -166,8 +166,8 @@ public class PlayerInventory : NetworkBehaviour
             NetworkItems.Add(new FixedString32Bytes(itemName));
             playerWeight += itemType.itemDatabase[itemName].weight;
         }
-        LogAllPlayerInventories();
-        Debug.Log($"Added {itemName} to inventory. Total weight: {playerWeight}");
+        // LogAllPlayerInventories();
+        // Debug.Log($"Added {itemName} to inventory. Total weight: {playerWeight}");
         // UI updates are automatic via OnListChanged on the client
     }
 
@@ -213,7 +213,7 @@ public class PlayerInventory : NetworkBehaviour
             }
         }
         
-        LogAllPlayerInventories();
+        //LogAllPlayerInventories();
     }
 
 

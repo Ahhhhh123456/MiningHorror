@@ -292,7 +292,7 @@ public class PlayerInventory : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void ClearHeldItemClientRpc()
+    public void ClearHeldItemClientRpc()
     {
         if (currentHeldItem != null)
         {
@@ -369,7 +369,7 @@ public class PlayerInventory : NetworkBehaviour
 
     // Update visuals for this player
     [ClientRpc]
-    private void UpdateHeldItemClientRpc(int index)
+    public void UpdateHeldItemClientRpc(int index)
     {
         // Destroy current held item if it exists
         if (currentHeldItem != null)

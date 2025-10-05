@@ -13294,11 +13294,15 @@ PrefabInstance:
       objectReference: {fileID: 902081662}
     - target: {fileID: 6246155681816082367, guid: b23a2be32a253e0408efce5cab46113d, type: 3}
       propertyPath: m_VersionIndex
-      value: 78
+      value: 99
       objectReference: {fileID: 0}
     - target: {fileID: 7495439090477593952, guid: b23a2be32a253e0408efce5cab46113d, type: 3}
       propertyPath: m_Name
       value: WheelOneTransparent
+      objectReference: {fileID: 0}
+    - target: {fileID: 7495439090477593952, guid: b23a2be32a253e0408efce5cab46113d, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 8688891253072053641, guid: b23a2be32a253e0408efce5cab46113d, type: 3}
       propertyPath: m_LocalPosition.x

@@ -1,18 +1,25 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class SnapPoint : MonoBehaviour
+public class SnapPoint : NetworkBehaviour
 {
     [Header("Snap Settings")]
     public float snapRadius = 0.5f;
 
-    private GameObject snappedItem;
+    private NetworkObject snappedItem;
+
+    Transform position => transform;
+    public NetworkObject itemPrefab;
+
+    private Vector3 scale;
 
     void Update()
     {
+        if (!IsServer && !IsOwner) return; // Only the owner/client can request snapping
+
         PlayerInventory playerInventory = FindObjectOfType<PlayerInventory>();
         if (playerInventory == null) return;
 
-        // If nothing is snapped and player is holding something
         if (snappedItem == null && playerInventory.currentHeldItem != null)
         {
             GameObject heldItem = playerInventory.currentHeldItem;
@@ -20,75 +27,77 @@ public class SnapPoint : MonoBehaviour
 
             if (distance <= snapRadius)
             {
-                SnapItem(heldItem, playerInventory);
+                SnapItemServerRpc();
             }
         }
-        // If something is snapped and player presses E near it, unsnap
         else if (snappedItem != null && Input.GetKeyDown(KeyCode.E))
         {
             float distance = Vector3.Distance(playerInventory.transform.position, transform.position);
-            if (distance <= 2f) // player close enough
+            if (distance <= 2f)
             {
-                UnsnapItem(playerInventory);
+                UnsnapItemServerRpc(snappedItem.NetworkObjectId, playerInventory.OwnerClientId);
             }
         }
     }
 
-    private void SnapItem(GameObject item, PlayerInventory playerInventory)
+    [ServerRpc(RequireOwnership = false)]
+    private void SnapItemServerRpc(ServerRpcParams rpcParams = default)
     {
-        string itemName = item.name.Replace("(Clone)", "");
-        playerInventory.RemoveFromInventory(itemName);
 
-        // Detach from camera
-        item.transform.SetParent(null);
+        if (itemPrefab == null)
+        {
+            Debug.LogWarning("SnapItemServerRpc: itemPrefab is null!");
+            return;
+        }
 
-        // Position at snap point
-        item.transform.position = transform.position;
-        item.transform.rotation = transform.rotation;
+        // 1. Instantiate the item on the server
+        NetworkObject netObj = Instantiate(itemPrefab, transform.position, transform.rotation).GetComponent<NetworkObject>();
 
-        // Lock in place
-        Rigidbody rb = item.GetComponent<Rigidbody>();
+        // 2. Spawn it to all clients
+        netObj.Spawn();
+
+        // 3. Lock physics
+        Rigidbody rb = netObj.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.isKinematic = true;
             rb.useGravity = false;
         }
 
-        snappedItem = item;
-        if (playerInventory.currentHeldItem == item)
-            playerInventory.currentHeldItem = null;
+        snappedItem = netObj;
 
-        Debug.Log($"Item {itemName} snapped into place!");
+        Debug.Log($"Item {netObj.name} snapped into place (server) and should be visible to all clients.");
     }
 
-    private void UnsnapItem(PlayerInventory playerInventory)
+
+    [ServerRpc(RequireOwnership = false)]
+    private void UnsnapItemServerRpc(ulong itemId, ulong clientId)
     {
-        if (snappedItem == null) return;
+        NetworkObject netObj = NetworkManager.Singleton.SpawnManager.SpawnedObjects[itemId];
+        if (netObj == null) return;
 
-        string itemName = snappedItem.name.Replace("(Clone)", "");
-
-        // Unlock physics
-        Rigidbody rb = snappedItem.GetComponent<Rigidbody>();
+        Rigidbody rb = netObj.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.isKinematic = false;
             rb.useGravity = true;
         }
 
-        // Give back to player inventory (server-authoritative)
-        if (playerInventory.IsOwner) // only the owning player requests the add
-            playerInventory.AddItemServer(itemName);
+        PlayerInventory playerInventory = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject
+            .GetComponent<PlayerInventory>();
 
-        playerInventory.currentHeldItem = snappedItem;
-        snappedItem.transform.SetParent(playerInventory.holdPosition);
-        snappedItem.transform.localPosition = Vector3.zero;
-        snappedItem.transform.localRotation = Quaternion.identity;
-
-        Debug.Log($"Item {itemName} unsnapped and returned to player!");
+        if (playerInventory != null)
+        {
+            playerInventory.AddItemServer(netObj.name.Replace("(Clone)", ""));
+            playerInventory.currentHeldItem = netObj.gameObject;
+            netObj.transform.SetParent(playerInventory.holdPosition);
+            netObj.transform.localPosition = Vector3.zero;
+            netObj.transform.localRotation = Quaternion.identity;
+        }
 
         snappedItem = null;
+        Debug.Log($"Item {netObj.name} unsnapped (server).");
     }
-
 
     private void OnDrawGizmosSelected()
     {

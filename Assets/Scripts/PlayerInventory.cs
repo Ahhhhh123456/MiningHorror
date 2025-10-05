@@ -212,7 +212,7 @@ public class PlayerInventory : NetworkBehaviour
                 break;
             }
         }
-        
+
         //LogAllPlayerInventories();
     }
 
@@ -393,6 +393,7 @@ public class PlayerInventory : NetworkBehaviour
 
         // Instantiate the held item for **all clients**
         currentHeldItem = Instantiate(prefab, targetHoldPosition);
+        
         currentHeldItem.name = prefab.name;
 
         currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
@@ -411,4 +412,6 @@ public class PlayerInventory : NetworkBehaviour
             return prefab;
         return null;
     }
+    
+    
 }

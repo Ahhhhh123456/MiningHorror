@@ -5,15 +5,14 @@ TagManager:
   serializedVersion: 3
   tags:
   - interactText
-  - DrillPart
-  - DrillPartWheel
-  - DrillPartHead
-  - DrillPartBody
   - Stone
   - Iron
   - Gold
   - Dropped
   - Box
+  - Wheel
+  - DrillHead
+  - DrillBody
   layers:
   - Default
   - TransparentFX

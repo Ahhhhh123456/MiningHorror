@@ -8,6 +8,8 @@ public class SnapPoint : NetworkBehaviour
 
     private NetworkObject snappedItem;
 
+    public NetworkVariable<bool> isOccupied = new NetworkVariable<bool>(false);
+
     Transform position => transform;
     public NetworkObject itemPrefab;
 
@@ -30,7 +32,6 @@ public class SnapPoint : NetworkBehaviour
                 {
                     SnapItemServerRpc();
                     RemovePlayerItemSnapServerRpc(playerInventory.currentHeldItem.name);
-                    
                 }
             }
         }
@@ -64,6 +65,12 @@ public class SnapPoint : NetworkBehaviour
 
         if (!IsServer) return;
 
+        if (isOccupied.Value)
+        {
+            Debug.Log("SnapPoint is already occupied.");
+            return;
+        }
+        isOccupied.Value = true;
         ulong senderClientId = rpcParams.Receive.SenderClientId;
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(senderClientId, out var client))
         {
@@ -77,12 +84,12 @@ public class SnapPoint : NetworkBehaviour
             if (rb == null)
             {
                 rb = snapObj.gameObject.AddComponent<Rigidbody>();
+                Debug.LogWarning("Rigidbody was missing on snapped item, added one.");
             }   
             rb.isKinematic = true;
             rb.useGravity = false;
             Debug.Log($"Item {snapObj.name} snapped into place (server).");
             snapObj.Spawn();
-
         }
     }
 

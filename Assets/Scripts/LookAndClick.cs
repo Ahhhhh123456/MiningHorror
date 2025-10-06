@@ -130,8 +130,6 @@ public class LookAndClickInteraction : NetworkBehaviour
     private void HandleInteraction()
     {
 
-        Debug.Log("E button pressed");
-
         if (isHoldingItem)
         {
             Debug.Log("Already holding an item, can't pick up another.");

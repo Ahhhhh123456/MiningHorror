@@ -13,13 +13,20 @@ public class CaveGeneration : MonoBehaviour
     
     private List<CombineInstance> combine = new List<CombineInstance>();
 
+    void Start()
+    {
+        CreateCave();
+    }
+
     public void CreateCave()
     {
 
 
         MeshFilter blockMesh = Instantiate(blockPrefab, Vector3.zero, Quaternion.identity).GetComponent<MeshFilter>();
 
-        float offset = Random.Range(0f, 1000f);
+        //float offset = Random.Range(0f, 1000f);
+        int offset = 996;
+        Debug.Log("Offset: " + offset);
 
         for (int x = 0; x < caveWidth; x++)
         {
@@ -69,6 +76,7 @@ public class CaveGeneration : MonoBehaviour
             MeshRenderer mr = g.AddComponent<MeshRenderer>();
             mr.material = material;
             mf.mesh.CombineMeshes(list.ToArray());
+            g.AddComponent<MeshCollider>();
         }
 
     }

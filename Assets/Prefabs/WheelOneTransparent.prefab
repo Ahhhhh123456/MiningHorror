@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 2185276086298919316}
   - component: {fileID: 1788720321609332373}
   - component: {fileID: 5734056016021361047}
+  - component: {fileID: -8792235071588351296}
   m_Layer: 0
   m_Name: WheelOneTransparent
   m_TagString: Untagged
@@ -8718,6 +8719,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   snapRadius: 0.5
+  isOccupied:
+    m_InternalValue: 0
   itemPrefab: {fileID: -9175161651640871428, guid: 8d5704fd71f25ba4da8d9b1b4229fc25, type: 3}
 --- !u!114 &5734056016021361047
 MonoBehaviour:
@@ -8765,3 +8768,17 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &-8792235071588351296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7495439090477593952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 449c29018ac0e3743a0e1f726333c25d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  snapPoint: {fileID: 1788720321609332373}

@@ -664,6 +664,7 @@ MonoBehaviour:
   snapRadius: 0.5
   isOccupied:
     m_InternalValue: 0
+  triggerCollider: {fileID: 5620425146864294347}
   itemPrefab: {fileID: -6619218728625593208, guid: 5d9e7a0a7eddea44f8d25ce0a2984db8, type: 3}
 --- !u!114 &46847966575636364
 MonoBehaviour:

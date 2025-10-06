@@ -88,15 +88,11 @@ public class Dropped : NetworkBehaviour
         Debug.Log($"[Server] Client {senderClientId} is picking up { (droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name) }");
 
         // Check if the picked up object was on a snapped drill part
-        SnapPoint snapPoint = FindObjectOfType<SnapPoint>();
-        if (snapPoint != null)
+        var snappedItemScript = netObj.GetComponent<SnappedItem>();
+        if (snappedItemScript != null && snappedItemScript.snapPoint != null)
         {
-            snapPoint.isOccupied.Value = false;
-            Debug.Log($"[Server] SnapPoint {snapPoint.name} is now unoccupied.");
-        }
-        else
-        { 
-            Debug.Log($"[Server] No SnapPoint found in the scene.");
+            snappedItemScript.snapPoint.isOccupied.Value = false;
+            Debug.Log($"SnapPoint {snappedItemScript.snapPoint.name} is now unoccupied.");
         }
 
         netObj.Despawn();

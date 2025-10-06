@@ -30,9 +30,17 @@ public class SnapPoint : NetworkBehaviour
 
                 if (distance <= snapRadius)
                 {
-                    SnapItemServerRpc();
+                    if (playerInventory.currentHeldItem.name == gameObject.tag.ToString())
+                    {
+                        SnapItemServerRpc();
+                    }
+                    else
+                    {
+                        return;
+                    }
                     RemovePlayerItemSnapServerRpc(playerInventory.currentHeldItem.name);
                 }
+                
             }
         }
     }
@@ -80,6 +88,12 @@ public class SnapPoint : NetworkBehaviour
 
             NetworkObject snapObj = Instantiate(itemPrefab, snapPos, snapRot);
             snapObj.name = itemPrefab.name;
+            snapObj.Spawn();
+            var snappedItemScript = snapObj.GetComponent<SnappedItem>();
+            if (snappedItemScript != null)
+            {
+                snappedItemScript.snapPoint = this;
+            }
             Rigidbody rb = snapObj.GetComponent<Rigidbody>();
             if (rb == null)
             {
@@ -89,7 +103,6 @@ public class SnapPoint : NetworkBehaviour
             rb.isKinematic = true;
             rb.useGravity = false;
             Debug.Log($"Item {snapObj.name} snapped into place (server).");
-            snapObj.Spawn();
         }
     }
 

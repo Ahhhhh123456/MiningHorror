@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 5788682582017938425}
   - component: {fileID: 6642771614439066329}
   - component: {fileID: 6798423590766820949}
+  - component: {fileID: -5713663915504911934}
   m_Layer: 7
   m_Name: DrillBox
   m_TagString: Box
@@ -122,7 +123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3208194402
+  GlobalObjectIdHash: 2833332927
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -148,10 +149,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  boxData: {fileID: 0}
-  stoneCount:
-    m_InternalValue: 0
-  ironCount:
-    m_InternalValue: 0
-  goldCount:
-    m_InternalValue: 0
+  boxData: {fileID: 11400000, guid: 01c818dea15e5bb44abc3c8a055982d1, type: 2}
+--- !u!114 &-5713663915504911934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9161303761176868496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6a987af39d0e7d42945869d2d0294b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boxData: {fileID: 11400000, guid: 01c818dea15e5bb44abc3c8a055982d1, type: 2}

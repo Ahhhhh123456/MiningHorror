@@ -1,61 +1,36 @@
 using UnityEngine;
 using TMPro;
+using Unity.Netcode;
 
 public class HoverText : MonoBehaviour
 {
-    [Header("UI")]
-    public Canvas playerCanvas;        // assign a canvas prefab
-    public TextMeshProUGUI hoverText;  // assign a TMP Text prefab
-
-    [Header("Hover Settings")]
-    public string objectName = "Item"; // name to show
-    public float hoverOffset = 2f;     // world units above the object
-
-    private Camera playerCamera;
-
-    void Start()
-    {
-        playerCanvas.gameObject.SetActive(true); // hide by default
-        playerCamera = Camera.main;               // or assign per player if needed
-    }
+    public Camera mainCamera;
+    public TextMeshProUGUI hoverText;
+    public LayerMask interactableLayer;
 
     void Update()
     {
-        CheckHover();
-    }
-
-    private void CheckHover()
-    {
-        // Raycast from camera
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-        if (Physics.Raycast(ray, out RaycastHit hit, 5f)) // max distance optional
+        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, interactableLayer))
         {
-            if (hit.collider.gameObject == gameObject)
+            hoverText.gameObject.SetActive(true);
+
+            NetworkedBoxData box = hit.collider.GetComponent<NetworkedBoxData>();
+            if (box != null)
             {
-                ShowHover();
-                return;
+                hoverText.text = $"Object: {hit.collider.gameObject.name}\n" +
+                                 $"Stone: {box.stoneCount.Value}\n" +
+                                 $"Iron: {box.ironCount.Value}\n" +
+                                 $"Gold: {box.goldCount.Value}";
+            }
+            else
+            {
+                hoverText.text = hit.collider.gameObject.name;
             }
         }
-
-        HideHover();
-    }
-
-    private void ShowHover()
-    {
-        if (!playerCanvas.gameObject.activeSelf)
-            playerCanvas.gameObject.SetActive(true);
-
-        hoverText.text = objectName;
-
-        // position canvas above object
-        Vector3 worldPos = transform.position + Vector3.up * hoverOffset;
-        Vector3 screenPos = playerCamera.WorldToScreenPoint(worldPos);
-        playerCanvas.transform.position = screenPos;
-    }
-
-    private void HideHover()
-    {
-        if (playerCanvas.gameObject.activeSelf)
-            playerCanvas.gameObject.SetActive(false);
+        else
+        {
+            hoverText.gameObject.SetActive(false);
+        }
     }
 }

@@ -12,11 +12,14 @@ public class BoxBreak : NetworkBehaviour
     private PlayerInventory playerInventory;
 
     private Dropped droppedScript;
+
+    private NetworkedBoxData networkedBoxData;
     public void Start()
     {
         playerInventory = FindObjectOfType<PlayerInventory>();
         droppedScript = FindObjectOfType<Dropped>();
-
+        networkedBoxData = GetComponent<NetworkedBoxData>();
+        networkedBoxData.InitializeFromDrillBoxData(boxData);
         // Debug.Log("Stone: " + boxData.stoneCount);
         // Debug.Log("Iron: " + boxData.ironCount);
         // Debug.Log("Gold: " + boxData.goldCount);
@@ -41,7 +44,7 @@ public class BoxBreak : NetworkBehaviour
 
         //Debug.Log($"Player {senderClientId} is breaking the box.");
         totalOres = 0;
-        CheckOreValues(boxData);
+        CheckOreValues(networkedBoxData);
 
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(senderClientId, out var client))
         {
@@ -58,7 +61,7 @@ public class BoxBreak : NetworkBehaviour
             {
                 inventoryScript.RemoveFromInventory(oreName);
                 inventoryScript.RemoveItemServer(oreName);
-                RemoveBoxOreValue(boxData, oreName);
+                RemoveBoxOreValue(oreName);
             }
 
             if (totalOres == 0)
@@ -99,32 +102,46 @@ public class BoxBreak : NetworkBehaviour
 
     }
     
-    void CheckOreValues(DrillBoxData boxData)
+    void CheckOreValues(NetworkedBoxData networkedBoxData)
     {
-        var fields = typeof(DrillBoxData).GetFields(BindingFlags.Public | BindingFlags.Instance);
+        totalOres = 0;
+
+        // Using reflection on the NetworkedBoxData class
+        var fields = typeof(NetworkedBoxData).GetFields(BindingFlags.Public | BindingFlags.Instance);
 
         foreach (var field in fields)
         {
-            if (field.FieldType == typeof(int) && field.Name.EndsWith("Count"))
+            // Only check NetworkVariables of type int
+            if (field.FieldType == typeof(NetworkVariable<int>))
             {
-                int value = (int)field.GetValue(boxData);
+                NetworkVariable<int> valueVar = (NetworkVariable<int>)field.GetValue(networkedBoxData);
+                int value = valueVar.Value;
                 Debug.Log($"{field.Name}: {value}");
                 totalOres += value;
             }
         }
+
+        Debug.Log("Total ores in box: " + totalOres);
     }
 
-    void RemoveBoxOreValue(DrillBoxData boxData, string oreName)
-    {
-        FieldInfo field = typeof(DrillBoxData).GetField(oreName.ToLower() + "Count", BindingFlags.Public | BindingFlags.Instance);
 
-        if (field != null && field.FieldType == typeof(int))
+    void RemoveBoxOreValue(string oreName)
+    {
+        if (!IsServer) return;
+
+        NetworkVariable<int> variable = oreName.ToLower() switch
         {
-            int currentValue = (int)field.GetValue(boxData);
-            int newValue = Mathf.Max(0, currentValue - 1);
-            field.SetValue(boxData, newValue);
+            "stone" => networkedBoxData.stoneCount,
+            "iron" => networkedBoxData.ironCount,
+            "gold" => networkedBoxData.goldCount,
+            _ => null
+        };
+
+        if (variable != null)
+        {
+            variable.Value = Mathf.Max(0, variable.Value - 1);
             totalOres -= 1;
-            Debug.Log("Total ores left in box: " + totalOres);
+            Debug.Log($"Total ores left in box: {totalOres}");
         }
     }
 

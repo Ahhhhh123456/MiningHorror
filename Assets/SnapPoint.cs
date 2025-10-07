@@ -40,7 +40,7 @@ public class SnapPoint : NetworkBehaviour
                     }
                     RemovePlayerItemSnapServerRpc(playerInventory.currentHeldItem.name);
                 }
-                
+
             }
         }
     }
@@ -89,6 +89,7 @@ public class SnapPoint : NetworkBehaviour
             NetworkObject snapObj = Instantiate(itemPrefab, snapPos, snapRot);
             snapObj.name = itemPrefab.name;
             snapObj.Spawn();
+            SetTagClientRpc(snapObj.NetworkObjectId, "Untagged");
             var snappedItemScript = snapObj.GetComponent<SnappedItem>();
             if (snappedItemScript != null)
             {
@@ -99,7 +100,7 @@ public class SnapPoint : NetworkBehaviour
             {
                 rb = snapObj.gameObject.AddComponent<Rigidbody>();
                 Debug.LogWarning("Rigidbody was missing on snapped item, added one.");
-            }   
+            }
             rb.isKinematic = true;
             rb.useGravity = false;
             Debug.Log($"Item {snapObj.name} snapped into place (server).");
@@ -110,5 +111,16 @@ public class SnapPoint : NetworkBehaviour
     {
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, snapRadius);
+    }
+    
+
+    // Sets tag to untagged for clients so snapped items aren't interactable
+    [ClientRpc]
+    void SetTagClientRpc(ulong netId, string newTag)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(netId, out var netObj))
+        {
+            netObj.gameObject.tag = newTag;
+        }
     }
 }

@@ -1,13 +1,20 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections;
 
-public class SpawnPoint : MonoBehaviour
+public class SpawnPointManager : MonoBehaviour
 {
     [SerializeField] private Transform spawnPoint;
 
     private void Start()
     {
+        // Only the server needs to handle positioning
+        if (!NetworkManager.Singleton.IsServer) return;
+
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+
+        // Also move host immediately
+        SetHostSpawnPosition();
     }
 
     private void OnDestroy()
@@ -16,25 +23,31 @@ public class SpawnPoint : MonoBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
     }
 
-    private void OnClientConnected(ulong clientId)
+    private void SetHostSpawnPosition()
     {
-        if (!NetworkManager.Singleton.IsServer) return;
-
-        // Wait a frame to ensure the player object has spawned
-        StartCoroutine(SetSpawnPositionNextFrame(clientId));
+        if (NetworkManager.Singleton.IsServer && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+        {
+            NetworkManager.Singleton.LocalClient.PlayerObject.transform.SetPositionAndRotation(
+                spawnPoint.position, spawnPoint.rotation);
+        }
     }
 
-    private System.Collections.IEnumerator SetSpawnPositionNextFrame(ulong clientId)
+    private void OnClientConnected(ulong clientId)
     {
-        yield return null; // wait 1 frame
+        StartCoroutine(SetClientSpawnPositionWhenReady(clientId));
+    }
 
-        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
-            yield break;
+    private IEnumerator SetClientSpawnPositionWhenReady(ulong clientId)
+    {
+        NetworkClient client;
 
-        var playerObject = client.PlayerObject;
-        if (playerObject != null)
+        // Wait until the player object exists
+        while (!NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out client) || client.PlayerObject == null)
         {
-            playerObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+            yield return null;
         }
+
+        // Set the position on the server (replicates to client)
+        client.PlayerObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
     }
 }

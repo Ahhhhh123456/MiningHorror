@@ -77,6 +77,9 @@ public class CaveGeneration : MonoBehaviour
             mr.material = material;
             mf.mesh.CombineMeshes(list.ToArray());
             g.AddComponent<MeshCollider>();
+
+            // Temperary layer so player can move around. Remove later when adding proper ore generation
+            g.layer = LayerMask.NameToLayer("Interactable");
         }
 
     }

@@ -10,17 +10,26 @@ public class CaveGeneration : MonoBehaviour
     private int caveWidth = 200;
     private int caveHeight = 20;
     private int caveDepth = 200;
+
+    private int tempCount = 0;
+    public float oreChance = 0.1f;
     
     private List<CombineInstance> combine = new List<CombineInstance>();
+
+    // Remember positions of blocks
+    List<Vector3> blockPositions = new List<Vector3>();
+
+    [Header("Ore Prefabs")]
+    public GameObject[] orePrefabs;
 
     void Start()
     {
         CreateCave();
+        //OreGeneration();
     }
 
     public void CreateCave()
     {
-
 
         MeshFilter blockMesh = Instantiate(blockPrefab, Vector3.zero, Quaternion.identity).GetComponent<MeshFilter>();
 
@@ -43,7 +52,9 @@ public class CaveGeneration : MonoBehaviour
                             mesh = blockMesh.sharedMesh,
                             transform = blockMesh.transform.localToWorldMatrix
                         });
+                        blockPositions.Add(new Vector3(x, y, z));
                     }
+                    
                 }
             }
         }
@@ -83,6 +94,26 @@ public class CaveGeneration : MonoBehaviour
         }
 
     }
+
+    // public void OreGeneration()
+    // {
+    //     tempCount = 0;
+
+    //     foreach (Vector3 pos in blockPositions)
+    //     {
+    //         tempCount++;
+
+    //         if (Random.value < oreChance)
+    //         {
+    //             GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
+    //             Instantiate(chosenOre, pos, Quaternion.identity);
+    //             chosenOre.name = chosenOre.name;
+    //         }
+    //     }
+
+    //     Debug.Log("Total Blocks: " + tempCount);
+    // }
+
     public void ClearCave()
     {
         Transform meshys = GameObject.Find("Meshys")?.transform;

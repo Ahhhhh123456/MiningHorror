@@ -1,7 +1,8 @@
+using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
 
-public class CaveGeneration : MonoBehaviour
+public class CaveGeneration : NetworkBehaviour
 {
     public GameObject blockPrefab;
     public Material material;
@@ -25,7 +26,11 @@ public class CaveGeneration : MonoBehaviour
     void Start()
     {
         CreateCave();
-        //OreGeneration();
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            Debug.Log("Generating Ores on Server");
+            OreGeneration();
+        }
     }
 
     public void CreateCave()
@@ -54,7 +59,7 @@ public class CaveGeneration : MonoBehaviour
                         });
                         blockPositions.Add(new Vector3(x, y, z));
                     }
-                    
+
                 }
             }
         }
@@ -90,29 +95,29 @@ public class CaveGeneration : MonoBehaviour
             g.AddComponent<MeshCollider>();
 
             // Temperary layer so player can move around. Remove later when adding proper ore generation
-            g.layer = LayerMask.NameToLayer("Interactable");
+            g.layer = LayerMask.NameToLayer("Ground");
         }
 
     }
 
-    // public void OreGeneration()
-    // {
-    //     tempCount = 0;
+    public void OreGeneration()
+    {
+        tempCount = 0;
 
-    //     foreach (Vector3 pos in blockPositions)
-    //     {
-    //         tempCount++;
+        foreach (Vector3 pos in blockPositions)
+        {
+            tempCount++;
 
-    //         if (Random.value < oreChance)
-    //         {
-    //             GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
-    //             Instantiate(chosenOre, pos, Quaternion.identity);
-    //             chosenOre.name = chosenOre.name;
-    //         }
-    //     }
+            if (Random.value < oreChance)
+            {
+                GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
+                Instantiate(chosenOre, pos, Quaternion.identity);
+                chosenOre.name = chosenOre.name;
+            }
+        }
 
-    //     Debug.Log("Total Blocks: " + tempCount);
-    // }
+        Debug.Log("Total Blocks: " + tempCount);
+    }
 
     public void ClearCave()
     {

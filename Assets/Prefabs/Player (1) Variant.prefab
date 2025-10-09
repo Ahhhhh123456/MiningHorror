@@ -457,6 +457,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5273788399659061711, guid: 1da2c53165f0fe74c999cc8d08e88eb9, type: 3}
+      propertyPath: groundMask.m_Bits
+      value: 192
+      objectReference: {fileID: 0}
     - target: {fileID: 5290257942210531726, guid: 1da2c53165f0fe74c999cc8d08e88eb9, type: 3}
       propertyPath: m_Enabled
       value: 1

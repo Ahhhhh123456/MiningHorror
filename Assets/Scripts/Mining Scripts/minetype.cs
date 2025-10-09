@@ -41,8 +41,17 @@ public class MineType : NetworkBehaviour
             if (dropscript != null)
                 dropscript.DropItem();
 
-            NetworkObject.Despawn(); // despawn block for all clients
+            DespawnOreServerRpc(); // despawn block for all clients
             holdCount = 0;
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void DespawnOreServerRpc()
+    {
+        if (NetworkObject != null && NetworkObject.IsSpawned)
+        {
+            NetworkObject.Despawn();
         }
     }
 

@@ -262,6 +262,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 241563494}
+  - component: {fileID: 241563496}
   - component: {fileID: 241563495}
   m_Layer: 0
   m_Name: CaveManager
@@ -297,13 +298,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bccf2150389adb84289564e6b43aa4b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockPrefab: {fileID: 4720856768170020262, guid: 0bf4a80f29840bd4e9c5d30125177e94, type: 3}
+  ShowTopMostFoldoutHeaderGroup: 1
+  blockPrefab: {fileID: 1140600578073304908, guid: 50234fd9657329d4ebc68dc1efb6e6e6, type: 3}
   material: {fileID: 2100000, guid: 0943c098522f0804caebf9cbedc7e5b3, type: 2}
   oreChance: 0.1
   orePrefabs:
   - {fileID: 4720856768170020262, guid: 0bf4a80f29840bd4e9c5d30125177e94, type: 3}
   - {fileID: 7695044068175496693, guid: aee75f7c3b1a7304ea8de88751c8638b, type: 3}
   - {fileID: 3458549237076436046, guid: 02a1ba1ba54f91142af0688cc99b389d, type: 3}
+  NetworkOrePrefabs:
+  - {fileID: 5311493799651647255, guid: 0bf4a80f29840bd4e9c5d30125177e94, type: 3}
+  - {fileID: -1200345405340672891, guid: aee75f7c3b1a7304ea8de88751c8638b, type: 3}
+  - {fileID: -9120839814650889323, guid: 02a1ba1ba54f91142af0688cc99b389d, type: 3}
+--- !u!114 &241563496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 241563492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 1584686378
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &386279275
 GameObject:
   m_ObjectHideFlags: 0

@@ -16,7 +16,7 @@ public class SteamNetworkStart : MonoBehaviour
         // Assign local Steam ID automatically
         // steamTransport.ConnectToSteamID = SteamUser.GetSteamID().m_SteamID;
         Debug.Log("Local SteamID: " + steamTransport.ConnectToSteamID);
-        hostSteamId = 76561198094843310;
+        //hostSteamId = 76561198094843310;
     }
 
     void Update()

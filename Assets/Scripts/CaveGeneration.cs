@@ -4,44 +4,49 @@ using System.Collections.Generic;
 
 public class CaveGeneration : NetworkBehaviour
 {
+    [Header("Cave Settings")]
     public GameObject blockPrefab;
     public Material material;
-
-    private float noiseScale = .05f;
+    private float noiseScale = 0.05f;
     private int caveWidth = 200;
     private int caveHeight = 20;
     private int caveDepth = 200;
 
-    private int tempCount = 0;
+    [Header("Ore Settings")]
     public float oreChance = 0.1f;
-    
-    private List<CombineInstance> combine = new List<CombineInstance>();
+    public GameObject[] orePrefabs; // Prefabs for ore instantiation
+    public NetworkObject[] NetworkOrePrefabs; // Networked versions
 
-    // Remember positions of blocks
-    List<Vector3> blockPositions = new List<Vector3>();
-
-    [Header("Ore Prefabs")]
-    public GameObject[] orePrefabs;
+    private List<CombineInstance> combine = new List<CombineInstance>(); // For combining block meshes
+    private List<Vector3> blockPositions = new List<Vector3>(); // Store positions for ore spawning
+    private int tempCount = 0;
 
     void Start()
     {
+        // Optional: Uncomment to generate cave in editor mode
         CreateCave();
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        if (IsServer)
         {
-            Debug.Log("Generating Ores on Server");
+            Debug.Log("Server: Generating cave and ores...");
             OreGeneration();
         }
     }
 
+
     public void CreateCave()
     {
-
+        // Create a single mesh filter to copy meshes into CombineInstance
         MeshFilter blockMesh = Instantiate(blockPrefab, Vector3.zero, Quaternion.identity).GetComponent<MeshFilter>();
 
-        //float offset = Random.Range(0f, 1000f);
-        int offset = 996;
+        int offset = 996; // fixed offset for Perlin noise
         Debug.Log("Offset: " + offset);
 
+        // Loop through all positions
         for (int x = 0; x < caveWidth; x++)
         {
             for (int y = 0; y < caveHeight; y++)
@@ -49,24 +54,31 @@ public class CaveGeneration : NetworkBehaviour
                 for (int z = 0; z < caveDepth; z++)
                 {
                     float noiseValue = Perlin3D((x + offset) * noiseScale / 2, (y + offset) * noiseScale, (z + offset) * noiseScale / 2);
-                    if ((noiseValue < 0.45 || noiseValue > 0.55) || (y == 0 || y == caveHeight - 1) || (x == 0 || x == caveWidth - 1) || (z == 0 || z == caveDepth - 1))
+
+                    if ((noiseValue < 0.45f || noiseValue > 0.55f) || 
+                        (y == 0 || y == caveHeight - 1) ||
+                        (x == 0 || x == caveWidth - 1) ||
+                        (z == 0 || z == caveDepth - 1))
                     {
                         blockMesh.transform.position = new Vector3(x, y, z);
+
                         combine.Add(new CombineInstance
                         {
                             mesh = blockMesh.sharedMesh,
                             transform = blockMesh.transform.localToWorldMatrix
                         });
+
                         blockPositions.Add(new Vector3(x, y, z));
                     }
-
                 }
             }
         }
 
+        // Split large meshes into submeshes under 65k vertices
         List<List<CombineInstance>> combineLists = new List<List<CombineInstance>>();
         int vertexCount = 0;
         combineLists.Add(new List<CombineInstance>());
+
         for (int i = 0; i < combine.Count; i++)
         {
             vertexCount += combine[i].mesh.vertexCount;
@@ -80,44 +92,70 @@ public class CaveGeneration : NetworkBehaviour
             {
                 combineLists[combineLists.Count - 1].Add(combine[i]);
             }
-
         }
 
-        Transform meshys = new GameObject("Meshys").transform;
-        foreach (List<CombineInstance> list in combineLists)
+        // Create combined meshes
+        Transform meshysParent = new GameObject("Meshys").transform;
+        foreach (var list in combineLists)
         {
             GameObject g = new GameObject("Meshy");
-            g.transform.parent = meshys;
+            g.transform.parent = meshysParent;
+
             MeshFilter mf = g.AddComponent<MeshFilter>();
             MeshRenderer mr = g.AddComponent<MeshRenderer>();
             mr.material = material;
+
             mf.mesh.CombineMeshes(list.ToArray());
             g.AddComponent<MeshCollider>();
-
-            // Temperary layer so player can move around. Remove later when adding proper ore generation
-            g.layer = LayerMask.NameToLayer("Ground");
+            g.layer = LayerMask.NameToLayer("Ground"); // Temporary layer
         }
-
     }
 
+
+  
     public void OreGeneration()
     {
+        bool allValid = true;
+
+        foreach (var networkOrePrefab in NetworkOrePrefabs)
+        {
+            if (!networkOrePrefab.TryGetComponent<NetworkObject>(out _))
+            {
+                Debug.LogWarning($"Ore prefab {networkOrePrefab.name} is missing a NetworkObject component!");
+                allValid = false;
+            }
+        }
+
+        if (allValid)
+        {
+            Debug.Log("All ore prefabs have NetworkObjects. Requesting ore generation...");
+            OreGenerationServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void OreGenerationServerRpc(ServerRpcParams rpcParams = default)
+    {
+        if (!IsServer) return;
+
+        Debug.Log("Generating ores...");
         tempCount = 0;
 
         foreach (Vector3 pos in blockPositions)
         {
             tempCount++;
-
             if (Random.value < oreChance)
             {
                 GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
-                Instantiate(chosenOre, pos, Quaternion.identity);
-                chosenOre.name = chosenOre.name;
+                NetworkObject oreInstance = Instantiate(chosenOre, pos, Quaternion.identity).GetComponent<NetworkObject>();
+                oreInstance.name = chosenOre.name;
+                oreInstance.Spawn();
             }
         }
 
-        Debug.Log("Total Blocks: " + tempCount);
+        Debug.Log($"Generated ores across {tempCount} blocks.");
     }
+
 
     public void ClearCave()
     {
@@ -128,6 +166,7 @@ public class CaveGeneration : NetworkBehaviour
             DestroyImmediate(GameObject.Find("Sphere(Clone)"));
         }
         combine.Clear();
+        blockPositions.Clear();
     }
 
     public static float Perlin3D(float x, float y, float z)
@@ -135,13 +174,11 @@ public class CaveGeneration : NetworkBehaviour
         float ab = Mathf.PerlinNoise(x, y);
         float bc = Mathf.PerlinNoise(y, z);
         float ac = Mathf.PerlinNoise(x, z);
-
         float ba = Mathf.PerlinNoise(y, x);
         float cb = Mathf.PerlinNoise(z, y);
         float ca = Mathf.PerlinNoise(z, x);
 
-        float abc = ab + bc + ac + ba + cb + ca;
-        return abc / 6f; // Average the values to get a smoother result
-
+        return (ab + bc + ac + ba + cb + ca) / 6f;
     }
+
 }

@@ -6,15 +6,24 @@ public class PlayerSpawn : NetworkBehaviour
 {
     [SerializeField] private Transform spawnPoint;
 
-    public override void OnNetworkSpawn()
+    // public override void OnNetworkSpawn()
+    // {
+    //     if (IsServer && spawnPoint != null)
+    //     {
+    //         StartCoroutine(DelayedSpawn());
+    //         OnPlayerSpawnClientRpc();
+    //     }
+
+
+    // }
+
+    void Update()
     {
-        if (IsServer && spawnPoint != null)
+        if (Input.GetKeyDown(KeyCode.J) && IsServer && spawnPoint != null)
         {
-            StartCoroutine(DelayedSpawn());
+            NetworkObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
             OnPlayerSpawnClientRpc();
         }
-
-
     }
 
     private IEnumerator DelayedSpawn()

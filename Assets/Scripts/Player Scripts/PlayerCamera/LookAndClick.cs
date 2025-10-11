@@ -234,7 +234,7 @@ public class LookAndClickInteraction : NetworkBehaviour
         // Spawn the dropped item
         GameObject droppedItem = Instantiate(prefab, spawnPos, spawnRot);
         droppedItem.name = itemName; // remove (Clone)
-
+        droppedItem.transform.rotation = prefab.transform.rotation; // reset rotation
         // Add Rigidbody for physics
         Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
         if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();

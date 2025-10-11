@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 6798423590766820949}
   - component: {fileID: -5713663915504911934}
   m_Layer: 7
-  m_Name: DrillBox
+  m_Name: DrillBox (Head)
   m_TagString: Box
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

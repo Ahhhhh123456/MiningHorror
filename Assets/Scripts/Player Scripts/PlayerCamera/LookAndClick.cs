@@ -229,12 +229,12 @@ public class LookAndClickInteraction : NetworkBehaviour
         }
 
         Vector3 spawnPos = dropTransform.position;
-        Quaternion spawnRot = dropTransform.rotation;
+        Quaternion spawnRot = dropTransform.rotation * Quaternion.Euler(0, 90f, 0f);
 
         // Spawn the dropped item
         GameObject droppedItem = Instantiate(prefab, spawnPos, spawnRot);
         droppedItem.name = itemName; // remove (Clone)
-        droppedItem.transform.rotation = prefab.transform.rotation; // reset rotation
+        droppedItem.transform.position = spawnPos + Vector3.up * 2f; // slight offset
         // Add Rigidbody for physics
         Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
         if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();

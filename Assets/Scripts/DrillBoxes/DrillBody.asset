@@ -16,4 +16,4 @@ MonoBehaviour:
   stoneCount: 30
   ironCount: 10
   goldCount: 5
-  dropPrefab: {fileID: 0}
+  dropPrefab: {fileID: 1123019164413543685, guid: ead79a91a6c6f4d46978540391e6867b, type: 3}

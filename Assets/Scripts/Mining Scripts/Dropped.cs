@@ -68,6 +68,13 @@ public class Dropped : NetworkBehaviour
         }
 
         PlayerInventory inventoryScript = client.PlayerObject.GetComponent<PlayerInventory>();
+
+        if (inventoryScript.NetworkItems.Count == inventoryScript.maxSlots)
+        {
+            Debug.Log($"[Server] Client {senderClientId} picked up {(droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name)}");
+            return;
+        }
+
         if (inventoryScript == null)
         {
             Debug.LogWarning($"[Server] Client {senderClientId} has no PlayerInventory.");
@@ -84,9 +91,8 @@ public class Dropped : NetworkBehaviour
             inventoryScript.AddItemServer(netObj.name);
         }
         // Despawn the dropped object
-
+        if (inventoryScript)
         Debug.Log($"[Server] Client {senderClientId} is picking up { (droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name) }");
-
         netObj.Despawn();
 
     }

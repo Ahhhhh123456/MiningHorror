@@ -109,7 +109,7 @@ public class PlayerMovement : NetworkBehaviour
                 loadingBar.IncreaseLoadServerRpc(50f * Time.deltaTime); 
                 // adjust 50f for speed of fill
             }
-            stamina.UseStaminaServerRpc(100f * Time.deltaTime); // drain 10 per second
+            stamina.UseStaminaServerRpc(25f * Time.deltaTime); // drain 10 per second
         }
 
 

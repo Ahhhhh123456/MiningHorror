@@ -52,11 +52,15 @@ public class PlayerInventory : NetworkBehaviour
     public NetworkList<FixedString32Bytes> NetworkItems = new NetworkList<FixedString32Bytes>();
     public Transform holdPosition;
     public Transform pickaxePosition;
+
+    public bool holdPickaxe = false;
     public GameObject currentHeldItem;
     private Dictionary<string, GameObject> prefabLookup;
 
     public float playerWeight = 0f;
     public int currentSlotIndex = -1; // track currently held slot
+
+    public int maxSlots = 2;
     private MineType mineType;
     private PlayerMovement playerMovement;
 
@@ -371,6 +375,7 @@ public class PlayerInventory : NetworkBehaviour
     [ClientRpc]
     public void UpdateHeldItemClientRpc(int index)
     {
+        
         // Destroy current held item if it exists
         if (currentHeldItem != null)
         {
@@ -378,10 +383,22 @@ public class PlayerInventory : NetworkBehaviour
             currentHeldItem = null;
         }
 
-        if (index < 0 || index >= NetworkItems.Count) return;
+        // If invalid index, clear held item and reset flags
+        if (index < 0 || index >= NetworkItems.Count)
+        {
+            holdPickaxe = false;
+            Debug.Log("No item held.");
+            return;
+        }
+
         string itemName = NetworkItems[index].ToString();
 
-        if (!prefabLookup.TryGetValue(itemName, out GameObject prefab)) return;
+        if (!prefabLookup.TryGetValue(itemName, out GameObject prefab))
+        {
+            holdPickaxe = false;
+            Debug.LogWarning($"Prefab not found for {itemName}");
+            return;
+        }
 
         ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
 
@@ -389,11 +406,19 @@ public class PlayerInventory : NetworkBehaviour
         Transform targetHoldPosition = holdPosition;
         if (itemType.itemDatabase.ContainsKey(itemName) &&
             itemType.itemDatabase[itemName].category == ItemCategory.Tool)
+        {
             targetHoldPosition = pickaxePosition;
+            holdPickaxe = true;
+            Debug.Log("Holding pickaxe for mining.");
+        }
+        else
+        {
+            holdPickaxe = false;
+            Debug.Log("Not holding pickaxe.");
+        }
 
-        // Instantiate the held item for **all clients**
+        // Instantiate the held item for all clients
         currentHeldItem = Instantiate(prefab, targetHoldPosition);
-        
         currentHeldItem.name = prefab.name;
 
         currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
@@ -406,6 +431,7 @@ public class PlayerInventory : NetworkBehaviour
             rb.useGravity = false;
         }
     }
+
     public GameObject GetPrefabForItem(string itemName)
     {
         if (prefabLookup.TryGetValue(itemName, out GameObject prefab))

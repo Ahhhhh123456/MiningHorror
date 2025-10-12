@@ -226,6 +226,7 @@ public class LookAndClickInteraction : NetworkBehaviour
             playerInventory.itemType.itemDatabase[itemName].category == ItemCategory.Tool)
         {
             dropTransform = playerInventory.pickaxePosition;
+            playerInventory.holdPickaxe = false;
         }
 
         Vector3 spawnPos = dropTransform.position;
@@ -262,41 +263,44 @@ public class LookAndClickInteraction : NetworkBehaviour
 
     private void Mining()
     {
-        if (clickAction.action.WasReleasedThisFrame())
+        if (playerInventory.holdPickaxe == true)
         {
-            if (currentMineTarget != null)
+            if (clickAction.action.WasReleasedThisFrame())
             {
-                currentMineTarget.holdCount = 0;
-                Debug.Log("Stopped Mining Cube");
-                currentMineTarget = null;
-            }
-            mineTimer = 0f; // reset timer
-        }
-
-        if (clickAction.action.IsPressed())
-        {
-            Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, interactRange))
-            {
-                MineType mineTypeScript = hit.collider.GetComponent<MineType>();
-                if (mineTypeScript != null)
+                if (currentMineTarget != null)
                 {
-                    currentMineTarget = mineTypeScript;
-
-                    // Update timer
-                    mineTimer += Time.deltaTime;
-
-                    // Call Mining only when enough time has passed
-                    if (mineTimer >= mineInterval)
-                    {
-                        currentMineTarget.MiningOre();
-                        mineTimer -= mineInterval; // reset timer but keep overflow
-                    }
+                    currentMineTarget.holdCount = 0;
+                    Debug.Log("Stopped Mining Cube");
+                    currentMineTarget = null;
                 }
+                mineTimer = 0f; // reset timer
+            }
+
+            if (clickAction.action.IsPressed())
+            {
+                Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+                RaycastHit hit;
+
+                if (Physics.Raycast(ray, out hit, interactRange))
+                {
+                    MineType mineTypeScript = hit.collider.GetComponent<MineType>();
+                    if (mineTypeScript != null)
+                    {
+                        currentMineTarget = mineTypeScript;
+
+                        // Update timer
+                        mineTimer += Time.deltaTime;
+
+                        // Call Mining only when enough time has passed
+                        if (mineTimer >= mineInterval)
+                        {
+                            currentMineTarget.MiningOre();
+                            mineTimer -= mineInterval; // reset timer but keep overflow
+                        }
+                    }
 
 
+                }
             }
         }
     }

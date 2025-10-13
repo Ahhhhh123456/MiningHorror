@@ -1,39 +1,191 @@
 using UnityEngine;
-
-public class Dropped : MonoBehaviour
+using Unity.Netcode;
+using System.Linq;
+public class Dropped : NetworkBehaviour
 {
     [Header("Drop Settings")]
+    public NetworkObject dropPrefab;
     public float dropScale = 0.3f;
     public Vector3 dropOffset = Vector3.up;
+    private Vector3 pendingImpulse;
+    private bool hasPendingImpulse = false;
 
+    public OreData oreData;
 
-    public void DropItem(GameObject item)
+    public override void OnNetworkSpawn()
     {
-        
-        GameObject droppedItem = Instantiate(item, transform.position + dropOffset, Quaternion.identity);
-        droppedItem.name = item.name;
-        droppedItem.tag = "Dropped";
-        droppedItem.transform.localScale *= dropScale;
+        base.OnNetworkSpawn();
 
-        Rigidbody rb = droppedItem.AddComponent<Rigidbody>();
-        rb.mass = 1f;              // optional
-        rb.useGravity = true;
-        rb.AddForce(Vector3.up * 2f + new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f)), ForceMode.Impulse);
-
+        if (hasPendingImpulse && TryGetComponent(out Rigidbody rb))
+        {
+            rb.AddForce(pendingImpulse, ForceMode.Impulse);
+            hasPendingImpulse = false;
+        }
     }
 
+    // Called From MineType
+    public void DropItem()
+    {
+        Debug.Log("DropItem Called");
+        if (dropPrefab.TryGetComponent<NetworkObject>(out NetworkObject netObj))
+        {
+            Debug.Log("NetworkObject found");
+            DropItemServerRpc();
+        }
+    }
+
+    // Called From LookAndClick
     public void PickedUp(GameObject item)
     {
-        Debug.Log("Picked Up Item");
-        PlayerInventory inventoryScript = FindObjectOfType<PlayerInventory>();
-        if (inventoryScript != null)
+        if (item.TryGetComponent<NetworkObject>(out NetworkObject netObj))
         {
-            Debug.Log(item.name);
-            inventoryScript.UpdateInventory(item.name);
+            Debug.Log("NetworkObject found");
+            PickUpServerRpc(netObj.NetworkObjectId);
         }
-        
-        Destroy(item);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void PickUpServerRpc(ulong networkId, ServerRpcParams rpcParams = default)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkId, out NetworkObject netObj))
+        {
+            Debug.LogWarning($"[Server] No spawned object found for ID {networkId}");
+            return;
+        }
+
+        Dropped droppedScript = netObj.GetComponent<Dropped>();
+        if (droppedScript == null)
+        {
+            Debug.LogWarning($"[Server] Object {networkId} has no Dropped script.");
+            return;
+        }
+
+        ulong senderClientId = rpcParams.Receive.SenderClientId;
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(senderClientId, out var client))
+        {
+            Debug.LogWarning($"[Server] Could not find client {senderClientId}");
+            return;
+        }
+
+        PlayerInventory inventoryScript = client.PlayerObject.GetComponent<PlayerInventory>();
+
+        if (inventoryScript.NetworkItems.Count == inventoryScript.maxSlots)
+        {
+            Debug.Log($"[Server] Client {senderClientId} picked up {(droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name)}");
+            return;
+        }
+
+        if (inventoryScript == null)
+        {
+            Debug.LogWarning($"[Server] Client {senderClientId} has no PlayerInventory.");
+            return;
+        }
+
+        // Use server-authoritative add
+        if (droppedScript.oreData != null)
+        {
+            inventoryScript.AddItemServer(droppedScript.oreData.oreName, droppedScript.oreData);
+        }
+        else
+        {
+            inventoryScript.AddItemServer(netObj.name);
+        }
+        // Despawn the dropped object
+        if (inventoryScript)
+        Debug.Log($"[Server] Client {senderClientId} is picking up { (droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name) }");
+        netObj.Despawn();
 
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void DropItemServerRpc(ServerRpcParams rpcParams = default)
+    {
+        if (oreData == null || oreData.dropPrefab == null)
+        {
+            Debug.LogError("OreData or dropPrefab not assigned!");
+            return;
+        }
+
+        Debug.LogWarning($"Dropping {oreData.oreName} for client {rpcParams.Receive.SenderClientId}");
+
+        // Instantiate
+        NetworkObject droppedItem = Instantiate(oreData.dropPrefab, transform.position + dropOffset, Quaternion.identity);
+
+        // Copy OreData
+        if (droppedItem.TryGetComponent(out Dropped droppedScript))
+        {
+            droppedScript.oreData = oreData;
+        }
+
+        droppedItem.gameObject.tag = "Dropped";
+
+        droppedItem.name = oreData.dropPrefab.name;
+        droppedItem.transform.localScale *= dropScale;
+        droppedItem.Spawn();
+        SetNameClientRpc(droppedItem.NetworkObjectId, oreData.dropPrefab.name);
+
+        Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
+        if (rb == null)
+            rb = droppedItem.gameObject.AddComponent<Rigidbody>();
+
+        rb.mass = 1f;
+        rb.useGravity = true; // Turn on gravity now
+        rb.isKinematic = false; // Make sure physics is active
+
+        Vector3 force = Vector3.up * 2f + new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f));
+
+        // Apply on server
+        rb.AddForce(force, ForceMode.Impulse);
+
+        // Apply on clients
+        ApplyImpulseClientRpc(droppedItem.NetworkObjectId, force);
+        SetDroppedTagClientRpc(droppedItem.NetworkObjectId);
+
+        Debug.Log($"Dropped {droppedItem.name} with force {force}");
+    }
+
+
+    [ClientRpc]
+    void ApplyImpulseClientRpc(ulong networkId, Vector3 force)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkId, out NetworkObject netObj))
+        {
+            if (netObj.TryGetComponent(out Rigidbody rb))
+            {
+                rb.useGravity = true;     // ✅ turn on gravity
+                rb.isKinematic = false;   // ensure physics is active
+                rb.AddForce(force, ForceMode.Impulse);
+            }
+            else if (netObj.TryGetComponent(out Dropped dropped))
+            {
+                // Rigidbody not ready yet; store for OnNetworkSpawn
+                dropped.pendingImpulse = force;
+                dropped.hasPendingImpulse = true;
+            }
+        }
+    }
+
+
+    [ClientRpc]
+    void SetNameClientRpc(ulong networkId, string newName)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkId, out NetworkObject netObj))
+        {
+            netObj.name = newName;
+        }
+    }
+
+    [ClientRpc]
+    void SetDroppedTagClientRpc(ulong networkId)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkId, out NetworkObject netObj))
+        {
+            netObj.gameObject.tag = "Dropped";
+        }
+    }
+
+
+
+
+    
 }

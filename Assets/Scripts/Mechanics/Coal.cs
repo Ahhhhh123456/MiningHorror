@@ -18,11 +18,11 @@ public class Coal : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            // Logic for when the player collects coal
-            Debug.Log("Coal collected!");
-            GameManager.instance.coalCollected+=5; // Increment the coal count in the GameManager
-            GameManager.instance.coalCountText.text = "Fuel: " + GameManager.instance.coalCollected; // Update the UI text
-            Destroy(gameObject); // Destroy the coal object
+            // // Logic for when the player collects coal
+            // Debug.Log("Coal collected!");
+            // GameManager.instance.coalCollected+=5; // Increment the coal count in the GameManager
+            // GameManager.instance.coalCountText.text = "Fuel: " + GameManager.instance.coalCollected; // Update the UI text
+            // Destroy(gameObject); // Destroy the coal object
         }
     }
 }

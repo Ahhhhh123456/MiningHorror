@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Toon Player
+  m_Name: Toon Player Head
   m_Shader: {fileID: -6465566751694194690, guid: c58d88c59a294da498a7adecaa76c407, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: e995c968e6f261a42b194f5727ad4d19, type: 3}
+        m_Texture: {fileID: 2800000, guid: fbf187913d0870b4cae85f6caebf94ee, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RampTexture:
@@ -65,8 +65,8 @@ Material:
     - _ZWriteControl: 0
     m_Colors:
     - _DiffuseColor: {r: 1, g: 1, b: 1, a: 0}
-    - _Primary_Color: {r: 0.3823425, g: 0.38620752, b: 0.4528302, a: 0}
-    - _Secondary_Color: {r: 1, g: 0, b: 0.50978374, a: 0}
+    - _Primary_Color: {r: 1, g: 0.35686275, b: 0, a: 0}
+    - _Secondary_Color: {r: 1, g: 1, b: 1, a: 0}
     - _SpecularColour: {r: 1, g: 1, b: 1, a: 0}
     - _Tertiary_Color: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

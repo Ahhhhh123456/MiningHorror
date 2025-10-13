@@ -535,9 +535,9 @@ MonoBehaviour:
     holdRotation: {x: -90, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Ladder
-    prefab: {fileID: 2995874846724104720, guid: abf59c89b524b3d49aa4aabaad7eae14, type: 3}
-    holdRotation: {x: 0, y: 90, z: -10}
-    holdPositionOffset: {x: 0, y: 3, z: 0}
+    prefab: {fileID: 3009761070082280216, guid: c8de112fb5959ae459ace2744451500f, type: 3}
+    holdRotation: {x: -90, y: 90, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &4428244045320431343
 MonoBehaviour:
   m_ObjectHideFlags: 0

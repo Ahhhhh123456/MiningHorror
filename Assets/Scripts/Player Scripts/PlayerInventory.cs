@@ -422,7 +422,6 @@ public class PlayerInventory : NetworkBehaviour
         // Instantiate the held item for all clients
         currentHeldItem = Instantiate(prefab, targetHoldPosition);
         currentHeldItem.name = prefab.name;
-
         currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
         currentHeldItem.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
 

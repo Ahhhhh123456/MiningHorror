@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1918b79854ecb2d41ad9e13896ed7b55, type: 3}
+  m_Name: DrillBody
+  m_EditorClassIdentifier: 
+  drillPartName: DrillBody
+  stoneCount: 30
+  ironCount: 10
+  goldCount: 5
+  dropPrefab: {fileID: 1123019164413543685, guid: ead79a91a6c6f4d46978540391e6867b, type: 3}

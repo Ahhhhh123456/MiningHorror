@@ -1,82 +1,72 @@
+using Unity.Netcode;
 using UnityEngine;
-using System.Collections.Generic;
 
-public class MineType : MonoBehaviour
+public class MineType : NetworkBehaviour
 {
-    public Dictionary<string, RockData> rockTypes = new Dictionary<string, RockData>()
-    {
-        { "Stone", new RockData { durability = 5, weight = 1f } },
-        { "Iron",  new RockData { durability = 10, weight = 4f } },
-        { "Gold",  new RockData { durability = 15, weight = 8f } },
-    };
-
+    public OreData oreData; // assign in Inspector per prefab
     public int holdCount = 0;
 
-    [Header("Effects")]
-    public ParticleSystem ParticleFullyBreak;
-
-    public ParticleSystem ParticleBreaking; 
-
-
-    public void Mining()
+    public void MiningOre()
     {
-        string tag = gameObject.tag;
-        holdCount += 1;
-
-        Debug.Log("Count:" + holdCount);
-        if (rockTypes.ContainsKey(tag))
+        if (IsServer)
         {
-            RockData data = rockTypes[tag];
-
-            // Particles midway through mining. Keep for later use maybe.
-            // if (tag != "Stone" && holdCount == data.durability / 2)
-            // {
-            //     if (ParticleBreaking != null)
-            //     {
-            //         ParticleSystem PB = Instantiate(ParticleBreaking, transform.position, Quaternion.identity);
-            //         PB.Play();
-            //         Destroy(PB.gameObject, PB.main.duration + PB.main.startLifetime.constantMax);
-            //     }
-            // }
-
-            // Particles on first hit of object
-            if (holdCount == 1)
-            {
-                if (ParticleBreaking != null)
-                {
-                    ParticleSystem PB = Instantiate(ParticleBreaking, transform.position, Quaternion.identity);
-                    PB.Play();
-                    Destroy(PB.gameObject, PB.main.duration + PB.main.startLifetime.constantMax);
-                }
-            }
-
-            if (holdCount == data.durability)
-                {
-
-                    if (ParticleFullyBreak != null)
-                    {
-                        ParticleSystem PFB = Instantiate(ParticleFullyBreak, transform.position, Quaternion.identity);
-                        PFB.Play();
-                        Destroy(PFB.gameObject, PFB.main.duration + PFB.main.startLifetime.constantMax);
-
-                    }
-
-                    Dropped dropscript = GetComponent<Dropped>();
-                    if (dropscript != null)
-                    {
-                        dropscript.DropItem(gameObject);
-                    }
-
-
-                    //Debug.Log("Mining complete for: " + tag);
-                    gameObject.SetActive(false);
-
-                    holdCount = 0;
-                }
+            HandleMining();
         }
         else
         {
-            //Debug.Log("No entry found for tag: " + tag);
+            MineServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void MineServerRpc(ServerRpcParams rpcParams = default)
+    {
+        HandleMining();
+    }
+
+    private void HandleMining()
+    {
+        holdCount++;
+
+        // Play breaking particle for everyone
+        if (holdCount == 1 && oreData.breakingParticles != null)
+            PlayParticleClientRpc(oreData.breakingParticles.name, transform.position);
+
+        if (holdCount >= oreData.durability)
+        {
+            if (oreData.fullyBreakParticles != null)
+                PlayParticleClientRpc(oreData.fullyBreakParticles.name, transform.position);
+
+            Dropped dropscript = GetComponent<Dropped>();
+            if (dropscript != null)
+                dropscript.DropItem();
+
+            DespawnOreServerRpc(); // despawn block for all clients
+            holdCount = 0;
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void DespawnOreServerRpc()
+    {
+        if (NetworkObject != null && NetworkObject.IsSpawned)
+        {
+            NetworkObject.Despawn();
+        }
+    }
+
+    [ClientRpc]
+    void PlayParticleClientRpc(string particleName, Vector3 position)
+    {
+        ParticleSystem prefab = (particleName == oreData.breakingParticles.name) ? oreData.breakingParticles :
+                                (particleName == oreData.fullyBreakParticles.name) ? oreData.fullyBreakParticles :
+                                null;
+
+        if (prefab != null)
+        {
+            ParticleSystem ps = Instantiate(prefab, position, Quaternion.identity);
+            ps.Play();
+            Destroy(ps.gameObject, ps.main.duration + ps.main.startLifetime.constantMax);
         }
     }
 }

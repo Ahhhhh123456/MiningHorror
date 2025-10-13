@@ -410,7 +410,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5014342
+  m_Radius: 0.4
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0.001434207}
@@ -510,9 +510,11 @@ MonoBehaviour:
   ItemText: {fileID: 3037089006279269783}
   holdPosition: {fileID: 8962825347188990875}
   pickaxePosition: {fileID: 1055970757075040379}
+  holdPickaxe: 0
   currentHeldItem: {fileID: 0}
   playerWeight: 0
   currentSlotIndex: -1
+  maxSlots: 2
   inventoryCanvas: {fileID: 9006037623679593259}
   itemType: {fileID: 0}
   prefabEntries:
@@ -1621,7 +1623,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c193ffe6990261f449387a2451c15c2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseSensitivity: 500
+  mouseSensitivity: 450
   playerBody: {fileID: 115666732453222338}
   head: {fileID: 1539863830786234313}
 --- !u!114 &1855371338031975856

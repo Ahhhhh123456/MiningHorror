@@ -402,13 +402,13 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 0943c098522f0804caebf9cbedc7e5b3, type: 2}
   oreChance: 0.02
   orePrefabs:
-  - {fileID: 4720856768170020262, guid: 0bf4a80f29840bd4e9c5d30125177e94, type: 3}
-  - {fileID: 7695044068175496693, guid: aee75f7c3b1a7304ea8de88751c8638b, type: 3}
-  - {fileID: 3458549237076436046, guid: 02a1ba1ba54f91142af0688cc99b389d, type: 3}
+  - {fileID: 6319728801581947189, guid: e984d0414e0bebb478bdcccf86ebfdee, type: 3}
+  - {fileID: 8551429989948833742, guid: dec1a671e7572e24b84b231aa5b54d26, type: 3}
+  - {fileID: 3930451010469288781, guid: f21de0c4bed194a4fbbe02ca1990333a, type: 3}
   NetworkOrePrefabs:
-  - {fileID: 5311493799651647255, guid: 0bf4a80f29840bd4e9c5d30125177e94, type: 3}
-  - {fileID: -1200345405340672891, guid: aee75f7c3b1a7304ea8de88751c8638b, type: 3}
-  - {fileID: -9120839814650889323, guid: 02a1ba1ba54f91142af0688cc99b389d, type: 3}
+  - {fileID: 111440828249058207, guid: e984d0414e0bebb478bdcccf86ebfdee, type: 3}
+  - {fileID: 3757863753513745559, guid: dec1a671e7572e24b84b231aa5b54d26, type: 3}
+  - {fileID: 7040635711557364015, guid: f21de0c4bed194a4fbbe02ca1990333a, type: 3}
 --- !u!114 &241563496
 MonoBehaviour:
   m_ObjectHideFlags: 0

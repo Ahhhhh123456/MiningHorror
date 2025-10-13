@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DrillBody
   m_EditorClassIdentifier: 
   drillPartName: DrillBody
-  stoneCount: 30
-  ironCount: 10
-  goldCount: 5
+  coalCount: 1
+  ironCount: 0
+  goldCount: 0
   dropPrefab: {fileID: 1123019164413543685, guid: ead79a91a6c6f4d46978540391e6867b, type: 3}

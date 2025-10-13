@@ -5,7 +5,7 @@ using Unity.Netcode;
 public class DrillBoxData : ScriptableObject
 {
     public string drillPartName;
-    public int stoneCount;
+    public int coalCount;
     public int ironCount;
     public int goldCount;
     public NetworkObject dropPrefab; // ✅ NetworkObject, not GameObject

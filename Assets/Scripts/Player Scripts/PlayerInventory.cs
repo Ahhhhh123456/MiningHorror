@@ -237,10 +237,12 @@ public class PlayerInventory : NetworkBehaviour
     // Called by LookAndClick
     public void RemoveFromInventory(string itemName)
     {
+        Debug.Log($"Attempting to remove {itemName} from inventory.");
         // Ore Inventory
         for (int i = 0; i < NetworkOres.Count; i++)
         {
-            if (NetworkOres[i].oreName.ToString() == itemName)
+            Debug.Log($"Checking ore {NetworkOres[i].oreName} against {itemName}");
+            if (NetworkOres[i].oreName.ToString().ToLower() == itemName.ToLower())
             {
                 var entry = NetworkOres[i];
                 entry.count--;
@@ -439,5 +441,13 @@ public class PlayerInventory : NetworkBehaviour
         return null;
     }
     
-    
+    public int GetOreCount(string oreName)
+    {
+        foreach (var ore in NetworkOres)
+        {
+            if (ore.oreName.ToString().ToLower() == oreName.ToLower())
+                return ore.count; // or however your PlayerInventory stores amounts
+        }
+        return 0;
+    }
 }

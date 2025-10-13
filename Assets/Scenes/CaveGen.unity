@@ -400,7 +400,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   blockPrefab: {fileID: 1140600578073304908, guid: 50234fd9657329d4ebc68dc1efb6e6e6, type: 3}
   material: {fileID: 2100000, guid: 0943c098522f0804caebf9cbedc7e5b3, type: 2}
-  oreChance: 0.1
+  oreChance: 0.02
   orePrefabs:
   - {fileID: 4720856768170020262, guid: 0bf4a80f29840bd4e9c5d30125177e94, type: 3}
   - {fileID: 7695044068175496693, guid: aee75f7c3b1a7304ea8de88751c8638b, type: 3}

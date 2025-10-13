@@ -230,7 +230,7 @@ public class LookAndClickInteraction : NetworkBehaviour
         }
 
         Vector3 spawnPos = dropTransform.position;
-        Quaternion spawnRot = dropTransform.rotation;
+        Quaternion spawnRot = Quaternion.Euler(-90,0, 0); // face player
 
         // Spawn the dropped item
         GameObject droppedItem = Instantiate(prefab, spawnPos, spawnRot);

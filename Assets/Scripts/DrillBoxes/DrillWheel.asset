@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DrillWheel
   m_EditorClassIdentifier: 
   drillPartName: DrillWheel
-  coalCount: 0
-  ironCount: 0
-  goldCount: 1
+  coalCount: 5
+  ironCount: 5
+  goldCount: 5
   dropPrefab: {fileID: -9175161651640871428, guid: 8d5704fd71f25ba4da8d9b1b4229fc25, type: 3}

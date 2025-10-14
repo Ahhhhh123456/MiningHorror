@@ -439,7 +439,7 @@ public class PlayerInventory : NetworkBehaviour
             return prefab;
         return null;
     }
-    
+
     public int GetOreCount(string oreName)
     {
         foreach (var ore in NetworkOres)
@@ -448,5 +448,41 @@ public class PlayerInventory : NetworkBehaviour
                 return ore.count; // or however your PlayerInventory stores amounts
         }
         return 0;
+    }
+    
+
+    public GameObject CreateItemInstance(string itemName, Transform parent = null)
+    {
+        if (!prefabLookup.TryGetValue(itemName, out GameObject prefab))
+        {
+            Debug.LogWarning($"Prefab not found for {itemName}");
+            return null;
+        }
+
+        // Find prefab entry for rotation/offset
+        ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
+
+        // Choose hold or pickaxe position
+        Transform targetHoldPosition = holdPosition;
+        if (itemType.itemDatabase.ContainsKey(itemName) &&
+            itemType.itemDatabase[itemName].category == ItemCategory.Tool)
+        {
+            targetHoldPosition = pickaxePosition;
+        }
+
+        // Instantiate just like UpdateHeldItemClientRpc
+        GameObject itemInstance = Instantiate(prefab, targetHoldPosition);
+        itemInstance.name = prefab.name;
+        itemInstance.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
+        itemInstance.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
+        Debug.Log($"Found rotation for {itemName}: {itemInstance.transform.localRotation.eulerAngles}");
+        // Re-parent if needed (for world drops)
+        if (parent != null)
+        {
+            itemInstance.transform.SetParent(null);
+            itemInstance.transform.position = parent.position + parent.forward * 0.2f + Vector3.up * 0.2f;
+        }
+
+        return itemInstance;
     }
 }

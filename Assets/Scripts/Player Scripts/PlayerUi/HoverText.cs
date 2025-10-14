@@ -18,7 +18,8 @@ public class HoverText : MonoBehaviour
             NetworkedBoxData box = hit.collider.GetComponent<NetworkedBoxData>();
             if (box != null)
             {
-                hoverText.text = $"Coal: {box.coalCount.Value}\n" +
+                hoverText.text = hit.collider.gameObject.name + "\n" +
+                                 $"Coal: {box.coalCount.Value}\n" +
                                  $"Iron: {box.ironCount.Value}\n" +
                                  $"Gold: {box.goldCount.Value}";
             }

@@ -215,40 +215,26 @@ public class LookAndClickInteraction : NetworkBehaviour
         // Remove from networked inventory
         playerInventory.RemoveFromInventory(itemName);
 
-        // Get the prefab
-        GameObject prefab = playerInventory.GetPrefabForItem(itemName);
-        if (prefab == null) return;
+        // Instantiate using PlayerInventory’s logic
+        GameObject droppedItem = playerInventory.CreateItemInstance(itemName, playerInventory.holdPosition);
+        if (droppedItem == null) return;
 
-        // Use holdPosition or pickaxePosition for spawn
-        Transform dropTransform = playerInventory.holdPosition;
+        droppedItem.transform.SetParent(null); // make sure it’s world-space
 
-        if (playerInventory.itemType.itemDatabase.ContainsKey(itemName) &&
-            playerInventory.itemType.itemDatabase[itemName].category == ItemCategory.Tool)
-        {
-            dropTransform = playerInventory.pickaxePosition;
-            playerInventory.holdPickaxe = false;
-        }
-
-        Vector3 spawnPos = dropTransform.position;
-        Quaternion spawnRot = Quaternion.Euler(-90,0, 0); // face player
-
-        // Spawn the dropped item
-        GameObject droppedItem = Instantiate(prefab, spawnPos, spawnRot);
-        droppedItem.name = itemName; // remove (Clone)
-        droppedItem.transform.position = spawnPos + Vector3.up * 2f; // slight offset
         // Add Rigidbody for physics
         Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
         if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();
         rb.isKinematic = false;
         rb.useGravity = true;
 
-        // Optional: small forward push
-        rb.AddForce(dropTransform.forward * 2f, ForceMode.Impulse);
+        // Add small push
+        rb.AddForce(playerInventory.holdPosition.forward * 2f, ForceMode.Impulse);
 
         // Spawn networked object
         if (droppedItem.TryGetComponent<NetworkObject>(out NetworkObject netObj))
             netObj.Spawn();
     }
+
 
 
     [ClientRpc]

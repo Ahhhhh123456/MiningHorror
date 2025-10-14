@@ -66,7 +66,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 7e3ff40e00628ed42a9bf789453e640c, type: 2}
     - target: {fileID: 919132149155446097, guid: 1b93717c4bdf8d346bd24cc59c747d7e, type: 3}
       propertyPath: m_Name
-      value: Iron (Real)
+      value: Iron
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 1b93717c4bdf8d346bd24cc59c747d7e, type: 3}
       propertyPath: m_Layer
@@ -120,7 +120,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.02, y: 0.03, z: 0.02}
+  m_Size: {x: 0.04, y: 0.04, z: 0.03}
   m_Center: {x: 0.0010162201, y: -0.004386655, z: 0.0068973918}
 --- !u!114 &3757863753513745559
 MonoBehaviour:

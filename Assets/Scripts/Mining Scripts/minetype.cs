@@ -6,25 +6,25 @@ public class MineType : NetworkBehaviour
     public OreData oreData; // assign in Inspector per prefab
     public int holdCount = 0;
 
-    public void MiningOre()
+    public void MiningOre(Vector3 cameraForward, Vector3 hitNormal)
     {
         if (IsServer)
         {
-            HandleMining();
+            HandleMining(cameraForward, hitNormal);
         }
         else
         {
-            MineServerRpc();
+            MineServerRpc(cameraForward, hitNormal);
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    void MineServerRpc(ServerRpcParams rpcParams = default)
+    void MineServerRpc(Vector3 cameraForward, Vector3 hitNormal, ServerRpcParams rpcParams = default)
     {
-        HandleMining();
+        HandleMining(cameraForward, hitNormal);
     }
 
-    private void HandleMining()
+    private void HandleMining(Vector3 cameraForward, Vector3 hitNormal)
     {
         holdCount++;
 
@@ -39,7 +39,7 @@ public class MineType : NetworkBehaviour
 
             Dropped dropscript = GetComponent<Dropped>();
             if (dropscript != null)
-                dropscript.DropItem();
+                dropscript.DropItem(cameraForward, hitNormal);
 
             DespawnOreServerRpc(); // despawn block for all clients
             holdCount = 0;

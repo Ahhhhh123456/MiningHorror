@@ -20,9 +20,6 @@ public class BoxBreak : NetworkBehaviour
         droppedScript = FindObjectOfType<Dropped>();
         networkedBoxData = GetComponent<NetworkedBoxData>();
         networkedBoxData.InitializeFromDrillBoxData(boxData);
-        // Debug.Log("Stone: " + boxData.stoneCount);
-        // Debug.Log("Iron: " + boxData.ironCount);
-        // Debug.Log("Gold: " + boxData.goldCount);
     }
 
     public void WhoBrokeBox()
@@ -44,24 +41,31 @@ public class BoxBreak : NetworkBehaviour
 
         //Debug.Log($"Player {senderClientId} is breaking the box.");
         totalOres = 0;
-        CheckOreValues(networkedBoxData);
+        //CheckOreValues(networkedBoxData);
+        var boxOreNeeds = CheckOreValues(networkedBoxData);
 
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(senderClientId, out var client))
         {
             PlayerInventory inventoryScript = client.PlayerObject.GetComponent<PlayerInventory>();
 
-            List<string> oresToRemove = new List<string>();
-
-            foreach (var ore in inventoryScript.NetworkOres)
+            foreach (var kvp in boxOreNeeds) // kvp.Key = "coal", kvp.Value = amount needed
             {
-                oresToRemove.Add(ore.oreName.ToString());
-            }
+                string oreName = kvp.Key;
+                int needed = kvp.Value;
 
-            foreach (var oreName in oresToRemove)
-            {
-                inventoryScript.RemoveFromInventory(oreName);
-                inventoryScript.RemoveItemServer(oreName);
-                RemoveBoxOreValue(oreName);
+                if (needed <= 0) continue; // skip ores not needed
+
+                // Count how many player actually has
+                int playerHas = inventoryScript.GetOreCount(oreName); // assume you have a method like this
+
+                int toRemove = Mathf.Min(playerHas, needed);
+
+                for (int i = 0; i < toRemove; i++)
+                {
+                    inventoryScript.RemoveFromInventory(oreName);
+                    inventoryScript.RemoveItemServer(oreName);
+                    RemoveBoxOreValue(oreName); // update the NetworkedBoxData
+                }
             }
 
             if (totalOres == 0)
@@ -102,27 +106,34 @@ public class BoxBreak : NetworkBehaviour
 
     }
     
-    void CheckOreValues(NetworkedBoxData networkedBoxData)
+    Dictionary<string, int> CheckOreValues(NetworkedBoxData networkedBoxData)
     {
+        Dictionary<string, int> oreCounts = new Dictionary<string, int>();
         totalOres = 0;
 
-        // Using reflection on the NetworkedBoxData class
         var fields = typeof(NetworkedBoxData).GetFields(BindingFlags.Public | BindingFlags.Instance);
 
         foreach (var field in fields)
         {
-            // Only check NetworkVariables of type int
             if (field.FieldType == typeof(NetworkVariable<int>))
             {
                 NetworkVariable<int> valueVar = (NetworkVariable<int>)field.GetValue(networkedBoxData);
                 int value = valueVar.Value;
-                Debug.Log($"{field.Name}: {value}");
+
+                // Normalize field name (e.g., "coalCount" → "coal")
+                string oreName = field.Name.Replace("Count", "").ToLower();
+
+                oreCounts[oreName] = value;
                 totalOres += value;
+
+                Debug.Log($"{field.Name}: {value}");
             }
         }
 
         Debug.Log("Total ores in box: " + totalOres);
+        return oreCounts;
     }
+
 
 
     void RemoveBoxOreValue(string oreName)
@@ -131,7 +142,7 @@ public class BoxBreak : NetworkBehaviour
 
         NetworkVariable<int> variable = oreName.ToLower() switch
         {
-            "stone" => networkedBoxData.stoneCount,
+            "coal" => networkedBoxData.coalCount,
             "iron" => networkedBoxData.ironCount,
             "gold" => networkedBoxData.goldCount,
             _ => null

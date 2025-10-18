@@ -24,13 +24,13 @@ public class Dropped : NetworkBehaviour
     }
 
     // Called From MineType
-    public void DropItem()
+    public void DropItem(Vector3 cameraForward, Vector3 hitNormal)
     {
         Debug.Log("DropItem Called");
         if (dropPrefab.TryGetComponent<NetworkObject>(out NetworkObject netObj))
         {
             Debug.Log("NetworkObject found");
-            DropItemServerRpc();
+            DropItemServerRpc(cameraForward, hitNormal);
         }
     }
 
@@ -98,7 +98,7 @@ public class Dropped : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void DropItemServerRpc(ServerRpcParams rpcParams = default)
+    public void DropItemServerRpc(Vector3 cameraForward, Vector3 hitNormal, ServerRpcParams rpcParams = default)
     {
         if (oreData == null || oreData.dropPrefab == null)
         {
@@ -107,42 +107,61 @@ public class Dropped : NetworkBehaviour
         }
 
         Debug.LogWarning($"Dropping {oreData.oreName} for client {rpcParams.Receive.SenderClientId}");
+        Debug.Log($"Camera forward: {cameraForward}, Hit normal: {hitNormal}");
 
-        // Instantiate
-        NetworkObject droppedItem = Instantiate(oreData.dropPrefab, transform.position + dropOffset, Quaternion.identity);
+        // Spawn slightly above the ore so it doesn't intersect
+        Vector3 spawnPos = transform.position + hitNormal * 0.2f + Vector3.up * 0.2f;
+        NetworkObject droppedItem = Instantiate(oreData.dropPrefab, spawnPos, Quaternion.identity);
 
-        // Copy OreData
         if (droppedItem.TryGetComponent(out Dropped droppedScript))
-        {
             droppedScript.oreData = oreData;
-        }
 
         droppedItem.gameObject.tag = "Dropped";
-
         droppedItem.name = oreData.dropPrefab.name;
         droppedItem.transform.localScale *= dropScale;
         droppedItem.Spawn();
         SetNameClientRpc(droppedItem.NetworkObjectId, oreData.dropPrefab.name);
 
         Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
-        if (rb == null)
-            rb = droppedItem.gameObject.AddComponent<Rigidbody>();
+        if (rb == null) rb = droppedItem.gameObject.AddComponent<Rigidbody>();
 
         rb.mass = 1f;
-        rb.useGravity = true; // Turn on gravity now
-        rb.isKinematic = false; // Make sure physics is active
+        rb.useGravity = true;
+        rb.isKinematic = false;
 
-        Vector3 force = Vector3.up * 2f + new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f));
+        // Decide force direction based on camera vs surface normal
+        Vector3 forceDir;
+        float dot = Vector3.Dot(cameraForward.normalized, hitNormal.normalized);
 
-        // Apply on server
+        if (dot < -0.5f)
+        {
+            // Camera pointing roughly at the surface → push away from surface
+            forceDir = hitNormal;
+        }
+        else if (dot > 0.5f)
+        {
+            // Camera pointing roughly opposite → push toward player
+            forceDir = -hitNormal;
+        }
+        else
+        {
+            // Side angles → just use camera direction
+            forceDir = cameraForward;
+        }
+
+        Vector3 force = forceDir.normalized * 3f + Vector3.up * 1.5f;
+
+        // Apply force on server
         rb.AddForce(force, ForceMode.Impulse);
 
-        // Apply on clients
+        // Apply same force on clients
         ApplyImpulseClientRpc(droppedItem.NetworkObjectId, force);
         SetDroppedTagClientRpc(droppedItem.NetworkObjectId);
 
         Debug.Log($"Dropped {droppedItem.name} with force {force}");
     }
+
+
 
 
     [ClientRpc]

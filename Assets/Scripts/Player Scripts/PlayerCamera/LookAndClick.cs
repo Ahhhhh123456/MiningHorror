@@ -279,8 +279,9 @@ public class LookAndClickInteraction : NetworkBehaviour
 
                         // Call Mining only when enough time has passed
                         if (mineTimer >= mineInterval)
-                        {
-                            currentMineTarget.MiningOre();
+                        {   
+                            // Passes camera and position of where the player mines
+                            currentMineTarget.MiningOre(playerCamera.transform.forward, hit.normal);
                             mineTimer -= mineInterval; // reset timer but keep overflow
                         }
                     }

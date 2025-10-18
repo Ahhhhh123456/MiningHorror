@@ -30,7 +30,13 @@ public class MineType : NetworkBehaviour
 
         // Play breaking particle for everyone
         if (holdCount == 1 && oreData.breakingParticles != null)
+        {
             PlayParticleClientRpc(oreData.breakingParticles.name, transform.position);
+            AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
+        }
+        
+        if (holdCount % 30 == 0 && oreData.breakingParticles != null)
+            AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
 
         if (holdCount >= oreData.durability)
         {

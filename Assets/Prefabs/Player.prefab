@@ -1482,6 +1482,7 @@ GameObject:
   - component: {fileID: 1514662869923634588}
   - component: {fileID: 7092328656714345724}
   - component: {fileID: 1855371338031975856}
+  - component: {fileID: 419555856906711604}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1566,7 +1567,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5861772471260538108}
-  m_Enabled: 0
+  m_Enabled: 1
 --- !u!114 &1514662869923634588
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1653,6 +1654,30 @@ MonoBehaviour:
   interactableLayer:
     serializedVersion: 2
     m_Bits: 128
+--- !u!167 &419555856906711604
+AudioReverbZone:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5861772471260538108}
+  m_Enabled: 1
+  m_MinDistance: 10
+  m_MaxDistance: 15
+  m_ReverbPreset: 9
+  m_Room: -1000
+  m_RoomHF: 0
+  m_DecayTime: 2.91
+  m_DecayHFRatio: 1.3
+  m_Reflections: -602
+  m_ReflectionsDelay: 0.015
+  m_Reverb: -302
+  m_ReverbDelay: 0.022
+  m_HFReference: 5000
+  m_Diffusion: 100
+  m_Density: 100
+  m_LFReference: 250
+  m_RoomLF: 0
 --- !u!1 &5993044735523093306
 GameObject:
   m_ObjectHideFlags: 0
@@ -2482,7 +2507,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8299781542833470292}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: da890e670d4325a45b68eee34b2da3f2, type: 3}
   m_Name: 

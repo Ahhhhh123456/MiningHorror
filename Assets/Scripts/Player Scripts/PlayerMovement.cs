@@ -1,6 +1,8 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements.Experimental;
+using NUnit.Framework.Internal.Filters;
 
 [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
 public class PlayerMovement : NetworkBehaviour
@@ -43,6 +45,38 @@ public class PlayerMovement : NetworkBehaviour
     private bool isClimbing = false;
     private Transform currentLadder;
 
+    public Animator animator;
+
+    public enum PlayerStates
+    {
+        IDLE,
+        WALK,
+        JUMP,
+    }
+
+    PlayerStates CurrentState
+    {
+        set
+        {
+            playerCurrentState = value;
+
+            switch(playerCurrentState)
+            {
+                case PlayerStates.IDLE:
+                    animator.Play("Idle");
+                    break;
+                case PlayerStates.WALK:
+                    animator.Play("Walk");
+                    break;
+                case PlayerStates.JUMP:
+                    animator.Play("Jump");
+                    break;
+            }
+        }
+    }
+
+    PlayerStates playerCurrentState;
+
 
     void Start()
     {
@@ -64,6 +98,8 @@ public class PlayerMovement : NetworkBehaviour
         }
 
         UpdateMoveSpeed();
+
+        animator = GetComponentInChildren<Animator>();
     }
 
     void OnEnable()
@@ -183,6 +219,17 @@ public class PlayerMovement : NetworkBehaviour
 
         // Apply movement
         rb.linearVelocity = new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z);
+
+        if (input != Vector2.zero)
+        {
+            animator.SetFloat("xMove", input.x);
+            animator.SetFloat("yMove", input.y);
+            CurrentState = PlayerStates.WALK;
+        }
+        else
+        {
+            CurrentState = PlayerStates.IDLE;
+        }
     }
 
 

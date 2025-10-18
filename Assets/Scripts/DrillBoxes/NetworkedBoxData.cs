@@ -4,7 +4,7 @@ using UnityEngine;
 public class NetworkedBoxData : NetworkBehaviour
 {
     // NetworkVariables for ore counts
-    public NetworkVariable<int> stoneCount = new NetworkVariable<int>(0);
+    public NetworkVariable<int> coalCount = new NetworkVariable<int>(0);
     public NetworkVariable<int> ironCount = new NetworkVariable<int>(0);
     public NetworkVariable<int> goldCount = new NetworkVariable<int>(0);
 
@@ -12,7 +12,7 @@ public class NetworkedBoxData : NetworkBehaviour
     {
 
         // Set starting values
-        stoneCount.Value = boxData.stoneCount;
+        coalCount.Value = boxData.coalCount;
         ironCount.Value = boxData.ironCount;
         goldCount.Value = boxData.goldCount;
     }

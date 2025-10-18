@@ -714,7 +714,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1857678587941897687}
-  - component: {fileID: 3349826917433285713}
   - component: {fileID: 8620404209389944362}
   - component: {fileID: 7567113563126236500}
   - component: {fileID: 8712592768138031279}
@@ -725,7 +724,6 @@ GameObject:
   - component: {fileID: 5579227905233273499}
   - component: {fileID: 3486490584670948592}
   - component: {fileID: 5365102101444058272}
-  - component: {fileID: 2883740471949175442}
   - component: {fileID: 6464447159036780730}
   - component: {fileID: 7492589602436191964}
   - component: {fileID: 3386794775839806669}
@@ -754,14 +752,6 @@ Transform:
   - {fileID: 577710633183381313}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &3349826917433285713
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3380701076809917854}
-  m_Mesh: {fileID: 0}
 --- !u!23 &8620404209389944362
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -979,9 +969,9 @@ MonoBehaviour:
     holdRotation: {x: -90, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Ladder
-    prefab: {fileID: 2995874846724104720, guid: abf59c89b524b3d49aa4aabaad7eae14, type: 3}
-    holdRotation: {x: 0, y: 90, z: -10}
-    holdPositionOffset: {x: 0, y: 3, z: 0}
+    prefab: {fileID: 3009761070082280216, guid: c8de112fb5959ae459ace2744451500f, type: 3}
+    holdRotation: {x: -90, y: 90, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &5579227905233273499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1064,19 +1054,6 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
---- !u!114 &2883740471949175442
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3380701076809917854}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5038678bcef64874290638d48e4713a6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hostSteamId: 0
 --- !u!114 &6464447159036780730
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -283,7 +283,6 @@ GameObject:
   - component: {fileID: 4428244045320431343}
   - component: {fileID: 216265315028909160}
   - component: {fileID: 6963044783393849843}
-  - component: {fileID: 3815501497436693231}
   - component: {fileID: 8052847251308309946}
   - component: {fileID: 7744466238523859097}
   - component: {fileID: 8552961329543922130}
@@ -493,6 +492,7 @@ MonoBehaviour:
   fallDamageMultiplier: 2
   ladderDetectionRadius: 1
   ladderClimbSpeed: 3
+  animator: {fileID: 0}
 --- !u!114 &3475916322898474429
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -620,19 +620,6 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
---- !u!114 &3815501497436693231
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3596784101021652936}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5038678bcef64874290638d48e4713a6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hostSteamId: 0
 --- !u!114 &8052847251308309946
 MonoBehaviour:
   m_ObjectHideFlags: 0

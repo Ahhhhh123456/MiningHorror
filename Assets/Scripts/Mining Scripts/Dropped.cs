@@ -149,7 +149,7 @@ public class Dropped : NetworkBehaviour
             forceDir = cameraForward;
         }
 
-        Vector3 force = forceDir.normalized * 3f + Vector3.up * 1.5f;
+        Vector3 force = forceDir.normalized * 2f + Vector3.up * 1.5f;
 
         // Apply force on server
         rb.AddForce(force, ForceMode.Impulse);

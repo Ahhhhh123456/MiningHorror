@@ -13,15 +13,24 @@ public class SteamLobbyManager : MonoBehaviour
     private const string HOST_STEAMID_KEY = "HostAddress";
     private SteamNetworkingSocketsTransport steamTransport;
 
+
+    void Awake()
+    {
+
+        DontDestroyOnLoad(gameObject);
+        lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
+        gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
+        lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+    }
     void Start()
     {
         // Grab the Steam transport from the NetworkManager
         steamTransport = NetworkManager.Singleton.GetComponent<SteamNetworkingSocketsTransport>();
 
         // Hook up Steamworks callbacks
-        lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
-        gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
-        lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+        // lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
+        // gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
+        // lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
 
         // Optional: NGO connection debug logging
         NetworkManager.Singleton.OnClientConnectedCallback += (id) =>

@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 public class CaveGeneration : NetworkBehaviour
 {
@@ -27,15 +28,22 @@ public class CaveGeneration : NetworkBehaviour
         CreateCave();
     }
 
-    public override void OnNetworkSpawn()
+public override void OnNetworkSpawn()
+{
+    base.OnNetworkSpawn();
+
+    if (IsServer)
     {
-        base.OnNetworkSpawn();
-        if (IsServer)
+        NetworkManager.Singleton.OnClientConnectedCallback += (clientId) =>
         {
-            Debug.Log("Server: Generating cave and ores...");
-            OreGeneration();
-        }
+            if (clientId == NetworkManager.Singleton.LocalClientId) return; // skip host
+
+            Debug.Log("Host: Client connected, generating cave...");
+            StartCoroutine(SpawnOresBatched()); // generate NetworkObjects for ores safely
+        };
     }
+}
+
 
 
     public void CreateCave()
@@ -55,7 +63,7 @@ public class CaveGeneration : NetworkBehaviour
                 {
                     float noiseValue = Perlin3D((x + offset) * noiseScale / 2, (y + offset) * noiseScale, (z + offset) * noiseScale / 2);
 
-                    if ((noiseValue < 0.45f || noiseValue > 0.55f) || 
+                    if ((noiseValue < 0.45f || noiseValue > 0.55f) ||
                         (y == 0 || y == caveHeight - 1) ||
                         (x == 0 || x == caveWidth - 1) ||
                         (z == 0 || z == caveDepth - 1))
@@ -112,50 +120,47 @@ public class CaveGeneration : NetworkBehaviour
     }
 
 
-  
-    public void OreGeneration()
+    
+    private IEnumerator SpawnOresBatched()
     {
-        bool allValid = true;
+        int batchSize = 50; // spawn 50 ores per frame
+        int index = 0;
 
-        foreach (var networkOrePrefab in NetworkOrePrefabs)
+        while (index < blockPositions.Count)
         {
-            if (!networkOrePrefab.TryGetComponent<NetworkObject>(out _))
+            for (int i = 0; i < batchSize && index < blockPositions.Count; i++, index++)
             {
-                Debug.LogWarning($"Ore prefab {networkOrePrefab.name} is missing a NetworkObject component!");
-                allValid = false;
+                if (Random.value < oreChance)
+                {
+                    GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
+                    NetworkObject oreInstance = Instantiate(chosenOre, blockPositions[index], Quaternion.identity)
+                                                .GetComponent<NetworkObject>();
+
+                    oreInstance.Spawn(); // Spawn first
+                    oreInstance.name = chosenOre.name; // rename on server
+
+                    // Now safely call the ClientRpc
+                    OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
+                }
             }
+            yield return null; // wait a frame to avoid flooding the client
         }
 
-        if (allValid)
-        {
-            Debug.Log("All ore prefabs have NetworkObjects. Requesting ore generation...");
-            OreGenerationServerRpc();
-        }
+        Debug.Log("Finished spawning ores in batches.");
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void OreGenerationServerRpc(ServerRpcParams rpcParams = default)
+    [ClientRpc]
+    void OreNameClientRpc(ulong networkId, string newName)
     {
-        if (!IsServer) return;
-
-        Debug.Log("Generating ores...");
-        tempCount = 0;
-
-        foreach (Vector3 pos in blockPositions)
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkId, out NetworkObject netObj))
         {
-            tempCount++;
-            if (Random.value < oreChance)
-            {
-                GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
-                NetworkObject oreInstance = Instantiate(chosenOre, pos, Quaternion.identity).GetComponent<NetworkObject>();
-                oreInstance.name = chosenOre.name;
-                oreInstance.Spawn();
-            }
+            netObj.gameObject.name = newName;
         }
-
-        Debug.Log($"Generated ores across {tempCount} blocks.");
+        else
+        {
+            Debug.LogWarning($"OreNameClientRpc: NetworkObject {networkId} not found on client yet.");
+        }
     }
-
 
     public void ClearCave()
     {

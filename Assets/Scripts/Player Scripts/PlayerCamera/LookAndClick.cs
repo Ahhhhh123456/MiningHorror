@@ -53,6 +53,8 @@ public class LookAndClickInteraction : NetworkBehaviour
 
     void OnEnable()
     {
+        if (!IsOwner) return; // 🔒 Only local player listens for input
+
         clickAction.action.Enable();
         eButtonAction.action.Enable();
         slot1Action.action.Enable();
@@ -60,12 +62,15 @@ public class LookAndClickInteraction : NetworkBehaviour
         slot3Action.action.Enable();
         slot4Action.action.Enable();
         dropAction.action.Enable();
+
         dropAction.action.performed += StartDropping;
         dropAction.action.canceled += StopDropping;
     }
 
     void OnDisable()
     {
+        if (!IsOwner) return; // 🔒 Only local player unbinds input
+
         clickAction.action.Disable();
         eButtonAction.action.Disable();
         slot1Action.action.Disable();
@@ -73,13 +78,17 @@ public class LookAndClickInteraction : NetworkBehaviour
         slot3Action.action.Disable();
         slot4Action.action.Disable();
         dropAction.action.Disable();
+
         dropAction.action.performed -= StartDropping;
         dropAction.action.canceled -= StopDropping;
     }
 
 
+
     void Update()
     {
+        if (!IsOwner) return; // 🧱 Only process input for the local player
+
         if (eButtonAction.action.WasPressedThisFrame())
         {
             HandleInteraction();
@@ -93,17 +102,10 @@ public class LookAndClickInteraction : NetworkBehaviour
         if (isDropping)
         {
             if (loadingBar != null)
-            {
                 loadingBar.IncreaseLoadServerRpc(30f * Time.deltaTime);
-                // adjust 30f for speed of fill
-            }
-            else
-            {
-                Debug.LogWarning("LoadingBar component not found on player.");
-            }
         }
-        ChooseInventorySlot();
 
+        ChooseInventorySlot();
         Mining();
     }
 

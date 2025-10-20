@@ -237,55 +237,77 @@ public class PlayerInventory : NetworkBehaviour
     // Called by LookAndClick
     public void RemoveFromInventory(string itemName)
     {
-        Debug.Log($"Attempting to remove {itemName} from inventory.");
-        // Ore Inventory
+        Debug.Log($"[Inventory] Attempting to remove '{itemName}' from inventory.");
+
+        // Early validation
+        if (string.IsNullOrEmpty(itemName))
+        {
+            Debug.LogWarning("[Inventory] Item name is null or empty.");
+            return;
+        }
+
+        // Debug which references are valid
+        Debug.Log($"mineType={mineType != null}, itemType={itemType != null}, playerMovement={playerMovement != null}");
+
+        // ---- Ore Inventory ----
         for (int i = 0; i < NetworkOres.Count; i++)
         {
-            Debug.Log($"Checking ore {NetworkOres[i].oreName} against {itemName}");
-            if (NetworkOres[i].oreName.ToString().ToLower() == itemName.ToLower())
+            string oreName = NetworkOres[i].oreName.ToString();
+            if (oreName.Equals(itemName, StringComparison.OrdinalIgnoreCase))
             {
                 var entry = NetworkOres[i];
                 entry.count--;
+
                 if (entry.count <= 0)
-                {
                     NetworkOres.RemoveAt(i);
+                else
+                    NetworkOres[i] = entry;
+
+                // Adjust weight if possible
+                if (mineType != null && mineType.oreData != null)
+                {
+                    playerWeight -= mineType.oreData.weight;
+                    if (playerMovement != null)
+                        playerMovement.UpdateMoveSpeed();
+
+                    Debug.Log($"[Inventory] Dropped ore '{itemName}' (Weight {mineType.oreData.weight}). Total weight: {playerWeight}");
                 }
                 else
                 {
-                    NetworkOres[i] = entry;
+                    Debug.LogWarning($"[Inventory] mineType or oreData was null while removing '{itemName}'. Weight not adjusted.");
                 }
 
-                // Adjust weight
-                OreData data = mineType.oreData;
-                playerWeight -= data.weight;
-                playerMovement.UpdateMoveSpeed();
-
-                Debug.Log($"Dropped {itemName} (Weight {data.weight}). Total weight: {playerWeight}");
-
-                break;
+                break; // Stop after removing one matching ore
             }
         }
 
-        // General items
+        // ---- General Items ----
         for (int i = 0; i < NetworkItems.Count; i++)
         {
-            if (NetworkItems[i].ToString() == itemName)
+            if (NetworkItems[i].ToString().Equals(itemName, StringComparison.OrdinalIgnoreCase))
             {
                 NetworkItems.RemoveAt(i);
 
-                if (itemType.itemDatabase.ContainsKey(itemName))
+                if (itemType != null && itemType.itemDatabase != null && itemType.itemDatabase.ContainsKey(itemName))
                 {
                     float itemWeight = itemType.itemDatabase[itemName].weight;
                     playerWeight -= itemWeight;
-                    playerMovement.UpdateMoveSpeed();
+                    if (playerMovement != null)
+                        playerMovement.UpdateMoveSpeed();
+
+                    Debug.Log($"[Inventory] Dropped '{itemName}' (Weight {itemWeight}). Total weight: {playerWeight}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[Inventory] itemType or itemDatabase missing for '{itemName}'. Weight not adjusted.");
                 }
 
                 UpdateItemUIText();
-                Debug.Log($" Dropped {itemName}. Total Weight: {playerWeight}. Items left: " + string.Join(", ", NetworkItems));
-                break;
+                break; // Stop after removing one matching item
             }
         }
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void ClearHeldItemServerRpc()

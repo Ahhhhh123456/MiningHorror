@@ -32,11 +32,13 @@ public class MineType : NetworkBehaviour
         if (holdCount == 1 && oreData.breakingParticles != null)
         {
             PlayParticleClientRpc(oreData.breakingParticles.name, transform.position);
-            AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
+            //AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
+            PlayMineSoundClientRpc();
         }
         
         if (holdCount % 30 == 0 && oreData.breakingParticles != null)
-            AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
+            //AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
+            PlayMineSoundClientRpc();
 
         if (holdCount >= oreData.durability)
         {
@@ -59,6 +61,12 @@ public class MineType : NetworkBehaviour
         {
             NetworkObject.Despawn();
         }
+    }
+
+    [ClientRpc]
+    void PlayMineSoundClientRpc()
+    {
+        AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
     }
 
     [ClientRpc]

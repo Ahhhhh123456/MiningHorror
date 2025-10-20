@@ -1577,8 +1577,8 @@
     "m_ObjectId": "097f9f8a1b984454978b5bbc64570946",
     "m_Title": "Ramp Texture",
     "m_Position": {
-        "x": -672.0,
-        "y": 461.0
+        "x": -671.9999389648438,
+        "y": 461.0000305175781
     }
 }
 
@@ -1998,7 +1998,7 @@
     "m_ObjectId": "146345151fa543cf816e8e34b0ec7e72",
     "m_Title": "Apply Light Colour",
     "m_Position": {
-        "x": -799.0,
+        "x": -798.9999389648438,
         "y": -286.0
     }
 }
@@ -2158,7 +2158,7 @@
     "m_Title": "Apply Albedo (ambient)",
     "m_Position": {
         "x": 570.0,
-        "y": -554.0
+        "y": -554.0000610351563
     }
 }
 
@@ -2647,7 +2647,7 @@
     "m_Title": "Combine Diffuse + Specular",
     "m_Position": {
         "x": 991.0,
-        "y": 136.0
+        "y": 136.00001525878907
     }
 }
 
@@ -3128,7 +3128,7 @@
     "m_ObjectId": "45d36482ab444f869f5edb7b25113a27",
     "m_Title": "+ Additional Lights",
     "m_Position": {
-        "x": 1751.0,
+        "x": 1751.0001220703125,
         "y": -97.0
     }
 }
@@ -3358,7 +3358,7 @@
     "m_Title": "Ramp Texture",
     "m_Position": {
         "x": -2147.0,
-        "y": -38.0
+        "y": -37.99999237060547
     }
 }
 
@@ -4323,8 +4323,8 @@
     "m_ObjectId": "7142348eaaa346d5a25d0d6d14c52666",
     "m_Title": "Ambient + Main Light",
     "m_Position": {
-        "x": 1536.0,
-        "y": -361.0
+        "x": 1536.0001220703125,
+        "y": -361.00006103515627
     }
 }
 
@@ -4608,8 +4608,8 @@
     "m_ObjectId": "7c88845d502b4085af23e7952f3f7522",
     "m_Title": "Albedo",
     "m_Position": {
-        "x": -200.0,
-        "y": -227.0
+        "x": -200.0001220703125,
+        "y": -227.00001525878907
     }
 }
 
@@ -4929,7 +4929,7 @@
     "m_Title": "Apply Albedo (diffuse)",
     "m_Position": {
         "x": 577.0,
-        "y": 136.0
+        "y": 136.00001525878907
     }
 }
 
@@ -5620,7 +5620,7 @@
     "m_Title": "Specular",
     "m_Position": {
         "x": -1154.0,
-        "y": 461.0
+        "y": 461.0000305175781
     }
 }
 
@@ -6283,7 +6283,7 @@
     "m_Title": "Diffuse, N Dot L",
     "m_Position": {
         "x": -2688.0,
-        "y": -312.0
+        "y": -312.0000305175781
     }
 }
 
@@ -6433,7 +6433,7 @@
     "m_ObjectId": "b57f5ced9e504dc8bc6cdb49b3744685",
     "m_Title": "Culling Mask",
     "m_Position": {
-        "x": -979.0,
+        "x": -978.9999389648438,
         "y": -262.0
     }
 }
@@ -7771,7 +7771,7 @@
     "m_ObjectId": "d05ee2f3810f446fbabf30a5e25a65d5",
     "m_Title": "Additional Lights (Toon)",
     "m_Position": {
-        "x": -58.0,
+        "x": -58.0001220703125,
         "y": 814.0
     }
 }
@@ -7914,7 +7914,7 @@
     "m_ObjectId": "d71ec0a8d7894bed8b3e4b37872c3ba7",
     "m_Title": "Main Light Cookie",
     "m_Position": {
-        "x": -1904.0,
+        "x": -1904.000244140625,
         "y": -399.0
     }
 }
@@ -8859,7 +8859,7 @@
     "m_ObjectId": "f8709b9010d045249e88f5948d9a686e",
     "m_Title": "Apply Fog",
     "m_Position": {
-        "x": 1938.0,
+        "x": 1938.0001220703125,
         "y": 137.0
     }
 }

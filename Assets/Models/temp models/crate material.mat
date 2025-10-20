@@ -21,18 +21,16 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: crate material
-  m_Shader: {fileID: -6465566751694194690, guid: 2753d56cee62e1e4c815b7d92a3a0328, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 7d2f18e7dbb283c4d88b16be2f276924, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords:
-  - ADDITIONAL_LIGHTS_ON
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2000
-  stringTagMap:
-    RenderType: Opaque
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
   m_LockedProperties: 
@@ -41,6 +39,10 @@ Material:
     m_TexEnvs:
     - _BaseMap:
         m_Texture: {fileID: 2800000, guid: d8035503d8912ec44ab0476aa096d135, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Base_Texture:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RampTexture:
@@ -71,6 +73,7 @@ Material:
     - _AlphaToMask: 0
     - _Alpha_Clip_Threshold: 0.5
     - _Blend: 0
+    - _BlendModePreserveSpecular: 1
     - _CastShadows: 1
     - _Cull: 2
     - _DYNAMICLIGHTMAP: 0
@@ -79,14 +82,17 @@ Material:
     - _LIGHTMAP_SHADOW_MIXING: 0
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _ReceiveShadows: 1
     - _SPECULAR: 0
     - _Smoothness: 0.5
     - _SrcBlend: 1
     - _Surface: 0
+    - _WorkflowMode: 1
     - _ZTest: 4
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
+    - _Color: {r: 0.9056604, g: 0.74969363, b: 0.49127805, a: 0}
     - _DiffuseColor: {r: 0.7735849, g: 0.56245023, b: 0.3539516, a: 1}
     - _SpecularColour: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

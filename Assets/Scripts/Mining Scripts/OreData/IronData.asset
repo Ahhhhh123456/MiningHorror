@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   oreName: Iron
   durability: 200
-  weight: 4
+  weight: 2
   dropPrefab: {fileID: 3757863753513745559, guid: dec1a671e7572e24b84b231aa5b54d26, type: 3}
   breakingParticles: {fileID: 93463955118898173, guid: 45441f6023413734b8404b55b07fc753, type: 3}
   fullyBreakParticles: {fileID: 29186453002920994, guid: db32ecee90d496244b669532db5d9609, type: 3}

@@ -70,6 +70,9 @@ public class MarchingCubes : NetworkBehaviour
         MeshRenderer mr = g.AddComponent<MeshRenderer>();
         mr.material = material;
         mf.mesh = mesh;
+
+        MeshysHelper helper = g.AddComponent<MeshysHelper>();
+        helper.caveGenerator = this;
     
         if (valid)
         {
@@ -478,6 +481,44 @@ public class MarchingCubes : NetworkBehaviour
         return Vector3.Cross(b - a, c - a).sqrMagnitude * 0.25f; // squared area
     }
 
+    public void MineCave(Vector3 worldPos, float radius, float depth)
+    {
+        int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
+        int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
+        int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
+
+        int r = Mathf.CeilToInt(radius / resolution);
+
+        for (int x = x0 - r; x <= x0 + r; x++)
+            for (int y = y0 - r; y <= y0 + r; y++)
+                for (int z = z0 - r; z <= z0 + r; z++)
+                {
+                    if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
+
+                    Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+                    if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+                    {
+                        densityMap[x, y, z] -= depth;
+                        densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
+                    }
+                }
+
+        UpdateCaveMesh();
+    }
+
+    public void UpdateCaveMesh()
+    {
+        MeshFilter mf = GameObject.Find("Meshys").GetComponent<MeshFilter>();
+        Mesh mesh = GenerateMeshFromDensity();
+        mf.mesh = mesh;
+
+        MeshCollider mc = mf.GetComponent<MeshCollider>();
+        if (mc != null)
+        {
+            mc.sharedMesh = null;  // clear first
+            mc.sharedMesh = mesh;  // assign updated mesh
+        }
+    }
 }
 
 

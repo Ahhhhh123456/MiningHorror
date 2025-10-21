@@ -28,6 +28,10 @@ public class LookAndClickInteraction : NetworkBehaviour
     public float mineInterval = 0.005f; // seconds between mining ticks
     private float mineTimer = 0f;
 
+    public MarchingCubes caveGenerator; // drag your cave object here
+    public float mineRadius = 1.5f;     // size of mining tool
+    public float mineDepth = 1f;        // how much density to subtract per hit
+
     [Header("Holding Settings")]
 
     [SerializeField] private float interactionDistance = 3f;
@@ -281,13 +285,26 @@ public class LookAndClickInteraction : NetworkBehaviour
 
                         // Call Mining only when enough time has passed
                         if (mineTimer >= mineInterval)
-                        {   
+                        {
                             // Passes camera and position of where the player mines
                             currentMineTarget.MiningOre(playerCamera.transform.forward, hit.normal);
                             mineTimer -= mineInterval; // reset timer but keep overflow
                         }
                     }
-
+                    else
+                    {
+                        // Check if the hit object is the cave mesh
+                        MeshysHelper helper = hit.collider.GetComponent<MeshysHelper>();
+                        if (helper != null)
+                        {
+                            Debug.Log("Mining Cave at: " + hit.point);
+                            helper.caveGenerator.MineCave(hit.point, mineRadius, mineDepth);
+                        }
+                        else
+                        {
+                            Debug.Log("No MineType or MeshysHelper found on hit object.");
+                        }
+                    }
 
                 }
             }

@@ -8,14 +8,18 @@ public class MarchingCubes : NetworkBehaviour
 {
     [Header("Cave Settings")]
     public Material material;
-    public int caveWidth = 50;  // reduced for testing
-    public int caveHeight = 20;
-    public int caveDepth = 50;
-    private float noiseScale = 0.05f;
-    private float isoLevel = 0.5f; // threshold for surface
+    public int caveWidth;  // reduced for testing
+    public int caveHeight;
+    public int caveDepth;
+
+    [Header("Noise Settings")]
+    public float noiseScale;
+    public float isoLevel;
+
+    public float resolution;
 
     [Header("Ore Settings")]
-    public float oreChance = 0.1f;
+    public float oreChance;
     public GameObject[] orePrefabs; // Prefabs for ore instantiation
     public NetworkObject[] NetworkOrePrefabs; // Networked versions
 
@@ -25,7 +29,6 @@ public class MarchingCubes : NetworkBehaviour
     {
         CreateCave();
     }
-
     public void ClearCave()
     {
         Transform meshys = GameObject.Find("Meshys")?.transform;
@@ -51,6 +54,9 @@ public class MarchingCubes : NetworkBehaviour
         ClearCave();
         GenerateDensityMap();
         Mesh mesh = GenerateMeshFromDensity();
+
+
+        //MeshUtils.FillSmallHoles(mesh);
 
         Debug.Log($"Generated mesh vertices: {mesh.vertexCount}, triangles: {mesh.triangles.Length / 3}");
 
@@ -183,11 +189,12 @@ public class MarchingCubes : NetworkBehaviour
         List<Vector3> vertices = new List<Vector3>();
         List<int> triangles = new List<int>();
         List<Vector2> uvs = new List<Vector2>();
+        Dictionary<long, int> vertexCache = new Dictionary<long, int>();
 
         for (int x = 0; x < caveWidth; x++)
             for (int y = 0; y < caveHeight; y++)
                 for (int z = 0; z < caveDepth; z++)
-                    MarchCube(x, y, z, vertices, triangles, uvs);
+                    MarchCube(x, y, z, vertices, triangles, uvs, vertexCache);
 
         Mesh mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -199,57 +206,72 @@ public class MarchingCubes : NetworkBehaviour
         return mesh;
     }
 
-    private void MarchCube(int x, int y, int z, List<Vector3> verts, List<int> tris, List<Vector2> uvs)
+    private void MarchCube(int x, int y, int z,List<Vector3> verts,List<int> tris,List<Vector2> uvs, Dictionary<long, int> vertexCache)
     {
         float[] cube = new float[8];
         Vector3[] cubePos = new Vector3[8];
 
+        // Gather cube corner positions and density values
         for (int i = 0; i < 8; i++)
         {
             int xi = x + ((i & 1) != 0 ? 1 : 0);
             int yi = y + ((i & 2) != 0 ? 1 : 0);
             int zi = z + ((i & 4) != 0 ? 1 : 0);
             cube[i] = densityMap[xi, yi, zi];
-            cubePos[i] = new Vector3(xi, yi, zi);
+            cubePos[i] = new Vector3(xi, yi, zi) * resolution;
         }
 
+        // Determine cube configuration
         int cubeIndex = 0;
         for (int i = 0; i < 8; i++)
             if (cube[i] > isoLevel) cubeIndex |= 1 << i;
 
-        if (cubeIndex == 0 || cubeIndex == 255) return;
+        if (cubeIndex == 0 || cubeIndex == 255)
+            return; // completely inside or outside
 
         int[,] edges = MarchingTable.Edges;
         int[,] triTable = MarchingTable.Triangles;
 
-        Vector3[] edgeVertex = new Vector3[12];
-
-        for (int i = 0; i < 12; i++)
+        // --- Helper function: get or create cached vertex ---
+        int GetOrCreateVertex(int edgeIndex)
         {
-            int c0 = MarchingTable.Edges[i, 0];
-            int c1 = MarchingTable.Edges[i, 1];
+            int c0 = edges[edgeIndex, 0];
+            int c1 = edges[edgeIndex, 1];
 
-            edgeVertex[i] = VertexInterp(cubePos[c0], cubePos[c1], cube[c0], cube[c1]);
+            // Build a unique 64-bit key for this edge in world-space
+            // This avoids duplicates between neighboring cubes.
+            //long key = (((long)x & 0xFFFF) << 48 | (((long)y & 0xFFFF) << 32) | (((long)z & 0xFFFF) << 16) | (long)edgeIndex);
+            Vector3Int edgeVerticesMin = new Vector3Int(
+                Mathf.Min(c0 % 2 + x, c1 % 2 + x),
+                Mathf.Min((c0 / 2) % 2 + y, (c1 / 2) % 2 + y),
+                Mathf.Min((c0 / 4) % 2 + z, (c1 / 4) % 2 + z)
+            );
+            long key = ((long)edgeVerticesMin.x << 48) | ((long)edgeVerticesMin.y << 32) | (long)edgeVerticesMin.z << 16 | edgeIndex;
+
+
+            if (vertexCache.TryGetValue(key, out int cachedIndex))
+                return cachedIndex;
+
+            Vector3 pos = VertexInterp(cubePos[c0], cubePos[c1], cube[c0], cube[c1]);
+            int newIndex = verts.Count;
+            verts.Add(pos);
+            uvs.Add(new Vector2(pos.x, pos.z)); // placeholder UVs
+
+            vertexCache[key] = newIndex;
+            return newIndex;
         }
 
-
-        
-        // Check if this cube index has any triangle entries
-        if (triTable[cubeIndex, 0] == -1)
-        {
-            Debug.LogWarning($"CubeIndex {cubeIndex} has no triangles in table!");
-            return; // skip early since there's nothing to draw
-        }
-
-        // Generate triangles
+        // --- Generate triangles using cached/shared vertices ---
         for (int i = 0; triTable[cubeIndex, i] != -1; i += 3)
         {
-            int a = verts.Count;
-            Vector3 v0 = edgeVertex[triTable[cubeIndex, i]];
-            Vector3 v1 = edgeVertex[triTable[cubeIndex, i + 1]];
-            Vector3 v2 = edgeVertex[triTable[cubeIndex, i + 2]];
+            int a = GetOrCreateVertex(triTable[cubeIndex, i]);
+            int b = GetOrCreateVertex(triTable[cubeIndex, i + 1]);
+            int c = GetOrCreateVertex(triTable[cubeIndex, i + 2]);
 
-            // Skip degenerate or zero-area triangles
+            // Skip degenerate triangles
+            Vector3 v0 = verts[a];
+            Vector3 v1 = verts[b];
+            Vector3 v2 = verts[c];
             if (Vector3.Distance(v0, v1) < 0.0001f ||
                 Vector3.Distance(v1, v2) < 0.0001f ||
                 Vector3.Distance(v2, v0) < 0.0001f)
@@ -259,13 +281,9 @@ public class MarchingCubes : NetworkBehaviour
             if (cross.sqrMagnitude < 0.00001f)
                 continue;
 
-            verts.Add(v0);
-            uvs.Add(new Vector2(v0.x, v0.z)); // placeholder UV
-            verts.Add(v1);
-            uvs.Add(new Vector2(v1.x, v1.z));
-            verts.Add(v2);
-            uvs.Add(new Vector2(v2.x, v2.z));
-            tris.Add(a); tris.Add(a + 1); tris.Add(a + 2);
+            tris.Add(a);
+            tris.Add(b);
+            tris.Add(c);
         }
     }
     private Vector3 VertexInterp(Vector3 p1, Vector3 p2, float valp1, float valp2)
@@ -277,6 +295,7 @@ public class MarchingCubes : NetworkBehaviour
         float t = Mathf.Clamp01((isoLevel - valp1) / diff);
         return Vector3.Lerp(p1, p2, t);
     }
+    
 }
 
 

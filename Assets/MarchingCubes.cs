@@ -55,9 +55,6 @@ public class MarchingCubes : NetworkBehaviour
         GenerateDensityMap();
         Mesh mesh = GenerateMeshFromDensity();
 
-
-        //MeshUtils.FillSmallHoles(mesh);
-
         Debug.Log($"Generated mesh vertices: {mesh.vertexCount}, triangles: {mesh.triangles.Length / 3}");
 
         // ensure bounds/normals are up-to-date
@@ -73,7 +70,7 @@ public class MarchingCubes : NetworkBehaviour
         MeshRenderer mr = g.AddComponent<MeshRenderer>();
         mr.material = material;
         mf.mesh = mesh;
-
+    
         if (valid)
         {
             MeshCollider mc = g.AddComponent<MeshCollider>();
@@ -148,7 +145,7 @@ public class MarchingCubes : NetworkBehaviour
                 degenerateCount++;
                 if (degenerateCount <= 5)
                 {
-                    Debug.LogWarning($"Degenerate tri #{degenerateCount} at triIndex {i/3}: v0={v0}, v1={v1}, v2={v2}, area2={area2}");
+                    Debug.LogWarning($"Degenerate tri #{degenerateCount} at triIndex {i / 3}: v0={v0}, v1={v1}, v2={v2}, area2={area2}");
                 }
             }
         }
@@ -188,25 +185,103 @@ public class MarchingCubes : NetworkBehaviour
     {
         List<Vector3> vertices = new List<Vector3>();
         List<int> triangles = new List<int>();
-        List<Vector2> uvs = new List<Vector2>();
-        Dictionary<long, int> vertexCache = new Dictionary<long, int>();
 
+        // Store dual vertex index for each cell (use -1 as "none")
+        int[,,] cellVertexIndex = new int[caveWidth, caveHeight, caveDepth];
+        for (int xi = 0; xi < caveWidth; xi++)
+            for (int yi = 0; yi < caveHeight; yi++)
+                for (int zi = 0; zi < caveDepth; zi++)
+                    cellVertexIndex[xi, yi, zi] = -1;
+
+        // 1) Create one vertex per cell that intersects the surface
         for (int x = 0; x < caveWidth; x++)
+        {
             for (int y = 0; y < caveHeight; y++)
+            {
                 for (int z = 0; z < caveDepth; z++)
-                    MarchCube(x, y, z, vertices, triangles, uvs, vertexCache);
+                {
+                    bool inside = false, outside = false;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        int xi = x + ((i & 1) != 0 ? 1 : 0);
+                        int yi = y + ((i & 2) != 0 ? 1 : 0);
+                        int zi = z + ((i & 4) != 0 ? 1 : 0);
+                        float val = densityMap[xi, yi, zi];
+                        if (val > isoLevel) inside = true; else outside = true;
+                    }
 
+                    if (inside && outside)
+                    {
+                        Vector3 dualV = ComputeDualVertex(x, y, z);
+                        cellVertexIndex[x, y, z] = vertices.Count;
+                        vertices.Add(dualV);
+                    }
+                }
+            }
+        }
+
+        // 2) For each grid face, connect the four adjacent cell centers into two triangles.
+        // We'll iterate internal faces on XY, XZ, YZ planes to avoid duplicates.
+        // XY faces (constant z) -> cells: (x,y,z),(x+1,y,z),(x+1,y+1,z),(x,y+1,z)
+        for (int z = 0; z < caveDepth; z++)
+        {
+            for (int x = 0; x < caveWidth - 1; x++)
+            {
+                for (int y = 0; y < caveHeight - 1; y++)
+                {
+                    int a = cellVertexIndex[x, y, z];
+                    int b = cellVertexIndex[x + 1, y, z];
+                    int c = cellVertexIndex[x + 1, y + 1, z];
+                    int d = cellVertexIndex[x, y + 1, z];
+                    AddFaceIfValid(vertices, triangles, a, b, c, d);
+                }
+            }
+        }
+
+        // XZ faces (constant y) -> cells: (x,y,z),(x+1,y,z),(x+1,y,z+1),(x,y,z+1)
+        for (int y = 0; y < caveHeight; y++)
+        {
+            for (int x = 0; x < caveWidth - 1; x++)
+            {
+                for (int z = 0; z < caveDepth - 1; z++)
+                {
+                    int a = cellVertexIndex[x, y, z];
+                    int b = cellVertexIndex[x + 1, y, z];
+                    int c = cellVertexIndex[x + 1, y, z + 1];
+                    int d = cellVertexIndex[x, y, z + 1];
+                    AddFaceIfValid(vertices, triangles, a, b, c, d);
+                }
+            }
+        }
+
+        // YZ faces (constant x) -> cells: (x,y,z),(x,y+1,z),(x,y+1,z+1),(x,y,z+1)
+        for (int x = 0; x < caveWidth; x++)
+        {
+            for (int y = 0; y < caveHeight - 1; y++)
+            {
+                for (int z = 0; z < caveDepth - 1; z++)
+                {
+                    int a = cellVertexIndex[x, y, z];
+                    int b = cellVertexIndex[x, y + 1, z];
+                    int c = cellVertexIndex[x, y + 1, z + 1];
+                    int d = cellVertexIndex[x, y, z + 1];
+                    AddFaceIfValid(vertices, triangles, a, b, c, d);
+                }
+            }
+        }
+
+        // 3) Build final mesh
         Mesh mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.SetVertices(vertices);
         mesh.SetTriangles(triangles, 0);
-        mesh.SetUVs(0, uvs);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
+
         return mesh;
     }
 
-    private void MarchCube(int x, int y, int z,List<Vector3> verts,List<int> tris,List<Vector2> uvs, Dictionary<long, int> vertexCache)
+    private void MarchCube(int x, int y, int z, List<Vector3> verts, List<int> tris, List<Vector2> uvs, Dictionary<long, int> vertexCache)
     {
         float[] cube = new float[8];
         Vector3[] cubePos = new Vector3[8];
@@ -289,14 +364,123 @@ public class MarchingCubes : NetworkBehaviour
     private Vector3 VertexInterp(Vector3 p1, Vector3 p2, float valp1, float valp2)
     {
         float diff = valp2 - valp1;
-        if (Mathf.Abs(diff) < 1e-4f) 
+        if (Mathf.Abs(diff) < 1e-6f)
             return (p1 + p2) * 0.5f; // midpoint if almost identical
 
         float t = Mathf.Clamp01((isoLevel - valp1) / diff);
         return Vector3.Lerp(p1, p2, t);
     }
+
+    private Vector3 ComputeDualVertex(int x, int y, int z)
+    {
+        // Sample cube corners
+        float[] cube = new float[8];
+        Vector3[] cubePos = new Vector3[8];
+        for (int i = 0; i < 8; i++)
+        {
+            int xi = x + ((i & 1) != 0 ? 1 : 0);
+            int yi = y + ((i & 2) != 0 ? 1 : 0);
+            int zi = z + ((i & 4) != 0 ? 1 : 0);
+            cube[i] = densityMap[xi, yi, zi];
+            cubePos[i] = new Vector3(xi, yi, zi) * resolution;
+        }
+
+        // Average edge intersections (weighted by edge gradient magnitude)
+        Vector3 sum = Vector3.zero;
+        float weightSum = 0f;
+
+        for (int i = 0; i < 12; i++)
+        {
+            int c0 = MarchingTable.Edges[i, 0];
+            int c1 = MarchingTable.Edges[i, 1];
+            float v0 = cube[c0];
+            float v1 = cube[c1];
+
+            bool crosses = (v0 > isoLevel && v1 < isoLevel) || (v1 > isoLevel && v0 < isoLevel);
+            if (!crosses) continue;
+
+            float t = Mathf.InverseLerp(v0, v1, isoLevel);
+            Vector3 p = Vector3.Lerp(cubePos[c0], cubePos[c1], t);
+
+            // approximate local gradient magnitude as |v1-v0|
+            float w = Mathf.Abs(v1 - v0) + 1e-5f;
+            sum += p * w;
+            weightSum += w;
+        }
+
+        if (weightSum <= 0f)
+        {
+            // fallback to center of cube in world-space
+            return new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+        }
+
+        return sum / weightSum;
+    }
+
+    private void AddQuad(List<int> tris, int v0, int v1, int v2, int v3, List<Vector3> verts)
+    {
+        if (v0 < 0 || v1 < 0 || v2 < 0 || v3 < 0) return;
+
+        Vector3 p0 = verts[v0];
+        Vector3 p1 = verts[v1];
+        Vector3 p2 = verts[v2];
+        Vector3 p3 = verts[v3];
+
+        // skip degenerate or overlapping quads
+        if ((p0 - p1).sqrMagnitude < 1e-6f ||
+            (p1 - p2).sqrMagnitude < 1e-6f ||
+            (p2 - p3).sqrMagnitude < 1e-6f ||
+            (p3 - p0).sqrMagnitude < 1e-6f)
+            return;
+
+        // ensure normal direction consistency
+        tris.Add(v0);
+        tris.Add(v2);
+        tris.Add(v1);
+
+        tris.Add(v0);
+        tris.Add(v3);
+        tris.Add(v2);
+    }
     
+    private void AddFaceIfValid(List<Vector3> verts, List<int> tris, int ia, int ib, int ic, int id)
+    {
+        // all four indices must exist
+        if (ia < 0 || ib < 0 || ic < 0 || id < 0) return;
+
+        Vector3 a = verts[ia];
+        Vector3 b = verts[ib];
+        Vector3 c = verts[ic];
+        Vector3 d = verts[id];
+
+        // Quick distance checks to avoid near-duplicates
+        const float minSqrDist = 1e-6f;
+        if ((a - b).sqrMagnitude < minSqrDist ||
+            (b - c).sqrMagnitude < minSqrDist ||
+            (c - d).sqrMagnitude < minSqrDist ||
+            (d - a).sqrMagnitude < minSqrDist)
+            return;
+
+        // Triangles: (a,b,c) and (a,c,d) — check both areas
+        float area1 = TriangleAreaSqr(a, b, c);
+        float area2 = TriangleAreaSqr(a, c, d);
+
+        const float minAreaSqr = 1e-6f; // adjust upward if needed
+        if (area1 < minAreaSqr || area2 < minAreaSqr) return;
+
+        // Add with consistent winding (CCW) — if needed you can flip order to match normals.
+        tris.Add(ia); tris.Add(ib); tris.Add(ic);
+        tris.Add(ia); tris.Add(ic); tris.Add(id);
+    }
+
+    private float TriangleAreaSqr(Vector3 a, Vector3 b, Vector3 c)
+    {
+        return Vector3.Cross(b - a, c - a).sqrMagnitude * 0.25f; // squared area
+    }
+
 }
+
+
 
 
     // private IEnumerator SpawnOresBatched()

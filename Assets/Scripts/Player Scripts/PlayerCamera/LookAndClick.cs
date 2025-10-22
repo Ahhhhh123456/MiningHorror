@@ -28,7 +28,7 @@ public class LookAndClickInteraction : NetworkBehaviour
     public float mineInterval = 0.005f; // seconds between mining ticks
     private float mineTimer = 0f;
 
-    public MarchingCubes caveGenerator; // drag your cave object here
+    // public MarchingCubes caveGenerator; // drag your cave object here
     public float mineRadius = 1.5f;     // size of mining tool
     public float mineDepth = 1f;        // how much density to subtract per hit
 
@@ -298,7 +298,7 @@ public class LookAndClickInteraction : NetworkBehaviour
                         if (helper != null)
                         {
                             Debug.Log("Mining Cave at: " + hit.point);
-                            helper.caveGenerator.MineCave(hit.point, mineRadius, mineDepth);
+                            helper.caveGenerator.MineCaveServerRpc(hit.point, mineRadius, mineDepth);
                         }
                         else
                         {

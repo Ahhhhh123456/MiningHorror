@@ -18,6 +18,14 @@ public class MarchingCubes : NetworkBehaviour
 
     public float resolution;
 
+    [Header("Chunk Settings")]
+    public int chunkSizeX;
+    public int chunkSizeY;
+    public int chunkSizeZ;
+    private Dictionary<Vector3Int, GameObject> chunks = new Dictionary<Vector3Int, GameObject>();
+
+
+
     [Header("Ore Settings")]
     public float oreChance;
     public GameObject[] orePrefabs; // Prefabs for ore instantiation
@@ -31,11 +39,17 @@ public class MarchingCubes : NetworkBehaviour
     }
     public void ClearCave()
     {
-        Transform meshys = GameObject.Find("Meshys")?.transform;
-        if (meshys != null)
+        // Transform meshys = GameObject.Find("Meshys")?.transform;
+        // if (meshys != null)
+        // {
+        //     DestroyImmediate(meshys.gameObject);
+        // }
+        foreach (var kv in chunks)
         {
-            DestroyImmediate(meshys.gameObject);
+            if (kv.Value != null)
+                DestroyImmediate(kv.Value);
         }
+        chunks.Clear();
     }
 
     public static float Perlin3D(float x, float y, float z)
@@ -49,49 +63,155 @@ public class MarchingCubes : NetworkBehaviour
         return (ab + bc + ac + ba + cb + ca) / 6f;
     }
 
+    // public void CreateCave()
+    // {
+    //     ClearCave();
+    //     GenerateDensityMap();
+    //     Mesh mesh = GenerateMeshFromDensity();
+
+    //     Debug.Log($"Generated mesh vertices: {mesh.vertexCount}, triangles: {mesh.triangles.Length / 3}");
+
+    //     // ensure bounds/normals are up-to-date
+    //     mesh.RecalculateNormals();
+    //     mesh.RecalculateBounds();
+
+    //     // Validate mesh for NaN/Infinity and degenerate triangles
+    //     bool valid = ValidateMesh(mesh, out string validationMessage);
+
+    //     GameObject g = new GameObject("Meshys");
+    //     g.transform.position = Vector3.zero;
+    //     MeshFilter mf = g.AddComponent<MeshFilter>();
+    //     MeshRenderer mr = g.AddComponent<MeshRenderer>();
+    //     mr.material = material;
+    //     mf.mesh = mesh;
+
+    //     MeshysHelper helper = g.AddComponent<MeshysHelper>();
+    //     helper.caveGenerator = this;
+
+    //     if (valid)
+    //     {
+    //         MeshCollider mc = g.AddComponent<MeshCollider>();
+    //         mc.sharedMesh = mesh;
+    //         mc.convex = false; // default is false
+    //         g.layer = LayerMask.NameToLayer("Ground");
+    //         Debug.Log("MeshCollider assigned successfully.");
+    //     }
+    //     else
+    //     {
+    //         Debug.LogError($"Mesh validation failed: {validationMessage}. Skipping MeshCollider and adding fallback BoxCollider.");
+    //         // Fallback collider so physics still works while we debug geometry
+    //         BoxCollider bc = g.AddComponent<BoxCollider>();
+    //         // use mesh bounds to size the box
+    //         bc.center = mesh.bounds.center;
+    //         bc.size = mesh.bounds.size;
+    //         g.layer = LayerMask.NameToLayer("Ground");
+    //     }
+    // }
+
     public void CreateCave()
     {
         ClearCave();
         GenerateDensityMap();
-        Mesh mesh = GenerateMeshFromDensity();
 
-        Debug.Log($"Generated mesh vertices: {mesh.vertexCount}, triangles: {mesh.triangles.Length / 3}");
+        chunks.Clear();
 
-        // ensure bounds/normals are up-to-date
+        for (int cx = 0; cx < caveWidth; cx += chunkSizeX)
+            for (int cy = 0; cy < caveHeight; cy += chunkSizeY)
+                for (int cz = 0; cz < caveDepth; cz += chunkSizeZ)
+                {
+                    GenerateChunkMesh(cx, cy, cz);
+                }
+    }
+    
+    private void GenerateChunkMesh(int startX, int startY, int startZ)
+    {
+        int sizeX = Mathf.Min(chunkSizeX, caveWidth - startX);
+        int sizeY = Mathf.Min(chunkSizeY, caveHeight - startY);
+        int sizeZ = Mathf.Min(chunkSizeZ, caveDepth - startZ);
+
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> triangles = new List<int>();
+        int[,,] cellVertexIndex = new int[sizeX, sizeY, sizeZ];
+
+        for (int x = 0; x < sizeX; x++)
+            for (int y = 0; y < sizeY; y++)
+                for (int z = 0; z < sizeZ; z++)
+                    cellVertexIndex[x, y, z] = -1;
+
+        // --- same dual marching cubes logic, just limited to this chunk ---
+        for (int x = 0; x < sizeX; x++)
+            for (int y = 0; y < sizeY; y++)
+                for (int z = 0; z < sizeZ; z++)
+                {
+                    bool inside = false, outside = false;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        int xi = startX + x + ((i & 1) != 0 ? 1 : 0);
+                        int yi = startY + y + ((i & 2) != 0 ? 1 : 0);
+                        int zi = startZ + z + ((i & 4) != 0 ? 1 : 0);
+                        float val = densityMap[xi, yi, zi];
+                        if (val > isoLevel) inside = true; else outside = true;
+                    }
+
+                    if (inside && outside)
+                        cellVertexIndex[x, y, z] = vertices.Count;
+                        vertices.Add(ComputeDualVertex(startX + x, startY + y, startZ + z));
+                }
+
+        // Faces (XY, XZ, YZ) - reuse your existing AddFaceIfValid
+        // make sure to offset indices properly for each chunk
+        for (int z = 0; z < sizeZ; z++)
+            for (int x = 0; x < sizeX - 1; x++)
+                for (int y = 0; y < sizeY - 1; y++)
+                    AddFaceIfValid(vertices, triangles,
+                                cellVertexIndex[x, y, z],
+                                cellVertexIndex[x + 1, y, z],
+                                cellVertexIndex[x + 1, y + 1, z],
+                                cellVertexIndex[x, y + 1, z]);
+
+        for (int y = 0; y < sizeY; y++)
+            for (int x = 0; x < sizeX - 1; x++)
+                for (int z = 0; z < sizeZ - 1; z++)
+                    AddFaceIfValid(vertices, triangles,
+                                cellVertexIndex[x, y, z],
+                                cellVertexIndex[x + 1, y, z],
+                                cellVertexIndex[x + 1, y, z + 1],
+                                cellVertexIndex[x, y, z + 1]);
+
+        for (int x = 0; x < sizeX; x++)
+            for (int y = 0; y < sizeY - 1; y++)
+                for (int z = 0; z < sizeZ - 1; z++)
+                    AddFaceIfValid(vertices, triangles,
+                                cellVertexIndex[x, y, z],
+                                cellVertexIndex[x, y + 1, z],
+                                cellVertexIndex[x, y + 1, z + 1],
+                                cellVertexIndex[x, y, z + 1]);
+
+        Mesh mesh = new Mesh();
+        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh.SetVertices(vertices);
+        mesh.SetTriangles(triangles, 0);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
-        // Validate mesh for NaN/Infinity and degenerate triangles
-        bool valid = ValidateMesh(mesh, out string validationMessage);
-
-        GameObject g = new GameObject("Meshys");
-        g.transform.position = Vector3.zero;
-        MeshFilter mf = g.AddComponent<MeshFilter>();
-        MeshRenderer mr = g.AddComponent<MeshRenderer>();
+        GameObject chunkObj = new GameObject($"Meshys");
+        chunkObj.transform.parent = transform;
+        MeshFilter mf = chunkObj.AddComponent<MeshFilter>();
+        MeshRenderer mr = chunkObj.AddComponent<MeshRenderer>();
         mr.material = material;
         mf.mesh = mesh;
 
-        MeshysHelper helper = g.AddComponent<MeshysHelper>();
+        MeshysHelper helper = chunkObj.AddComponent<MeshysHelper>();
         helper.caveGenerator = this;
-    
-        if (valid)
-        {
-            MeshCollider mc = g.AddComponent<MeshCollider>();
-            mc.sharedMesh = mesh;
-            mc.convex = false; // default is false
-            g.layer = LayerMask.NameToLayer("Ground");
-            Debug.Log("MeshCollider assigned successfully.");
-        }
-        else
-        {
-            Debug.LogError($"Mesh validation failed: {validationMessage}. Skipping MeshCollider and adding fallback BoxCollider.");
-            // Fallback collider so physics still works while we debug geometry
-            BoxCollider bc = g.AddComponent<BoxCollider>();
-            // use mesh bounds to size the box
-            bc.center = mesh.bounds.center;
-            bc.size = mesh.bounds.size;
-            g.layer = LayerMask.NameToLayer("Ground");
-        }
+
+        MeshCollider mc = chunkObj.AddComponent<MeshCollider>();
+        mc.sharedMesh = mesh;
+        mc.convex = false;
+        chunkObj.layer = LayerMask.NameToLayer("Ground");
+
+        // Save reference for mining / updates
+        Vector3Int chunkKey = new Vector3Int(startX, startY, startZ);
+        chunks[chunkKey] = chunkObj;
     }
 
     // Validate mesh: NaN/Infinity check + detect zero-area triangles
@@ -483,6 +603,7 @@ public class MarchingCubes : NetworkBehaviour
 
     public void MineCave(Vector3 worldPos, float radius, float depth)
     {
+        // Modify the density map in the radius
         int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
         int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
         int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
@@ -503,82 +624,31 @@ public class MarchingCubes : NetworkBehaviour
                     }
                 }
 
-        UpdateCaveMesh();
+        // Instead of manually looping, just call the helper
+        UpdateAffectedChunks(worldPos, radius);
     }
 
-    public void UpdateCaveMesh()
+    public void UpdateAffectedChunks(Vector3 worldPos, float radius)
     {
-        MeshFilter mf = GameObject.Find("Meshys").GetComponent<MeshFilter>();
-        Mesh mesh = GenerateMeshFromDensity();
-        mf.mesh = mesh;
+        int minX = Mathf.Max(0, Mathf.FloorToInt((worldPos.x - radius) / chunkSizeX) * chunkSizeX);
+        int minY = Mathf.Max(0, Mathf.FloorToInt((worldPos.y - radius) / chunkSizeY) * chunkSizeY);
+        int minZ = Mathf.Max(0, Mathf.FloorToInt((worldPos.z - radius) / chunkSizeZ) * chunkSizeZ);
 
-        MeshCollider mc = mf.GetComponent<MeshCollider>();
-        if (mc != null)
-        {
-            mc.sharedMesh = null;  // clear first
-            mc.sharedMesh = mesh;  // assign updated mesh
-        }
+        int maxX = Mathf.Min(caveWidth, Mathf.CeilToInt((worldPos.x + radius) / chunkSizeX) * chunkSizeX);
+        int maxY = Mathf.Min(caveHeight, Mathf.CeilToInt((worldPos.y + radius) / chunkSizeY) * chunkSizeY);
+        int maxZ = Mathf.Min(caveDepth, Mathf.CeilToInt((worldPos.z + radius) / chunkSizeZ) * chunkSizeZ);
+
+        for (int cx = minX; cx < maxX; cx += chunkSizeX)
+            for (int cy = minY; cy < maxY; cy += chunkSizeY)
+                for (int cz = minZ; cz < maxZ; cz += chunkSizeZ)
+                {
+                    Vector3Int key = new Vector3Int(cx, cy, cz);
+                    if (chunks.TryGetValue(key, out GameObject chunkObj))
+                    {
+                        DestroyImmediate(chunkObj);
+                        GenerateChunkMesh(cx, cy, cz);
+                    }
+                }
     }
+
 }
-
-
-
-
-    // private IEnumerator SpawnOresBatched()
-    // {
-    //     int batchSize = 50; // spawn 50 ores per frame
-    //     int index = 0;
-
-    //     while (index < blockPositions.Count)
-    //     {
-    //         for (int i = 0; i < batchSize && index < blockPositions.Count; i++, index++)
-    //         {
-    //             if (Random.value < oreChance)
-    //             {
-    //                 GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
-    //                 NetworkObject oreInstance = Instantiate(chosenOre, blockPositions[index], Quaternion.identity)
-    //                                             .GetComponent<NetworkObject>();
-
-    //                 oreInstance.Spawn(); // Spawn first
-    //                 oreInstance.name = chosenOre.name; // rename on server
-
-    //                 // Now safely call the ClientRpc
-    //                 OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
-    //             }
-    //         }
-    //         yield return null; // wait a frame to avoid flooding the client
-    //     }
-
-    //     Debug.Log("Finished spawning ores in batches.");
-    // }
-
-    // [ClientRpc]
-    // void OreNameClientRpc(ulong networkId, string newName)
-    // {
-    //     if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkId, out NetworkObject netObj))
-    //     {
-    //         netObj.gameObject.name = newName;
-    //     }
-    //     else
-    //     {
-    //         Debug.LogWarning($"OreNameClientRpc: NetworkObject {networkId} not found on client yet.");
-    //     }
-    // }
-
-    // public override void OnNetworkSpawn()
-    // {
-    //     base.OnNetworkSpawn();
-
-    //     if (IsServer)
-    //     {
-    //         NetworkManager.Singleton.OnClientConnectedCallback += (clientId) =>
-    //         {
-    //             if (clientId == NetworkManager.Singleton.LocalClientId) return; // skip host
-
-    //             Debug.Log("Host: Client connected, generating cave...");
-    //             StartCoroutine(SpawnOresBatched()); // generate NetworkObjects for ores safely
-    //         };
-    //     }
-    // }
-
-

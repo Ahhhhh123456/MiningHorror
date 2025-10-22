@@ -3071,6 +3071,9 @@ MonoBehaviour:
   noiseScale: 0.05
   isoLevel: 0.5
   resolution: 1
+  chunkSizeX: 32
+  chunkSizeY: 32
+  chunkSizeZ: 32
   oreChance: 0.01
   orePrefabs: []
   NetworkOrePrefabs: []

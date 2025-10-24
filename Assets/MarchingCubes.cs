@@ -31,9 +31,12 @@ public class MarchingCubes : NetworkBehaviour
     public GameObject[] orePrefabs; // Prefabs for ore instantiation
     public NetworkObject[] NetworkOrePrefabs; // Networked versions
 
-    public GameObject meshysPrefab; 
+    public GameObject meshysPrefab;
 
     private float[,,] densityMap;
+
+    // Similar to MineType's holdCount
+    private int holdCount = 0;
 
     public override void OnNetworkSpawn()
     {
@@ -56,10 +59,7 @@ public class MarchingCubes : NetworkBehaviour
         CreateCave();
     }
 
-    // void Start()
-    // {
-    //     CreateCave();
-    // }
+
     public void ClearCave()
     {
         // Transform meshys = GameObject.Find("Meshys")?.transform;
@@ -99,8 +99,91 @@ public class MarchingCubes : NetworkBehaviour
                 {
                     GenerateChunkMesh(cx, cy, cz);
                 }
+
+        if (IsServer)
+            StartCoroutine(SpawnOresBatched());
+
     }
     
+    private IEnumerator SpawnOresBatched()
+    {
+        int batchSize = 25; // Fewer per frame since raycasts are heavier
+        List<Vector3> spawnPositions = new List<Vector3>();
+
+        foreach (var kv in chunks)
+        {
+            GameObject chunkObj = kv.Value;
+            if (chunkObj == null) continue;
+
+            MeshFilter mf = chunkObj.GetComponent<MeshFilter>();
+            MeshCollider mc = chunkObj.GetComponent<MeshCollider>();
+            if (mf == null || mf.mesh == null || mc == null) continue;
+
+            Vector3[] verts = mf.mesh.vertices;
+            Vector3[] normals = mf.mesh.normals;
+
+            // Iterate over mesh vertices
+            for (int i = 0; i < verts.Length; i++)
+            {
+                if (Random.value > oreChance) continue; // random chance skip
+
+                Vector3 worldPos = chunkObj.transform.TransformPoint(verts[i]);
+                Vector3 worldNormal = chunkObj.transform.TransformDirection(normals[i]);
+
+                // Raycast INWARD (opposite the normal) to detect solid rock behind the vertex
+                Ray inwardRay = new Ray(worldPos - worldNormal * 0.05f, -worldNormal);
+
+                // // If we do NOT hit rock behind the vertex, it's an exterior surface → skip
+                // bool insideCave = Physics.Raycast(inwardRay, 0.5f, LayerMask.GetMask("Ground"));
+                // if (!insideCave)
+                //     continue;
+
+                // Otherwise, it's an interior cave wall — spawn ore slightly embedded
+                Vector3 spawnPos = worldPos - worldNormal * Random.Range(0.05f, 0.15f);
+                spawnPositions.Add(spawnPos);
+            }
+        }
+
+        Debug.Log($"[OreGen] Found {spawnPositions.Count} valid surface positions.");
+
+        // Spawn ores in batches
+        int index = 0;
+        while (index < spawnPositions.Count)
+        {
+            for (int i = 0; i < batchSize && index < spawnPositions.Count; i++, index++)
+            {
+                Vector3 spawnPos = spawnPositions[index];
+                GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
+
+                NetworkObject oreInstance = Instantiate(chosenOre, spawnPos, Quaternion.identity)
+                                            .GetComponent<NetworkObject>();
+
+                oreInstance.Spawn();
+                oreInstance.name = chosenOre.name;
+                OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
+            }
+
+            yield return null; // wait a frame
+        }
+
+        Debug.Log("[OreGen] Finished spawning ores on surfaces.");
+    }
+
+
+
+    [ClientRpc]
+    void OreNameClientRpc(ulong networkId, string newName)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkId, out NetworkObject netObj))
+        {
+            netObj.gameObject.name = newName;
+        }
+        else
+        {
+            Debug.LogWarning($"OreNameClientRpc: NetworkObject {networkId} not found on client yet.");
+        }
+    }
+
     private void GenerateChunkMesh(int startX, int startY, int startZ)
     {
         int sizeX = Mathf.Min(chunkSizeX, caveWidth - startX);
@@ -368,28 +451,40 @@ public class MarchingCubes : NetworkBehaviour
     }
     public void MineCave(Vector3 worldPos, float radius, float depth)
     {
-        int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
-        int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
-        int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
+        holdCount++;
+        Debug.Log(holdCount);
+        if (holdCount == 100)
+        {
+            holdCount = 0;
+            Debug.Log("resetting holdcount");
+        }
+        if (holdCount == 1)
+        {
+            Debug.Log("Hold Count 100 Reached - Mining Cave at " + worldPos);
+            int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
+            int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
+            int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
 
-        int r = Mathf.CeilToInt(radius / resolution);
+            int r = Mathf.CeilToInt(radius / resolution);
 
-        for (int x = x0 - r; x <= x0 + r; x++)
-            for (int y = y0 - r; y <= y0 + r; y++)
-                for (int z = z0 - r; z <= z0 + r; z++)
-                {
-                    if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
-
-                    Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
-                    if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+            for (int x = x0 - r; x <= x0 + r; x++)
+                for (int y = y0 - r; y <= y0 + r; y++)
+                    for (int z = z0 - r; z <= z0 + r; z++)
                     {
-                        densityMap[x, y, z] -= depth;
-                        densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
-                    }
-                }
+                        if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
 
-        // Update affected chunks locally
-        UpdateAffectedChunks(worldPos, radius);
+                        Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+                        if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+                        {
+                            densityMap[x, y, z] -= depth;
+                            densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
+                        }
+                    }
+
+            // Update affected chunks locally
+            UpdateAffectedChunks(worldPos, radius);
+        }
+
     }
 
     private void UpdateAffectedChunks(Vector3 worldPos, float radius)

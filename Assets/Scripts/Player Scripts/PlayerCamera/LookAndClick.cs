@@ -275,6 +275,12 @@ public class LookAndClickInteraction : NetworkBehaviour
 
                 if (Physics.Raycast(ray, out hit, interactRange))
                 {
+                    // Section to mine ores. Makes sure to check if it's the dropped item first
+                    if (hit.collider.gameObject.tag == "Dropped")
+                    {
+                        Debug.Log("Hit a dropped item, not mining.");
+                        return;
+                    }
                     MineType mineTypeScript = hit.collider.GetComponent<MineType>();
                     if (mineTypeScript != null)
                     {
@@ -297,8 +303,15 @@ public class LookAndClickInteraction : NetworkBehaviour
                         MeshysHelper helper = hit.collider.GetComponent<MeshysHelper>();
                         if (helper != null)
                         {
+                            mineTimer += Time.deltaTime;
+                            Debug.Log(mineTimer);
+                            if (mineTimer >= mineInterval)
+                            {
+                                helper.caveGenerator.MineCaveServerRpc(hit.point, mineRadius, mineDepth);
+                                mineTimer -= mineInterval; 
+                            }
                             Debug.Log("Mining Cave at: " + hit.point);
-                            helper.caveGenerator.MineCaveServerRpc(hit.point, mineRadius, mineDepth);
+
                         }
                         else
                         {

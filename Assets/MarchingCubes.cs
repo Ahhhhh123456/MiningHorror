@@ -185,6 +185,8 @@ public class MarchingCubes : NetworkBehaviour
         mc.sharedMesh = mesh;
         mc.convex = false;
 
+        Physics.SyncTransforms();
+
         MeshysHelper helper = chunkObj.GetComponent<MeshysHelper>();
         helper.caveGenerator = this;
 
@@ -297,12 +299,12 @@ public class MarchingCubes : NetworkBehaviour
 
         // ensure normal direction consistency
         tris.Add(v0);
-        tris.Add(v2);
         tris.Add(v1);
+        tris.Add(v2);
 
         tris.Add(v0);
-        tris.Add(v3);
         tris.Add(v2);
+        tris.Add(v3);
     }
     
     private void AddFaceIfValid(List<Vector3> verts, List<int> tris, int ia, int ib, int ic, int id)
@@ -331,8 +333,10 @@ public class MarchingCubes : NetworkBehaviour
         if (area1 < minAreaSqr || area2 < minAreaSqr) return;
 
         // Add with consistent winding (CCW) — if needed you can flip order to match normals.
-        tris.Add(ia); tris.Add(ib); tris.Add(ic);
-        tris.Add(ia); tris.Add(ic); tris.Add(id);
+        // tris.Add(ia); tris.Add(ib); tris.Add(ic);
+        // tris.Add(ia); tris.Add(ic); tris.Add(id);
+        tris.Add(ia); tris.Add(ic); tris.Add(ib);
+        tris.Add(ia); tris.Add(id); tris.Add(ic);
     }
 
     private float TriangleAreaSqr(Vector3 a, Vector3 b, Vector3 c)

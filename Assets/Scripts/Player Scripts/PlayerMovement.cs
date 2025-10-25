@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements.Experimental;
 using NUnit.Framework.Internal.Filters;
@@ -47,6 +48,8 @@ public class PlayerMovement : NetworkBehaviour
 
     public Animator animator;
 
+    public NetworkAnimator netAnimator;
+
     public enum PlayerStates
     {
         IDLE,
@@ -60,16 +63,30 @@ public class PlayerMovement : NetworkBehaviour
         {
             playerCurrentState = value;
 
+            if (!IsOwner) return;
+
+            // switch(playerCurrentState)
+            // {
+            //     case PlayerStates.IDLE:
+            //         animator.Play("Idle");
+            //         break;
+            //     case PlayerStates.WALK:
+            //         animator.Play("Walk");
+            //         break;
+            //     case PlayerStates.JUMP:
+            //         animator.SetTrigger("Jump");
+            //         break;
+            // }
             switch(playerCurrentState)
             {
                 case PlayerStates.IDLE:
-                    animator.Play("Idle");
+                    animator.SetFloat("xMove", 0f);
+                    animator.SetFloat("yMove", 0f);
                     break;
                 case PlayerStates.WALK:
-                    animator.Play("Walk");
                     break;
                 case PlayerStates.JUMP:
-                    animator.Play("Jump");
+                    animator.SetTrigger("Jump");
                     break;
             }
         }
@@ -100,6 +117,7 @@ public class PlayerMovement : NetworkBehaviour
         UpdateMoveSpeed();
 
         animator = GetComponentInChildren<Animator>();
+        netAnimator = GetComponent<NetworkAnimator>();
     }
 
     void OnEnable()
@@ -125,6 +143,9 @@ public class PlayerMovement : NetworkBehaviour
     void Update()
     {
         if (!IsOwner) return;
+
+        if (IsOwner)
+            DebugAnimatorState();
 
         // Jump input
         if (jumpAction.action.triggered && isGrounded)
@@ -232,7 +253,20 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    void DebugAnimatorState()
+    {
+        if (animator == null) return;
 
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0); // 0 = base layer
+        if (stateInfo.IsName("LadderClimb"))
+            Debug.Log("Currently in: LadderClimb");
+        else if (stateInfo.IsName("Walk"))
+            Debug.Log("Currently in: Walk");
+        else if (stateInfo.IsName("Idle"))
+            Debug.Log("Currently in: Idle");
+        else if (stateInfo.IsName("Jump"))
+            Debug.Log("Currently in: Jump");
+    }
 
 
     public void UpdateMoveSpeed()

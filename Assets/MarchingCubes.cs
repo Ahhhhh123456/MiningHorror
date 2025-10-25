@@ -33,7 +33,7 @@ public class MarchingCubes : NetworkBehaviour
 
     public GameObject meshysPrefab;
 
-    private float[,,] densityMap;
+    public float[,,] densityMap;
 
     // Similar to MineType's holdCount
     private int holdCount = 0;
@@ -102,6 +102,11 @@ public class MarchingCubes : NetworkBehaviour
 
         if (IsServer)
             StartCoroutine(SpawnOresBatched());
+            BoxSpawner boxSpawner = GetComponent<BoxSpawner>();
+            if (boxSpawner != null && IsServer)
+            {
+                StartCoroutine(boxSpawner.SpawnBoxesOnSurface());
+            }
 
     }
     
@@ -199,9 +204,9 @@ public class MarchingCubes : NetworkBehaviour
 
     private void GenerateChunkMesh(int startX, int startY, int startZ)
     {
-        int sizeX = Mathf.Min(chunkSizeX, caveWidth - startX);
-        int sizeY = Mathf.Min(chunkSizeY, caveHeight - startY);
-        int sizeZ = Mathf.Min(chunkSizeZ, caveDepth - startZ);
+        int sizeX = Mathf.Min(chunkSizeX+1, caveWidth - startX);
+        int sizeY = Mathf.Min(chunkSizeY+1, caveHeight - startY);
+        int sizeZ = Mathf.Min(chunkSizeZ+1, caveDepth - startZ);
 
         List<Vector3> vertices = new List<Vector3>();
         List<int> triangles = new List<int>();
@@ -229,12 +234,13 @@ public class MarchingCubes : NetworkBehaviour
 
                     if (inside && outside)
                         cellVertexIndex[x, y, z] = vertices.Count;
-                        vertices.Add(ComputeDualVertex(startX + x, startY + y, startZ + z));
+                    vertices.Add(ComputeDualVertex(startX + x, startY + y, startZ + z));
+                        
                 }
 
         // Faces (XY, XZ, YZ) - reuse your existing AddFaceIfValid
         // make sure to offset indices properly for each chunk
-        for (int z = 0; z < sizeZ; z++)
+        for (int z = 0; z < sizeZ-1; z++)
             for (int x = 0; x < sizeX - 1; x++)
                 for (int y = 0; y < sizeY - 1; y++)
                     AddFaceIfValid(vertices, triangles,
@@ -243,7 +249,7 @@ public class MarchingCubes : NetworkBehaviour
                                 cellVertexIndex[x + 1, y + 1, z],
                                 cellVertexIndex[x, y + 1, z]);
 
-        for (int y = 0; y < sizeY; y++)
+        for (int y = 0; y < sizeY-1; y++)
             for (int x = 0; x < sizeX - 1; x++)
                 for (int z = 0; z < sizeZ - 1; z++)
                     AddFaceIfValid(vertices, triangles,
@@ -252,7 +258,7 @@ public class MarchingCubes : NetworkBehaviour
                                 cellVertexIndex[x + 1, y, z + 1],
                                 cellVertexIndex[x, y, z + 1]);
 
-        for (int x = 0; x < sizeX; x++)
+        for (int x = 0; x < sizeX-1; x++)
             for (int y = 0; y < sizeY - 1; y++)
                 for (int z = 0; z < sizeZ - 1; z++)
                     AddFaceIfValid(vertices, triangles,
@@ -271,6 +277,7 @@ public class MarchingCubes : NetworkBehaviour
         GameObject chunkObj = Instantiate(meshysPrefab, transform);
         chunkObj.name = $"Meshys_{startX}_{startY}_{startZ}";
         chunkObj.layer = LayerMask.NameToLayer("Ground");
+        chunkObj.tag = "Cave";
 
         // Assign mesh before spawning
         MeshFilter mf = chunkObj.GetComponent<MeshFilter>();
@@ -466,7 +473,7 @@ public class MarchingCubes : NetworkBehaviour
     {
         holdCount++;
         Debug.Log(holdCount);
-        if (holdCount == 100)
+        if (holdCount == 50)
         {
             holdCount = 0;
             Debug.Log("resetting holdcount");

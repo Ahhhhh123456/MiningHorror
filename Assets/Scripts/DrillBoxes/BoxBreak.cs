@@ -19,7 +19,10 @@ public class BoxBreak : NetworkBehaviour
         playerInventory = FindObjectOfType<PlayerInventory>();
         droppedScript = FindObjectOfType<Dropped>();
         networkedBoxData = GetComponent<NetworkedBoxData>();
-        networkedBoxData.InitializeFromDrillBoxData(boxData);
+        if (IsServer)
+        {
+            networkedBoxData.InitializeFromDrillBoxData(boxData);
+        }
     }
 
     public void WhoBrokeBox()

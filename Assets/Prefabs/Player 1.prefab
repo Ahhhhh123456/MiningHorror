@@ -533,6 +533,8 @@ MonoBehaviour:
   slot4Action: {fileID: -2742271709846591488, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   dropAction: {fileID: 5844052175466972657, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   mineInterval: 0.005
+  mineRadius: 1.5
+  mineDepth: 1
   interactionDistance: 3
   interactableLayer:
     serializedVersion: 2
@@ -2378,7 +2380,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8629257546593736176
 Transform:
   m_ObjectHideFlags: 0

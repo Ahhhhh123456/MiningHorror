@@ -29,8 +29,8 @@ public class LookAndClickInteraction : NetworkBehaviour
     private float mineTimer = 0f;
 
     // public MarchingCubes caveGenerator; // drag your cave object here
-    public float mineRadius = 1.5f;     // size of mining tool
-    public float mineDepth = 1f;        // how much density to subtract per hit
+    public float mineRadius = 100f;     // size of mining tool
+    public float mineDepth = 200f;        // how much density to subtract per hit
 
     [Header("Holding Settings")]
 
@@ -255,72 +255,74 @@ public class LookAndClickInteraction : NetworkBehaviour
 
     private void Mining()
     {
-        if (playerInventory.holdPickaxe == true)
+        if (!playerInventory.holdPickaxe) return;
+
+        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        RaycastHit hit;
+
+        if (clickAction.action.WasReleasedThisFrame())
         {
-            if (clickAction.action.WasReleasedThisFrame())
+            if (currentMineTarget != null)
             {
-                if (currentMineTarget != null)
+                currentMineTarget.holdCount = 0;
+                Debug.Log("Stopped Mining Cube");
+                currentMineTarget = null;
+            }
+            mineTimer = 0f;
+        }
+
+        if (!clickAction.action.IsPressed()) return;
+
+        if (Physics.Raycast(ray, out hit, interactRange))
+        {
+            GameObject hitObj = hit.collider.gameObject;
+
+            // PRIORITY: Cave first
+            if (hitObj.CompareTag("Cave"))
+            {
+                MeshysHelper helper = hit.collider.GetComponent<MeshysHelper>();
+                if (helper != null)
                 {
-                    currentMineTarget.holdCount = 0;
-                    Debug.Log("Stopped Mining Cube");
-                    currentMineTarget = null;
+                    mineTimer += Time.deltaTime;
+                    if (mineTimer >= mineInterval)
+                    {
+                        helper.caveGenerator.MineCaveServerRpc(hit.point, mineRadius, mineDepth);
+                        mineTimer -= mineInterval;
+                        Debug.Log("Mining Cave at: " + hit.point);
+                    }
                 }
-                mineTimer = 0f; // reset timer
+                else
+                {
+                    Debug.Log("No MeshysHelper found on Cave object.");
+                }
+                return; // stop further checks
             }
 
-            if (clickAction.action.IsPressed())
+            // Then check for dropped items
+            if (hitObj.CompareTag("Dropped"))
             {
-                Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-                RaycastHit hit;
+                Debug.Log("Hit a dropped item, not mining.");
+                return;
+            }
 
-                if (Physics.Raycast(ray, out hit, interactRange))
+            // Then MineType
+            MineType mineTypeScript = hit.collider.GetComponent<MineType>();
+            if (mineTypeScript != null)
+            {
+                currentMineTarget = mineTypeScript;
+                mineTimer += Time.deltaTime;
+
+                if (mineTimer >= mineInterval)
                 {
-                    // Section to mine ores. Makes sure to check if it's the dropped item first
-                    if (hit.collider.gameObject.tag == "Dropped")
-                    {
-                        Debug.Log("Hit a dropped item, not mining.");
-                        return;
-                    }
-                    MineType mineTypeScript = hit.collider.GetComponent<MineType>();
-                    if (mineTypeScript != null)
-                    {
-                        currentMineTarget = mineTypeScript;
-
-                        // Update timer
-                        mineTimer += Time.deltaTime;
-
-                        // Call Mining only when enough time has passed
-                        if (mineTimer >= mineInterval)
-                        {
-                            // Passes camera and position of where the player mines
-                            currentMineTarget.MiningOre(playerCamera.transform.forward, hit.normal);
-                            mineTimer -= mineInterval; // reset timer but keep overflow
-                        }
-                    }
-                    else
-                    {
-                        // Check if the hit object is the cave mesh
-                        MeshysHelper helper = hit.collider.GetComponent<MeshysHelper>();
-                        if (helper != null)
-                        {
-                            mineTimer += Time.deltaTime;
-                            Debug.Log(mineTimer);
-                            if (mineTimer >= mineInterval)
-                            {
-                                helper.caveGenerator.MineCaveServerRpc(hit.point, mineRadius, mineDepth);
-                                mineTimer -= mineInterval; 
-                            }
-                            Debug.Log("Mining Cave at: " + hit.point);
-
-                        }
-                        else
-                        {
-                            Debug.Log("No MineType or MeshysHelper found on hit object.");
-                        }
-                    }
-
+                    currentMineTarget.MiningOre(playerCamera.transform.forward, hit.normal);
+                    mineTimer -= mineInterval;
                 }
+            }
+            else
+            {
+                Debug.Log("No MineType or MeshysHelper found on hit object.");
             }
         }
     }
+
 }

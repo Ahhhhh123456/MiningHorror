@@ -2078,7 +2078,7 @@ MonoBehaviour:
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
     Address: 127.0.0.1
-    Port: 7776
+    Port: 7779
     ServerListenAddress: 127.0.0.1
   DebugSimulator:
     PacketDelayMS: 0
@@ -3134,16 +3134,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   material: {fileID: 2100000, guid: 0943c098522f0804caebf9cbedc7e5b3, type: 2}
-  caveWidth: 50
+  caveWidth: 200
   caveHeight: 50
-  caveDepth: 50
+  caveDepth: 200
   noiseScale: 0.05
   isoLevel: 0.5
   resolution: 1
   chunkSizeX: 32
   chunkSizeY: 32
   chunkSizeZ: 32
-  oreChance: 0.01
+  oreChance: 0.1
   orePrefabs:
   - {fileID: 6319728801581947189, guid: e984d0414e0bebb478bdcccf86ebfdee, type: 3}
   - {fileID: 8551429989948833742, guid: dec1a671e7572e24b84b231aa5b54d26, type: 3}

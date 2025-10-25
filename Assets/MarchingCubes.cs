@@ -107,46 +107,59 @@ public class MarchingCubes : NetworkBehaviour
     
     private IEnumerator SpawnOresBatched()
     {
-        int batchSize = 25; // Fewer per frame since raycasts are heavier
+        int batchSize = 25;
         List<Vector3> spawnPositions = new List<Vector3>();
 
-        foreach (var kv in chunks)
-        {
-            GameObject chunkObj = kv.Value;
-            if (chunkObj == null) continue;
+        float surfaceChance = oreChance * 0.06f;
+        float deepChance = oreChance * 0.12f;
 
-            MeshFilter mf = chunkObj.GetComponent<MeshFilter>();
-            MeshCollider mc = chunkObj.GetComponent<MeshCollider>();
-            if (mf == null || mf.mesh == null || mc == null) continue;
+        for (int x = 1; x < caveWidth; x++)
+            for (int y = 1; y < caveHeight; y++)
+                for (int z = 1; z < caveDepth; z++)
+                {
+                    float val = densityMap[x, y, z];
+                    bool solid = val > isoLevel;
+                    if (!solid) continue;
 
-            Vector3[] verts = mf.mesh.vertices;
-            Vector3[] normals = mf.mesh.normals;
+                    // --- Check for nearby air (surface detection)
+                    bool nearAir = false;
+                    for (int dx = -1; dx <= 1 && !nearAir; dx++)
+                        for (int dy = -1; dy <= 1 && !nearAir; dy++)
+                            for (int dz = -1; dz <= 1 && !nearAir; dz++)
+                            {
+                                int nx = x + dx, ny = y + dy, nz = z + dz;
+                                if (nx < 0 || ny < 0 || nz < 0 ||
+                                    nx > caveWidth || ny > caveHeight || nz > caveDepth)
+                                    continue;
+                                if (densityMap[nx, ny, nz] <= isoLevel)
+                                    nearAir = true;
+                            }
 
-            // Iterate over mesh vertices
-            for (int i = 0; i < verts.Length; i++)
-            {
-                if (Random.value > oreChance) continue; // random chance skip
+                    // --- Choose correct spawn chance
+                    float chance = nearAir ? surfaceChance : deepChance;
+                    if (Random.value > chance)
+                        continue;
 
-                Vector3 worldPos = chunkObj.transform.TransformPoint(verts[i]);
-                Vector3 worldNormal = chunkObj.transform.TransformDirection(normals[i]);
+                    // --- Compute world-space position
+                    Vector3 pos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
 
-                // Raycast INWARD (opposite the normal) to detect solid rock behind the vertex
-                Ray inwardRay = new Ray(worldPos - worldNormal * 0.05f, -worldNormal);
+                    if (nearAir)
+                    {
+                        // Surface ores: slight offset inward so they appear on walls
+                        pos += Random.insideUnitSphere * (resolution * 0.15f);
+                    }
+                    else
+                    {
+                        // Deep ores: buried inside rock
+                        pos += Random.insideUnitSphere * (resolution * 0.3f);
+                    }
 
-                // // If we do NOT hit rock behind the vertex, it's an exterior surface → skip
-                // bool insideCave = Physics.Raycast(inwardRay, 0.5f, LayerMask.GetMask("Ground"));
-                // if (!insideCave)
-                //     continue;
+                    spawnPositions.Add(pos);
+                }
 
-                // Otherwise, it's an interior cave wall — spawn ore slightly embedded
-                Vector3 spawnPos = worldPos - worldNormal * Random.Range(0.05f, 0.15f);
-                spawnPositions.Add(spawnPos);
-            }
-        }
+        Debug.Log($"[OreGen] Found {spawnPositions.Count} potential ore spots.");
 
-        Debug.Log($"[OreGen] Found {spawnPositions.Count} valid surface positions.");
-
-        // Spawn ores in batches
+        // --- Spawn them in small batches ---
         int index = 0;
         while (index < spawnPositions.Count)
         {
@@ -163,10 +176,10 @@ public class MarchingCubes : NetworkBehaviour
                 OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
             }
 
-            yield return null; // wait a frame
+            yield return null;
         }
 
-        Debug.Log("[OreGen] Finished spawning ores on surfaces.");
+        Debug.Log("[OreGen] Finished spawning surface + deep ores.");
     }
 
 

@@ -946,6 +946,7 @@ MonoBehaviour:
   ladderDetectionRadius: 1
   ladderClimbSpeed: 3
   animator: {fileID: 0}
+  netAnimator: {fileID: 0}
 --- !u!114 &5104359714748234288
 MonoBehaviour:
   m_ObjectHideFlags: 0

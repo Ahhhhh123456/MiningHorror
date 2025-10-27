@@ -144,8 +144,8 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (IsOwner)
-            DebugAnimatorState();
+        // if (IsOwner)
+        //     DebugAnimatorState();
 
         // Jump input
         if (jumpAction.action.triggered && isGrounded)

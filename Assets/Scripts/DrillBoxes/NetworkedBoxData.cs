@@ -11,9 +11,14 @@ public NetworkVariable<int> coalCount = new NetworkVariable<int>(0, NetworkVaria
     public void InitializeFromDrillBoxData(DrillBoxData boxData)
     {
 
-        // Set starting values
-        coalCount.Value = boxData.coalCount;
-        ironCount.Value = boxData.ironCount;
-        goldCount.Value = boxData.goldCount;
+        if (!IsServer) return; // Only the server should modify NetworkVariables
+
+        int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
+
+        // multiply base counts by number of connected players
+        coalCount.Value = boxData.coalCount * playerCount;
+        ironCount.Value = boxData.ironCount * playerCount;
+        goldCount.Value = boxData.goldCount * playerCount;
+
     }
 }

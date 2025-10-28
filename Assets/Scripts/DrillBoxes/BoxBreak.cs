@@ -20,6 +20,10 @@ public class BoxBreak : NetworkBehaviour
     {
         playerInventory = FindObjectOfType<PlayerInventory>();
         droppedScript = FindObjectOfType<Dropped>();
+    }
+
+    public void Awake()
+    {
         networkedBoxData = GetComponent<NetworkedBoxData>();
     }
 
@@ -32,8 +36,6 @@ public class BoxBreak : NetworkBehaviour
             // Subscribe to connection events
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
-
-            TryInitializeBox();
         }
     }
 

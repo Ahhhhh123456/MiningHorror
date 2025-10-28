@@ -5,7 +5,7 @@ public class Dropped : NetworkBehaviour
 {
     [Header("Drop Settings")]
     public NetworkObject dropPrefab;
-    public float dropScale = 0.3f;
+    public float dropScale = 0.1f;
     public Vector3 dropOffset = Vector3.up;
     private Vector3 pendingImpulse;
     private bool hasPendingImpulse = false;
@@ -149,7 +149,7 @@ public class Dropped : NetworkBehaviour
             forceDir = cameraForward;
         }
 
-        Vector3 force = forceDir.normalized * 2f + Vector3.up * 1.5f;
+        Vector3 force = forceDir.normalized * 1.5f + Vector3.up * 2f;
 
         // Apply force on server
         rb.AddForce(force, ForceMode.Impulse);

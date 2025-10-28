@@ -524,7 +524,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   playerCamera: {fileID: 5237642999132564622}
-  interactRange: 5
+  interactRange: 2
   clickAction: {fileID: -6987561939814216150, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   eButtonAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   slot1Action: {fileID: 2411907206095950430, guid: 052faaac586de48259a63d0c4782560b, type: 3}
@@ -535,7 +535,7 @@ MonoBehaviour:
   mineInterval: 0.005
   mineRadius: 1.5
   mineDepth: 1
-  interactionDistance: 3
+  interactionDistance: 2
   interactableLayer:
     serializedVersion: 2
     m_Bits: 128

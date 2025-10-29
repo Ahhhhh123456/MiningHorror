@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.AI; // <--- IMPORTANT
 
 public class MonsterFollow : NetworkBehaviour
 {
@@ -14,27 +15,25 @@ public class MonsterFollow : NetworkBehaviour
     public float roamWaitTime = 2f;
 
     private Transform targetPlayer;
-    private Rigidbody rb;
-    private Vector3 roamTarget;
-    private float roamTimer;
+    private NavMeshAgent agent;
     private Vector3 spawnPosition;
+    private float roamTimer;
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody>();
+        agent = GetComponent<NavMeshAgent>();
+        agent.speed = moveSpeed;
         spawnPosition = transform.position;
-        SetNewRoamTarget();
     }
 
     private void Start()
     {
-        // Subscribe to player spawning events
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
-            // Check for existing local player (host)
-            if (NetworkManager.Singleton.LocalClient != null && NetworkManager.Singleton.LocalClient.PlayerObject != null)
+            if (NetworkManager.Singleton.LocalClient != null &&
+                NetworkManager.Singleton.LocalClient.PlayerObject != null)
             {
                 targetPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.transform;
             }
@@ -51,61 +50,46 @@ public class MonsterFollow : NetworkBehaviour
 
     private void OnClientConnected(ulong clientId)
     {
-        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client) &&
+            client.PlayerObject != null && targetPlayer == null)
         {
-            if (client.PlayerObject != null && targetPlayer == null)
-            {
-                targetPlayer = client.PlayerObject.transform;
-                Debug.Log("Monster now targeting spawned player: " + client.PlayerObject.name);
-            }
+            targetPlayer = client.PlayerObject.transform;
         }
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        // If we have a player in range, chase them
         if (targetPlayer != null)
         {
             float distance = Vector3.Distance(transform.position, targetPlayer.position);
             if (distance < chaseRange)
             {
-                ChasePlayer(targetPlayer.position);
+                ChasePlayer();
                 return;
             }
         }
 
-        // Otherwise, roam randomly
         Roam();
     }
 
-    private void ChasePlayer(Vector3 playerPos)
+    private void ChasePlayer()
     {
-        Vector3 direction = (playerPos - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * turnSpeed);
-        rb.MovePosition(transform.position + direction * moveSpeed * Time.fixedDeltaTime);
+        agent.SetDestination(targetPlayer.position);
+        agent.stoppingDistance = stopRange;
     }
 
     private void Roam()
     {
-        roamTimer -= Time.fixedDeltaTime;
-        float distanceToTarget = Vector3.Distance(transform.position, roamTarget);
+        roamTimer -= Time.deltaTime;
 
-        if (distanceToTarget < 0.5f || roamTimer <= 0f)
+        if (roamTimer <= 0f || agent.remainingDistance < 0.5f)
         {
-            SetNewRoamTarget();
+            Vector2 randomCircle = Random.insideUnitCircle * roamRadius;
+            Vector3 roamTarget = spawnPosition + new Vector3(randomCircle.x, 0, randomCircle.y);
+
+            agent.stoppingDistance = 0;
+            agent.SetDestination(roamTarget);
             roamTimer = roamWaitTime;
         }
-
-        Vector3 direction = (roamTarget - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * turnSpeed);
-        rb.MovePosition(transform.position + direction * moveSpeed * Time.fixedDeltaTime);
-    }
-
-    private void SetNewRoamTarget()
-    {
-        Vector2 randomCircle = Random.insideUnitCircle * roamRadius;
-        roamTarget = spawnPosition + new Vector3(randomCircle.x, 0, randomCircle.y);
     }
 }

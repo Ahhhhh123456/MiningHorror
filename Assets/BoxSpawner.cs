@@ -1,8 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Netcode; // if using NetworkObject
-
+using Unity.Netcode; 
+using Unity.AI.Navigation;
 public class BoxSpawner : NetworkBehaviour
 {
     [Header("Prefabs")]
@@ -21,11 +21,10 @@ public class BoxSpawner : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        if (IsServer)
-        {
-            // Clients also generate locally so they can see geometry
-            StartCoroutine(SpawnBoxesOnSurface());
-        }
+
+        // Called In CreateCave (MarchingCubes.cs)
+        //StartCoroutine(SpawnBoxesOnSurface());
+        
     }
 
     void Awake()
@@ -114,12 +113,19 @@ public class BoxSpawner : NetworkBehaviour
             NetworkObject boxInstance = Instantiate(chosenBox, spawnPos, Quaternion.identity)
                                         .GetComponent<NetworkObject>();
 
+            // --- Make sure NavMesh ignores this object ---
+            NavMeshModifier modifier = boxInstance.GetComponent<NavMeshModifier>();
+            if (modifier == null)
+            {
+                modifier = boxInstance.gameObject.AddComponent<NavMeshModifier>();
+            }
+            modifier.ignoreFromBuild = true;
+
             // Spawn it on the network
             boxInstance.Spawn();
 
-            // Now initialize NetworkVariables safely (server only)
+            // Initialize NetworkVariables safely (server only)
             NetworkedBoxData netData = boxInstance.GetComponent<NetworkedBoxData>();
-
             if (chosenBox == box1)          // body prefab
                 netData.InitializeFromDrillBoxData(bodyData);
             else if (chosenBox == box2)     // head prefab
@@ -131,6 +137,7 @@ public class BoxSpawner : NetworkBehaviour
 
             yield return null;
         }
+
 
         Debug.Log("[BoxGen] Finished spawning boxes on cave surface.");
     }

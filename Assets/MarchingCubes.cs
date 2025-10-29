@@ -2,7 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
-
+using Unity.AI.Navigation;
 
 public class MarchingCubes : NetworkBehaviour
 {
@@ -11,6 +11,7 @@ public class MarchingCubes : NetworkBehaviour
     public int caveWidth;  // reduced for testing
     public int caveHeight;
     public int caveDepth;
+
 
     [Header("Noise Settings")]
     public float noiseScale;
@@ -24,8 +25,8 @@ public class MarchingCubes : NetworkBehaviour
     public int chunkSizeZ;
     private Dictionary<Vector3Int, GameObject> chunks = new Dictionary<Vector3Int, GameObject>();
 
-
-
+    public GameObject caveParent;
+    public NavMeshSurface surface; 
     [Header("Ore Settings")]
     public float oreChance;
     public GameObject[] orePrefabs; // Prefabs for ore instantiation
@@ -49,6 +50,7 @@ public class MarchingCubes : NetworkBehaviour
         {
             // Clients also generate locally so they can see geometry
             StartCoroutine(WaitForServerAndGenerate());
+
         }
     }
 
@@ -101,6 +103,7 @@ public class MarchingCubes : NetworkBehaviour
                 }
 
         if (IsServer)
+        {
             StartCoroutine(SpawnOresBatched());
             BoxSpawner boxSpawner = GetComponent<BoxSpawner>();
             if (boxSpawner != null && IsServer)
@@ -108,6 +111,22 @@ public class MarchingCubes : NetworkBehaviour
                 StartCoroutine(boxSpawner.SpawnBoxesOnSurface());
             }
 
+            if (surface != null)
+            {
+                surface.BuildNavMesh();
+            }
+            else
+            {
+                Debug.LogWarning("NavMeshSurface component not found on MarchingCubes GameObject.");
+            }
+
+            MonsterSpawn monsterSpawner = GetComponent<MonsterSpawn>();
+            if (monsterSpawner != null && IsServer)
+            {
+                StartCoroutine(monsterSpawner.SpawnMonstersOnSurface());
+            }
+        }
+                
     }
     
     private IEnumerator SpawnOresBatched()
@@ -173,9 +192,24 @@ public class MarchingCubes : NetworkBehaviour
                 Vector3 spawnPos = spawnPositions[index];
                 GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
 
-                NetworkObject oreInstance = Instantiate(chosenOre, spawnPos, Quaternion.identity)
-                                            .GetComponent<NetworkObject>();
+                // NetworkObject oreInstance = Instantiate(chosenOre, spawnPos, Quaternion.identity)
+                //                             .GetComponent<NetworkObject>();
 
+                // oreInstance.Spawn();
+                // oreInstance.name = chosenOre.name;
+                // OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
+                NetworkObject oreInstance = Instantiate(chosenOre, spawnPos, Quaternion.identity)
+                                .GetComponent<NetworkObject>();
+
+                // --- Make sure NavMesh ignores this ore ---
+                NavMeshModifier modifier = oreInstance.GetComponent<NavMeshModifier>();
+                if (modifier == null)
+                {
+                    modifier = oreInstance.gameObject.AddComponent<NavMeshModifier>();
+                }
+                modifier.ignoreFromBuild = true;
+
+                // --- Now spawn it ---
                 oreInstance.Spawn();
                 oreInstance.name = chosenOre.name;
                 OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
@@ -273,7 +307,7 @@ public class MarchingCubes : NetworkBehaviour
         mesh.SetTriangles(triangles, 0);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-        
+
         GameObject chunkObj = Instantiate(meshysPrefab, transform);
         chunkObj.name = $"Meshys_{startX}_{startY}_{startZ}";
         chunkObj.layer = LayerMask.NameToLayer("Ground");
@@ -297,6 +331,7 @@ public class MarchingCubes : NetworkBehaviour
         if (IsServer)
         {
             netObj.Spawn();
+            chunkObj.transform.SetParent(caveParent.transform, true); // true keeps world pos
         }
 
         // Save reference for mining / updates

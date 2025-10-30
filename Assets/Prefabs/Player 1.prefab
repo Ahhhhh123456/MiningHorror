@@ -992,6 +992,10 @@ MonoBehaviour:
     prefab: {fileID: 3009761070082280216, guid: c8de112fb5959ae459ace2744451500f, type: 3}
     holdRotation: {x: -90, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
+  - itemName: Dynamite
+    prefab: {fileID: 9219746269787248094, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+    holdRotation: {x: -90, y: 90, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &5579227905233273499
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -42,6 +42,8 @@ public class LookAndClickInteraction : NetworkBehaviour
     private BoxBreak boxBreak;
 
     private Dropped dropScript;
+
+    private Explode explodeScript;
     private bool isHoldingItem = false;
 
     public void Start()
@@ -147,13 +149,6 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
         {
-            // if (dropScript != null && eButtonAction.action.WasPressedThisFrame() && hit.collider.CompareTag("Dropped"))
-            // {
-            //     // Instead of picking up locally, call the networked method
-            //     Debug.Log("Picking up item: " + hit.collider.gameObject.name);
-            //     dropScript.PickedUp(hit.collider.gameObject);
-            //     return;
-            // }
             if (eButtonAction.action.WasPressedThisFrame() && hit.collider.CompareTag("Dropped"))
             {
                 Dropped hitDrop = hit.collider.GetComponent<Dropped>();
@@ -239,6 +234,22 @@ public class LookAndClickInteraction : NetworkBehaviour
         // Spawn networked object
         if (droppedItem.TryGetComponent<NetworkObject>(out NetworkObject netObj))
             netObj.Spawn();
+
+        if (itemName == "Dynamite")
+        {
+            Explode explodeScript = droppedItem.GetComponent<Explode>();
+            if (explodeScript != null)
+            {
+                Debug.Log("Found Explode script on dropped item.");
+
+                // 🔥 Call explosion via RPC, not local function
+                explodeScript.ExplosionServerRpc();
+            }
+            else
+            {
+                Debug.LogWarning("Dropped Dynamite has no Explode script!");
+            }
+        }
     }
 
 

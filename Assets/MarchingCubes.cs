@@ -49,6 +49,7 @@ public class MarchingCubes : NetworkBehaviour
         else if (IsClient)
         {
             // Clients also generate locally so they can see geometry
+            Debug.Log("Client generating cave mesh locally.");
             StartCoroutine(WaitForServerAndGenerate());
 
         }
@@ -56,9 +57,15 @@ public class MarchingCubes : NetworkBehaviour
 
     private IEnumerator WaitForServerAndGenerate()
     {
-        // Wait for the cave parameters (like width, height, etc.) to sync if needed
         yield return new WaitForSeconds(0.5f);
         CreateCave();
+
+
+        yield return new WaitForSeconds(5.0f);
+        if (surface != null)
+        {
+            surface.BuildNavMesh();
+        }
     }
 
 
@@ -104,7 +111,7 @@ public class MarchingCubes : NetworkBehaviour
 
         if (IsServer)
         {
-            StartCoroutine(SpawnOresBatched());
+            //StartCoroutine(SpawnOresBatched());
             BoxSpawner boxSpawner = GetComponent<BoxSpawner>();
             if (boxSpawner != null && IsServer)
             {
@@ -308,12 +315,11 @@ public class MarchingCubes : NetworkBehaviour
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
-        GameObject chunkObj = Instantiate(meshysPrefab, transform);
+        GameObject chunkObj = Instantiate(meshysPrefab); // instantiate as root (world)
         chunkObj.name = $"Meshys_{startX}_{startY}_{startZ}";
         chunkObj.layer = LayerMask.NameToLayer("Ground");
         chunkObj.tag = "Cave";
 
-        // Assign mesh before spawning
         MeshFilter mf = chunkObj.GetComponent<MeshFilter>();
         mf.mesh = mesh;
         MeshRenderer mr = chunkObj.GetComponent<MeshRenderer>();
@@ -328,10 +334,36 @@ public class MarchingCubes : NetworkBehaviour
         helper.caveGenerator = this;
 
         NetworkObject netObj = chunkObj.GetComponent<NetworkObject>();
+
         if (IsServer)
         {
+            // Spawn first
             netObj.Spawn();
-            chunkObj.transform.SetParent(caveParent.transform, true); // true keeps world pos
+
+            // Now safe to parent to caveParent (server)
+            if (caveParent != null)
+            {
+                NetworkObject caveParentNetObj = caveParent.GetComponent<NetworkObject>();
+                if (caveParentNetObj != null && caveParentNetObj.IsSpawned)
+                {
+                    try
+                    {
+                        netObj.TrySetParent(caveParentNetObj, true);
+                    }
+                    catch
+                    {
+                        // ignore
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Client-only: parent to NavMeshSurface for local mesh navigation
+            if (surface != null)
+            {
+                chunkObj.transform.SetParent(surface.transform, true);
+            }
         }
 
         // Save reference for mining / updates

@@ -471,7 +471,7 @@ public class PlayerInventory : NetworkBehaviour
         }
         return 0;
     }
-    
+
 
     public GameObject CreateItemInstance(string itemName, Transform parent = null)
     {

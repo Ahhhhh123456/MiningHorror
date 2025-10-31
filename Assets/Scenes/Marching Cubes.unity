@@ -1424,6 +1424,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Meshys
       objectReference: {fileID: 0}
+    - target: {fileID: 3543107023861291975, guid: d515deac896e6854e9f3cb8b0a5e2d86, type: 3}
+      propertyPath: m_UseGeometry
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3895978845079606742, guid: d515deac896e6854e9f3cb8b0a5e2d86, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2244,7 +2248,7 @@ MonoBehaviour:
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
     Address: 127.0.0.1
-    Port: 7783
+    Port: 7777
     ServerListenAddress: 127.0.0.1
   DebugSimulator:
     PacketDelayMS: 0
@@ -3057,7 +3061,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3153184520594772525, guid: 056679d8d44c41a4ca77fc23e6f41973, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3316,6 +3320,75 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1894795404
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 5.19536
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.82980347
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4155504801084245605, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4810000188225527060, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 357745249
+      objectReference: {fileID: 0}
+    - target: {fileID: 4810000188225527060, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4810000188225527060, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 2375493714
+      objectReference: {fileID: 0}
+    - target: {fileID: 9219746269787248094, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+      propertyPath: m_Name
+      value: Dynamite
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4356678001a363549a8b11e036dd447f, type: 3}
 --- !u!1 &1901608284
 GameObject:
   m_ObjectHideFlags: 0
@@ -3759,9 +3832,9 @@ MonoBehaviour:
   noiseScale: 0.05
   isoLevel: 0.5
   resolution: 1
-  chunkSizeX: 16
-  chunkSizeY: 16
-  chunkSizeZ: 16
+  chunkSizeX: 32
+  chunkSizeY: 32
+  chunkSizeZ: 32
   caveParent: {fileID: 786366002}
   surface: {fileID: 1325947495}
   oreChance: 0.12
@@ -4101,3 +4174,4 @@ SceneRoots:
   - {fileID: 1602720896}
   - {fileID: 1287954925}
   - {fileID: 786366003}
+  - {fileID: 1894795404}

@@ -55,18 +55,34 @@ public class MarchingCubes : NetworkBehaviour
         }
     }
 
+    // private IEnumerator WaitForServerAndGenerate()
+    // {
+    //     yield return new WaitForSeconds(0.5f);
+    //     CreateCave();
+
+    //     // WAIT one frame so objects are in hierarchy
+    //     yield return null;
+
+    //     Physics.SyncTransforms();   // <-- Important
+
+    //     yield return new WaitForSeconds(0.1f);
+    //     surface.BuildNavMesh();     // <-- Bake final navmesh
+    // }
     private IEnumerator WaitForServerAndGenerate()
     {
         yield return new WaitForSeconds(0.5f);
+
         CreateCave();
 
+        yield return null; // wait a frame
 
-        yield return new WaitForSeconds(5.0f);
-        if (surface != null)
-        {
-            surface.BuildNavMesh();
-        }
+        Physics.SyncTransforms();
+
+        surface.BuildNavMesh(); // bake NavMesh without interactables
+
+        yield return null;
     }
+
 
 
     public void ClearCave()
@@ -111,13 +127,13 @@ public class MarchingCubes : NetworkBehaviour
 
         if (IsServer)
         {
-            //StartCoroutine(SpawnOresBatched());
+            StartCoroutine(SpawnOresBatched());
             BoxSpawner boxSpawner = GetComponent<BoxSpawner>();
             if (boxSpawner != null && IsServer)
             {
                 StartCoroutine(boxSpawner.SpawnBoxesOnSurface());
             }
-
+        
             if (surface != null)
             {
                 surface.BuildNavMesh();
@@ -359,10 +375,21 @@ public class MarchingCubes : NetworkBehaviour
         }
         else
         {
-            // Client-only: parent to NavMeshSurface for local mesh navigation
-            if (surface != null)
+            // This is for the client.
+            if (caveParent != null)
             {
-                chunkObj.transform.SetParent(surface.transform, true);
+                NetworkObject caveParentNetObj = caveParent.GetComponent<NetworkObject>();
+                if (caveParentNetObj != null && caveParentNetObj.IsSpawned)
+                {
+                    try
+                    {
+                        netObj.TrySetParent(caveParentNetObj, true);
+                    }
+                    catch
+                    {
+                        // ignore
+                    }
+                }
             }
         }
 
@@ -570,6 +597,10 @@ public class MarchingCubes : NetworkBehaviour
 
             // Update affected chunks locally
             UpdateAffectedChunks(worldPos, radius);
+            if (surface != null)
+            {
+                surface.UpdateNavMesh(surface.navMeshData);
+            }
         }
 
     }
@@ -597,5 +628,5 @@ public class MarchingCubes : NetworkBehaviour
                     }
                 }
     }
-
+    
 }

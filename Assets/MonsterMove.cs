@@ -59,6 +59,10 @@ public class MonsterFollow : NetworkBehaviour
 
     private void Update()
     {
+        if (!IsServer) return; 
+
+        targetPlayer = GetClosestPlayer(); 
+
         if (targetPlayer != null)
         {
             float distance = Vector3.Distance(transform.position, targetPlayer.position);
@@ -76,6 +80,27 @@ public class MonsterFollow : NetworkBehaviour
     {
         agent.SetDestination(targetPlayer.position);
         agent.stoppingDistance = stopRange;
+    }
+
+    private Transform GetClosestPlayer()
+    {
+        Transform closest = null;
+        float closestDist = Mathf.Infinity;
+        Vector3 pos = transform.position;
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null) continue;
+
+            float dist = Vector3.Distance(pos, client.PlayerObject.transform.position);
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                closest = client.PlayerObject.transform;
+            }
+        }
+
+        return closest;
     }
 
     private void Roam()

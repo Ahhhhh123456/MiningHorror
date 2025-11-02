@@ -114,8 +114,6 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         ChooseInventorySlot();
         Mining();
-
-        CompassUpdate();
     }
 
 
@@ -265,19 +263,6 @@ public class LookAndClickInteraction : NetworkBehaviour
             Destroy(playerInventory.currentHeldItem);
             playerInventory.currentHeldItem = null;
         }
-    }
-
-    private void CompassUpdate()
-    {
-        TrackBoxes compassTracker = GetComponent<TrackBoxes>();
-        if (playerInventory.IsHoldingCompass)
-        {
-            if (compassTracker == null)
-            {
-                Debug.Log("compassTracker is null");
-            }
-        }
-
     }
 
     private void Mining()

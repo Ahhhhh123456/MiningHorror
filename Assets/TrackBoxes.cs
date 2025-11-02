@@ -13,13 +13,40 @@ public class TrackBoxes : NetworkBehaviour
     private Vector3 closestTargetPosition;
     private float timer;
 
+    private void Start()
+    {
+        // Wait for players to spawn then link the local player only
+        Invoke(nameof(FindLocalPlayerInventory), 0.25f);
+    }
+
+    private void FindLocalPlayerInventory()
+    {
+        foreach (var obj in FindObjectsOfType<PlayerInventory>())
+        {
+            // Only pick the player's own inventory on their client
+            if (obj.IsOwner)
+            {
+                Initialize(obj);
+                Debug.Log($"Compass Tracker linked to player: {obj.OwnerClientId}");
+                return;
+            }
+        }
+
+        Debug.LogWarning("TrackBoxes could not find a local PlayerInventory!");
+    }
+
     private void Update()
     {
-        if (playerInventory == null) return;
+        if (playerInventory == null)
+        {
+            Debug.LogWarning("PlayerInventory not initialized in TrackBoxes.");
+            return;
+        }
 
         timer += Time.deltaTime;
         if (timer < updateRate) return;
         timer = 0f;
+
 
         if (playerInventory.IsHoldingCompass)
         {
@@ -35,7 +62,7 @@ public class TrackBoxes : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void RequestClosestTargetServerRpc()
     {
-        Vector3 playerPos = transform.position;
+        Vector3 playerPos = playerInventory.transform.position;
 
         GameObject closest = null;
         float minDistance = float.MaxValue;
@@ -59,10 +86,11 @@ public class TrackBoxes : NetworkBehaviour
             {
                 Send = new ClientRpcSendParams
                 {
-                    TargetClientIds = new ulong[] { OwnerClientId }
+                    TargetClientIds = new ulong[] { playerInventory.OwnerClientId }
                 }
             };
 
+            Debug.Log($"Sending closest target at {closest.transform.position} to client {playerInventory.OwnerClientId}");
             SendClosestTargetClientRpc(closest.transform.position, rpcParams);
         }
     }

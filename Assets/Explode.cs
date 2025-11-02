@@ -42,7 +42,7 @@ public class Explode : NetworkBehaviour
         var caveGenerator = FindObjectOfType<MarchingCubes>();
         if (caveGenerator != null)
         {
-            caveGenerator.MineCaveServerRpc(pos, explosionRadius, carveDepth);
+            caveGenerator.MineCaveServerRpc(pos, explosionRadius, carveDepth, true);
             //caveGenerator.UpdateNavMeshForMining();
         }
         // 3) Play FX for everyone

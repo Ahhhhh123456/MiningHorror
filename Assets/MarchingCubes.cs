@@ -543,66 +543,89 @@ public class MarchingCubes : NetworkBehaviour
 
 
     [ServerRpc(RequireOwnership = false)]
-    public void MineCaveServerRpc(Vector3 worldPos, float radius, float depth, ServerRpcParams rpcParams = default)
+    public void MineCaveServerRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        Debug.Log($"MineCaveServerRpc called by client {clientId} at position {worldPos}");
-
-        // Update the server density map
-        MineCave(worldPos, radius, depth);
-
-        // Tell all clients (including host) to update
-        MineCaveClientRpc(worldPos, radius, depth);
+        MineCave(worldPos, radius, depth, ignoreHold);
+        MineCaveClientRpc(worldPos, radius, depth, ignoreHold);
     }
     
     [ClientRpc]
-    private void MineCaveClientRpc(Vector3 worldPos, float radius, float depth)
+    private void MineCaveClientRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold)
     {
-        // Skip the server because it already applied it
         if (IsServer) return;
-
-        MineCave(worldPos, radius, depth);
+        MineCave(worldPos, radius, depth, ignoreHold);
     }
-    public void MineCave(Vector3 worldPos, float radius, float depth)
+    public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false)
     {
-        holdCount++;
-        Debug.Log(holdCount);
-        if (holdCount == 50)
+        // If this is **pickaxe mining**, use the hold system
+        if (!ignoreHold)
         {
-            holdCount = 0;
-            Debug.Log("resetting holdcount");
-        }
-        if (holdCount == 1)
-        {
-            Debug.Log("Hold Count 100 Reached - Mining Cave at " + worldPos);
-            int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
-            int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
-            int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
+            holdCount++;
+            Debug.Log(holdCount);
 
-            int r = Mathf.CeilToInt(radius / resolution);
-
-            for (int x = x0 - r; x <= x0 + r; x++)
-                for (int y = y0 - r; y <= y0 + r; y++)
-                    for (int z = z0 - r; z <= z0 + r; z++)
-                    {
-                        if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
-
-                        Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
-                        if (Vector3.Distance(voxelCenter, worldPos) <= radius)
-                        {
-                            densityMap[x, y, z] -= depth;
-                            densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
-                        }
-                    }
-
-            // Update affected chunks locally
-            UpdateAffectedChunks(worldPos, radius);
-            if (surface != null)
+            if (holdCount == 50)
             {
-                surface.UpdateNavMesh(surface.navMeshData);
+                holdCount = 0;
+                Debug.Log("resetting holdcount");
             }
+
+            // Only mine if this is the "first" hold tick
+            if (holdCount != 1)
+            {
+                Debug.Log("Hold Count not reached - skipping mining");
+                return;
+            }
+
+            Debug.Log("Hold Count reached - Mining Cave at " + worldPos);
+        }
+        else
+        {
+            // If this is an explosion, we ALWAYS mine:
+            Debug.Log("Explosion Mining Cave at " + worldPos);
         }
 
+        // --- Do the actual carving ---
+        int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
+        int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
+        int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
+
+        int r = Mathf.CeilToInt(radius / resolution);
+
+        for (int x = x0 - r; x <= x0 + r; x++)
+            for (int y = y0 - r; y <= y0 + r; y++)
+                for (int z = z0 - r; z <= z0 + r; z++)
+                {
+                    if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
+
+                    Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+                    if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+                    {
+                        densityMap[x, y, z] -= depth;
+                        densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
+                    }
+                }
+
+        // Update affected chunks locally
+        UpdateAffectedChunks(worldPos, radius);
+
+        // Rebuild navmesh
+        if (surface != null)
+        {
+            StartCoroutine(DelayedNavMeshRebuild());
+            //surface.UpdateNavMesh(surface.navMeshData);
+            Debug.Log("NavMesh updated after mining.");
+        }
+    }
+
+
+    private IEnumerator DelayedNavMeshRebuild()
+    {
+        // Wait one frame so destroyed meshes are deleted and new ones are generated
+        yield return null;
+        yield return null; // sometimes 1 frame is enough, sometimes 2 is safer
+
+        if (surface != null && IsServer)
+            surface.UpdateNavMesh(surface.navMeshData);
     }
 
     private void UpdateAffectedChunks(Vector3 worldPos, float radius)

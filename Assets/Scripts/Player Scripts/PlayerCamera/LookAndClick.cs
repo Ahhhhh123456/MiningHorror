@@ -44,6 +44,7 @@ public class LookAndClickInteraction : NetworkBehaviour
     private Dropped dropScript;
 
     private Explode explodeScript;
+    //private TrackBoxes trackBoxes;
     private bool isHoldingItem = false;
 
     public void Start()
@@ -113,6 +114,8 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         ChooseInventorySlot();
         Mining();
+
+        CompassUpdate();
     }
 
 
@@ -264,6 +267,19 @@ public class LookAndClickInteraction : NetworkBehaviour
         }
     }
 
+    private void CompassUpdate()
+    {
+        TrackBoxes compassTracker = GetComponent<TrackBoxes>();
+        if (playerInventory.IsHoldingCompass)
+        {
+            if (compassTracker == null)
+            {
+                Debug.Log("compassTracker is null");
+            }
+        }
+
+    }
+
     private void Mining()
     {
         if (!playerInventory.holdPickaxe) return;
@@ -324,8 +340,7 @@ public class LookAndClickInteraction : NetworkBehaviour
                 if (mineTimer >= mineInterval)
                 {
                     helper.caveGenerator.MineCaveServerRpc(
-                        caveHit.Value.point, mineRadius, mineDepth
-                    );
+                        caveHit.Value.point, mineRadius, mineDepth, false);
                     mineTimer -= mineInterval;
                 }
             }

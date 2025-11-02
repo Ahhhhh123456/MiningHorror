@@ -11,7 +11,8 @@ public class ItemType : MonoBehaviour
         {"DrillHead", new ItemData(10f, ItemCategory.Part)},
         {"Wheel", new ItemData(8.5f, ItemCategory.Part)},
         {"Ladder", new ItemData(5f, ItemCategory.Misc)},
-        {"Dynamite", new ItemData(2f, ItemCategory.Misc)}
+        {"Dynamite", new ItemData(2f, ItemCategory.Misc)},
+        {"Compass", new ItemData(0.01f, ItemCategory.Misc)}
     };
 }
 

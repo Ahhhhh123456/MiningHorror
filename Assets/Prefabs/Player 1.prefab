@@ -539,6 +539,8 @@ MonoBehaviour:
   interactableLayer:
     serializedVersion: 2
     m_Bits: 128
+  targetPrefabs: []
+  updateRate: 0.1
 --- !u!114 &5471021842958538708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -747,6 +749,7 @@ GameObject:
   - component: {fileID: 3386794775839806669}
   - component: {fileID: 3054592535333448796}
   - component: {fileID: -1728222716589372832}
+  - component: {fileID: -1560127733828016002}
   m_Layer: 0
   m_Name: Player 1
   m_TagString: Player
@@ -965,6 +968,7 @@ MonoBehaviour:
   holdPosition: {fileID: 4371809906300329274}
   pickaxePosition: {fileID: 425613153254977570}
   holdPickaxe: 0
+  IsHoldingCompass: 0
   currentHeldItem: {fileID: 0}
   playerWeight: 0
   currentSlotIndex: -1
@@ -1169,6 +1173,24 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   TransitionStateInfoList: []
   m_Animator: {fileID: 4636701859300606066}
+--- !u!114 &-1560127733828016002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3380701076809917854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1739e6531a7463f4b999035edfcc4830, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  targetPrefabs:
+  - {fileID: 4608852769024827792, guid: f6140c807bdcdc54bbb994d138d9e544, type: 3}
+  - {fileID: 729531574931480515, guid: 3c4a81b6e5c08b745861dacabb6c3ede, type: 3}
+  - {fileID: 6611217039265726838, guid: ffd163fb0966a1243b9e500081a3bfd2, type: 3}
+  updateRate: 0.1
 --- !u!1 &3382507352548371615
 GameObject:
   m_ObjectHideFlags: 0

@@ -806,10 +806,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Compass
       objectReference: {fileID: 0}
-    - target: {fileID: 5342587301488557757, guid: a1b516d462511c24f99555ea8316593a, type: 3}
-      propertyPath: 'targetPrefabs.Array.data[0]'
-      value: 
-      objectReference: {fileID: 733691624}
     - target: {fileID: 5606364777650611164, guid: a1b516d462511c24f99555ea8316593a, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 794048855
@@ -1092,11 +1088,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 482200360}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &733691624 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4608852769024827792, guid: f6140c807bdcdc54bbb994d138d9e544, type: 3}
-  m_PrefabInstance: {fileID: 5287020398164232609}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &776824725
 GameObject:
   m_ObjectHideFlags: 0
@@ -3173,7 +3164,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5833307698401237964, guid: ffd163fb0966a1243b9e500081a3bfd2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -8.233
+      value: -11.93
       objectReference: {fileID: 0}
     - target: {fileID: 5833307698401237964, guid: ffd163fb0966a1243b9e500081a3bfd2, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3213,7 +3204,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6611217039265726838, guid: ffd163fb0966a1243b9e500081a3bfd2, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3532,7 +3523,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 729531574931480515, guid: 3c4a81b6e5c08b745861dacabb6c3ede, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3333931042021656630, guid: 3c4a81b6e5c08b745861dacabb6c3ede, type: 3}
       propertyPath: GlobalObjectIdHash
@@ -3650,7 +3641,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3800544955298790186, guid: f6140c807bdcdc54bbb994d138d9e544, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -8.23
+      value: -12.27
       objectReference: {fileID: 0}
     - target: {fileID: 3800544955298790186, guid: f6140c807bdcdc54bbb994d138d9e544, type: 3}
       propertyPath: m_LocalRotation.w

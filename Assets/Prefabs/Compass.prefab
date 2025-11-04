@@ -18,7 +18,6 @@ GameObject:
   - component: {fileID: 8893654043028371721}
   - component: {fileID: 2115081697748338764}
   - component: {fileID: 1014079658755553449}
-  - component: {fileID: 5342587301488557757}
   m_Layer: 7
   m_Name: Compass
   m_TagString: Dropped
@@ -260,20 +259,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ba0a55c7d543294f820eede21a01463, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &5342587301488557757
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 760378346170225441}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1739e6531a7463f4b999035edfcc4830, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  targetPrefabs:
-  - {fileID: 0}
-  updateRate: 0.1
-  playerInventory: {fileID: 0}

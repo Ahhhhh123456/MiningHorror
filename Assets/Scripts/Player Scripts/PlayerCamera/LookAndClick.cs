@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
+using System.Collections.Generic;
 public class LookAndClickInteraction : NetworkBehaviour
 {
     public Camera playerCamera;                // assign your FPS camera in Inspector
@@ -47,6 +48,14 @@ public class LookAndClickInteraction : NetworkBehaviour
     //private TrackBoxes trackBoxes;
     private bool isHoldingItem = false;
 
+    [Header("Compass Settings")]
+    public List<GameObject> targetPrefabs; // list of target prefabs to track
+    public float updateRate = 0.1f; // how often to update arrow
+
+    private Vector3 closestTargetPosition;
+    private float timer;
+    private TrackBoxes compassscript;
+
     public void Start()
     {
         mineType = FindObjectOfType<MineType>();
@@ -54,6 +63,7 @@ public class LookAndClickInteraction : NetworkBehaviour
         playerInventory = FindObjectOfType<PlayerInventory>();
         loadingBar = GetComponent<LoadingBar>();
         boxBreak = FindObjectOfType<BoxBreak>();
+        compassscript = FindObjectOfType<TrackBoxes>();
 
     }
 
@@ -114,6 +124,7 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         ChooseInventorySlot();
         Mining();
+        compassTrack();
     }
 
 
@@ -265,6 +276,19 @@ public class LookAndClickInteraction : NetworkBehaviour
         }
     }
 
+
+    private void compassTrack()
+    {
+        if (!playerInventory.IsHoldingCompass) return;
+
+        if (playerInventory.IsHoldingCompass)
+        {
+            timer += Time.deltaTime;
+            if (timer < updateRate) return;
+            timer = 0f;
+            compassscript.RequestClosestTargetServerRpc();
+        }
+    }
     private void Mining()
     {
         if (!playerInventory.holdPickaxe) return;

@@ -55,19 +55,6 @@ public class MarchingCubes : NetworkBehaviour
         }
     }
 
-    // private IEnumerator WaitForServerAndGenerate()
-    // {
-    //     yield return new WaitForSeconds(0.5f);
-    //     CreateCave();
-
-    //     // WAIT one frame so objects are in hierarchy
-    //     yield return null;
-
-    //     Physics.SyncTransforms();   // <-- Important
-
-    //     yield return new WaitForSeconds(0.1f);
-    //     surface.BuildNavMesh();     // <-- Bake final navmesh
-    // }
     private IEnumerator WaitForServerAndGenerate()
     {
         yield return new WaitForSeconds(0.5f);

@@ -447,10 +447,6 @@ public class PlayerInventory : NetworkBehaviour
         {
             IsHoldingCompass = true;
             Debug.Log("Holding compass.");
-
-            TrackBoxes tracker = FindObjectOfType<TrackBoxes>();
-            if (tracker != null)
-                tracker.Initialize(this);
         }
         else
         {

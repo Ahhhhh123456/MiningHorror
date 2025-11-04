@@ -8,61 +8,17 @@ public class TrackBoxes : NetworkBehaviour
     public List<GameObject> targetPrefabs; // list of target prefabs to track
     public float updateRate = 0.1f; // how often to update arrow
 
-    [HideInInspector] public PlayerInventory playerInventory;
-
     private Vector3 closestTargetPosition;
     private float timer;
 
-    private void Start()
-    {
-        // Wait for players to spawn then link the local player only
-        Invoke(nameof(FindLocalPlayerInventory), 0.25f);
-    }
-
-    private void FindLocalPlayerInventory()
-    {
-        foreach (var obj in FindObjectsOfType<PlayerInventory>())
-        {
-            // Only pick the player's own inventory on their client
-            if (obj.IsOwner)
-            {
-                Initialize(obj);
-                Debug.Log($"Compass Tracker linked to player: {obj.OwnerClientId}");
-                return;
-            }
-        }
-
-        Debug.LogWarning("TrackBoxes could not find a local PlayerInventory!");
-    }
-
-    private void Update()
-    {
-        if (playerInventory == null)
-        {
-            Debug.LogWarning("PlayerInventory not initialized in TrackBoxes.");
-            return;
-        }
-
-        timer += Time.deltaTime;
-        if (timer < updateRate) return;
-        timer = 0f;
-
-
-        if (playerInventory.IsHoldingCompass)
-        {
-            RequestClosestTargetServerRpc();
-        }
-    }
-
-    public void Initialize(PlayerInventory inventory)
-    {
-        playerInventory = inventory;
-    }
-
     [ServerRpc(RequireOwnership = false)]
-    public void RequestClosestTargetServerRpc()
+    public void RequestClosestTargetServerRpc(ServerRpcParams rpcParams = default)
     {
-        Vector3 playerPos = playerInventory.transform.position;
+        ulong senderId = rpcParams.Receive.SenderClientId;
+
+        // Get the requesting player's transform
+        var senderPlayer = NetworkManager.Singleton.ConnectedClients[senderId].PlayerObject;
+        Vector3 playerPos = senderPlayer.transform.position;
 
         GameObject closest = null;
         float minDistance = float.MaxValue;
@@ -82,23 +38,22 @@ public class TrackBoxes : NetworkBehaviour
 
         if (closest != null)
         {
-            ClientRpcParams rpcParams = new ClientRpcParams
+            ClientRpcParams rpcParamsSend = new ClientRpcParams
             {
                 Send = new ClientRpcSendParams
                 {
-                    TargetClientIds = new ulong[] { playerInventory.OwnerClientId }
+                    TargetClientIds = new ulong[] { senderId } // send back to the requester
                 }
             };
 
-            Debug.Log($"Sending closest target at {closest.transform.position} to client {playerInventory.OwnerClientId}");
-            SendClosestTargetClientRpc(closest.transform.position, rpcParams);
+            SendClosestTargetClientRpc(closest.transform.position, closest.name, rpcParamsSend);
         }
     }
 
     [ClientRpc]
-    private void SendClosestTargetClientRpc(Vector3 targetPos, ClientRpcParams rpcParams = default)
+    private void SendClosestTargetClientRpc(Vector3 targetPos, string targetName, ClientRpcParams rpcParams = default)
     {
         closestTargetPosition = targetPos;
-        Debug.Log($"Received closest target at {targetPos}");
+        Debug.Log($"Received closest target '{targetName}' at {targetPos} on client {NetworkManager.Singleton.LocalClientId}");
     }
 }

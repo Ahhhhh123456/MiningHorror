@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System.Collections;
 public class LookAndClickInteraction : NetworkBehaviour
 {
     public Camera playerCamera;                // assign your FPS camera in Inspector
@@ -125,6 +126,7 @@ public class LookAndClickInteraction : NetworkBehaviour
         ChooseInventorySlot();
         Mining();
         compassTrack();
+        DebugDirection();
     }
 
 
@@ -225,25 +227,23 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         string itemName = playerInventory.NetworkItems[slotIndex].ToString();
 
-        // Remove from networked inventory
         playerInventory.RemoveFromInventory(itemName);
 
-        // Instantiate using PlayerInventory’s logic
         GameObject droppedItem = playerInventory.CreateItemInstance(itemName, playerInventory.holdPosition);
         if (droppedItem == null) return;
 
-        droppedItem.transform.SetParent(null); // make sure it’s world-space
+        droppedItem.transform.SetParent(null);
 
-        // Add Rigidbody for physics
+
         Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
         if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();
         rb.isKinematic = false;
         rb.useGravity = true;
 
-        // Add small push
+
         rb.AddForce(playerInventory.holdPosition.forward * 2f, ForceMode.Impulse);
 
-        // Spawn networked object
+
         if (droppedItem.TryGetComponent<NetworkObject>(out NetworkObject netObj))
             netObj.Spawn();
 
@@ -253,9 +253,8 @@ public class LookAndClickInteraction : NetworkBehaviour
             if (explodeScript != null)
             {
                 Debug.Log("Found Explode script on dropped item.");
-
-                // 🔥 Call explosion via RPC, not local function
-                explodeScript.ExplosionServerRpc();
+                StartCoroutine(DoThingAfterSeconds(explodeScript, 3f));
+                    
             }
             else
             {
@@ -263,6 +262,14 @@ public class LookAndClickInteraction : NetworkBehaviour
             }
         }
     }
+
+    IEnumerator DoThingAfterSeconds(Explode explodeScript, float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        Debug.Log("3 seconds have passed!");
+        explodeScript.ExplosionServerRpc();
+    }
+
 
 
 
@@ -288,6 +295,22 @@ public class LookAndClickInteraction : NetworkBehaviour
             timer = 0f;
             compassscript.RequestClosestTargetServerRpc();
         }
+    }
+
+    private void DebugDirection()
+    {
+
+        // Only when we actually have a target
+        if (closestTargetPosition == Vector3.zero) return;
+
+        // Direction from this object to target
+        Vector3 direction = (closestTargetPosition - transform.position).normalized;
+
+        // Log the direction for debugging
+        Debug.Log($"Direction to closest target: {direction}");
+
+        // Draw the direction in the scene view
+        Debug.DrawRay(transform.position, direction * 5f, Color.green);
     }
     private void Mining()
     {

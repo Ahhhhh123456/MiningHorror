@@ -54,6 +54,11 @@ public class TrackBoxes : NetworkBehaviour
     private void SendClosestTargetClientRpc(Vector3 targetPos, string targetName, ClientRpcParams rpcParams = default)
     {
         closestTargetPosition = targetPos;
-        Debug.Log($"Received closest target '{targetName}' at {targetPos} on client {NetworkManager.Singleton.LocalClientId}");
+
+        Vector3 direction = (closestTargetPosition - transform.position).normalized;
+
+        // Log the direction for debugging
+        Debug.Log($"Direction to closest target: {direction}");
+
     }
 }

@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections;
 
 public class Explode : NetworkBehaviour
 {
@@ -19,6 +20,7 @@ public class Explode : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ExplosionServerRpc()
     {
+        //StartCoroutine(DoThingAfterSeconds(3f));
         Server_Explosion();
     }
 
@@ -51,6 +53,12 @@ public class Explode : NetworkBehaviour
         // 4) Despawn dynamite object
         NetworkObject.Despawn();
     }
+
+    // IEnumerator DoThingAfterSeconds(float seconds)
+    // {
+    //     yield return new WaitForSeconds(seconds);
+    //     Debug.Log("3 seconds have passed!");
+    // }
 
     [ClientRpc]
     void PlayExplosionClientRpc(Vector3 worldPos)

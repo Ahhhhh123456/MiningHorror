@@ -214,24 +214,46 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 moveDir = transform.right * input.x + transform.forward * input.y;
         moveDir.y = 0f;
 
-        if (moveDir.sqrMagnitude > 0.01f)
+        // if (moveDir.sqrMagnitude > 0.01f)
+        // {
+        //     CapsuleCollider wallChecker = GetComponent<CapsuleCollider>();
+
+        //     Vector3 point1 = transform.position + wallChecker.center + Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
+        //     Vector3 point2 = transform.position + wallChecker.center - Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
+
+        //     float checkDistance = 0.1f;
+
+        //     if (Physics.CapsuleCast(point1, point2, wallChecker.radius, moveDir.normalized, out RaycastHit hit, checkDistance))
+        //     {
+        //         float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+
+        //         // If hitting a wall or steep slope, cancel horizontal input
+        //         if (slopeAngle > 45f)
+        //         {
+        //             moveDir = Vector3.zero;
+        //         }
+        //     }
+        // }
+
+        // // ✅ ADD THIS RIGHT HERE — Project movement onto slope
+        // if (isGrounded)
+        // {
+        //     if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 1.5f, groundMask))
+        //     {
+        //         Vector3 slopeNormal = slopeHit.normal;
+        //         moveDir = Vector3.ProjectOnPlane(moveDir, slopeNormal).normalized;
+        //     }
+        // }
+        // ---- SLOPE HANDLING ----
+        if (isGrounded && moveDir.sqrMagnitude > 0.01f)
         {
-            CapsuleCollider wallChecker = GetComponent<CapsuleCollider>();
-
-            Vector3 point1 = transform.position + wallChecker.center + Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
-            Vector3 point2 = transform.position + wallChecker.center - Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
-
-            float checkDistance = 0.1f;
-
-            if (Physics.CapsuleCast(point1, point2, wallChecker.radius, moveDir.normalized, out RaycastHit hit, checkDistance))
+            // Cast down to find slope normal
+            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit groundHit, 2f, groundMask))
             {
-                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+                Vector3 groundNormal = groundHit.normal;
 
-                // If hitting a wall or steep slope, cancel horizontal input
-                if (slopeAngle > 45f)
-                {
-                    moveDir = Vector3.zero;
-                }
+                // Project movement onto the ground plane
+                moveDir = Vector3.ProjectOnPlane(moveDir, groundNormal).normalized;
             }
         }
 

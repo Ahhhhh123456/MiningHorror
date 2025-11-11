@@ -1,42 +1,33 @@
-using Unity.Netcode;
 using UnityEngine;
-using System.Collections;
+using Unity.Netcode;
+using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class PlayerSpawn : NetworkBehaviour
 {
-    [SerializeField] private Transform spawnPoint;
-
-    void Update()
+    private void OnEnable()
     {
-        // ✅ Only let the local player (the owner) read keyboard input
-        if (!IsOwner) return;
-
-        if (Input.GetKeyDown(KeyCode.J))
-        {
-            // Send the request to the server
-            RequestRespawnServerRpc();
-        }
+        if (NetworkManager.Singleton != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted += OnSceneLoaded;
     }
 
-    [ServerRpc]
-    private void RequestRespawnServerRpc(ServerRpcParams rpcParams = default)
+    private void OnDisable()
     {
-        if (spawnPoint != null)
-        {
-            // Move the player’s NetworkObject on the server
-            NetworkObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
-
-            // Then sync to all clients
-            OnPlayerSpawnClientRpc();
-        }
+        if (NetworkManager.Singleton != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
     }
 
-    [ClientRpc]
-    private void OnPlayerSpawnClientRpc()
+    private void OnSceneLoaded(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        if (spawnPoint != null)
+        // ✅ Only the server controls player spawn position
+        if (!IsServer) return;
+
+        if (SceneSpawnPoint.Instance != null)
         {
-            NetworkObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+            transform.SetPositionAndRotation(
+                SceneSpawnPoint.Instance.spawnLocation.position,
+                SceneSpawnPoint.Instance.spawnLocation.rotation
+            );
         }
     }
 }

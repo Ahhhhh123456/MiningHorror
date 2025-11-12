@@ -8,7 +8,7 @@ public class SyncPhysicsObject : MonoBehaviour
 
     [SerializeField] Rigidbody animatedRigidbody3D;
 
-    [SerializeField] bool syncAnimation = false;
+    [SerializeField] public bool syncAnimation = false;
 
     // Keep track for starting rotation
     Quaternion startLocalRotation;
@@ -20,6 +20,12 @@ public class SyncPhysicsObject : MonoBehaviour
 
         // Store the starting local rotation
         startLocalRotation = transform.localRotation;
+
+        // Auto-assign the animated Rigidbody if not set in Inspector
+        if (animatedRigidbody3D == null)
+        {
+            animatedRigidbody3D = GetComponent<Rigidbody>();
+        }
     }
 
     public void UpdateJointFromAnimation()

@@ -34,6 +34,12 @@ public class PlayerMovement : NetworkBehaviour
     private bool wasGrounded = false; // Track previous grounded state
     private bool isSprinting = false;
 
+    [Header("Ragdoll Settings")]
+    [SerializeField] private ConfigurableJoint mainJoint;
+    SyncPhysicsObject[] syncPhysicsObjects;
+    [SerializeField] private Rigidbody[] ragdollRigidbodies;
+    [SerializeField] private Collider[] ragdollColliders;
+
     [Header("Fall Damage Settings")]
     public float fallDamageThreshold = -10f; // Minimum downward velocity to start taking damage
     public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
@@ -50,49 +56,49 @@ public class PlayerMovement : NetworkBehaviour
 
     public NetworkAnimator netAnimator;
 
-    public enum PlayerStates
-    {
-        IDLE,
-        WALK,
-        JUMP,
-    }
+    // public enum PlayerStates
+    // {
+    //     IDLE,
+    //     WALK,
+    //     JUMP,
+    // }
 
-    PlayerStates CurrentState
-    {
-        set
-        {
-            playerCurrentState = value;
+    // PlayerStates CurrentState
+    // {
+    //     set
+    //     {
+    //         playerCurrentState = value;
 
-            if (!IsOwner) return;
+    //         if (!IsOwner) return;
 
-            // switch(playerCurrentState)
-            // {
-            //     case PlayerStates.IDLE:
-            //         animator.Play("Idle");
-            //         break;
-            //     case PlayerStates.WALK:
-            //         animator.Play("Walk");
-            //         break;
-            //     case PlayerStates.JUMP:
-            //         animator.SetTrigger("Jump");
-            //         break;
-            // }
-            switch(playerCurrentState)
-            {
-                case PlayerStates.IDLE:
-                    animator.SetFloat("xMove", 0f);
-                    animator.SetFloat("yMove", 0f);
-                    break;
-                case PlayerStates.WALK:
-                    break;
-                case PlayerStates.JUMP:
-                    animator.SetTrigger("Jump");
-                    break;
-            }
-        }
-    }
+    //         // switch(playerCurrentState)
+    //         // {
+    //         //     case PlayerStates.IDLE:
+    //         //         animator.Play("Idle");
+    //         //         break;
+    //         //     case PlayerStates.WALK:
+    //         //         animator.Play("Walk");
+    //         //         break;
+    //         //     case PlayerStates.JUMP:
+    //         //         animator.SetTrigger("Jump");
+    //         //         break;
+    //         // }
+    //         switch(playerCurrentState)
+    //         {
+    //             case PlayerStates.IDLE:
+    //                 animator.SetFloat("xMove", 0f);
+    //                 animator.SetFloat("yMove", 0f);
+    //                 break;
+    //             case PlayerStates.WALK:
+    //                 break;
+    //             case PlayerStates.JUMP:
+    //                 animator.SetTrigger("Jump");
+    //                 break;
+    //         }
+    //     }
+    // }
 
-    PlayerStates playerCurrentState;
+    // PlayerStates playerCurrentState;
 
 
     void Start()
@@ -120,6 +126,11 @@ public class PlayerMovement : NetworkBehaviour
         netAnimator = GetComponent<NetworkAnimator>();
     }
 
+    void Awake()
+    {
+        syncPhysicsObjects = GetComponentsInChildren<SyncPhysicsObject>();
+    }
+
     void OnEnable()
     {
         sprintAction.action.Enable();
@@ -144,8 +155,6 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        // if (IsOwner)
-        //     DebugAnimatorState();
 
         // Jump input
         if (jumpAction.action.triggered && isGrounded)
@@ -175,6 +184,12 @@ public class PlayerMovement : NetworkBehaviour
     void FixedUpdate()
     {
         HandleMovement();
+
+        // Optional: Update ragdoll limbs after everything
+        for (int i = 0; i < syncPhysicsObjects.Length; i++)
+        {
+            syncPhysicsObjects[i].UpdateJointFromAnimation();
+        }
     }
 
     public void HandleMovement()
@@ -214,47 +229,25 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 moveDir = transform.right * input.x + transform.forward * input.y;
         moveDir.y = 0f;
 
-        // if (moveDir.sqrMagnitude > 0.01f)
-        // {
-        //     CapsuleCollider wallChecker = GetComponent<CapsuleCollider>();
-
-        //     Vector3 point1 = transform.position + wallChecker.center + Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
-        //     Vector3 point2 = transform.position + wallChecker.center - Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
-
-        //     float checkDistance = 0.1f;
-
-        //     if (Physics.CapsuleCast(point1, point2, wallChecker.radius, moveDir.normalized, out RaycastHit hit, checkDistance))
-        //     {
-        //         float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
-
-        //         // If hitting a wall or steep slope, cancel horizontal input
-        //         if (slopeAngle > 45f)
-        //         {
-        //             moveDir = Vector3.zero;
-        //         }
-        //     }
-        // }
-
-        // // ✅ ADD THIS RIGHT HERE — Project movement onto slope
-        // if (isGrounded)
-        // {
-        //     if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 1.5f, groundMask))
-        //     {
-        //         Vector3 slopeNormal = slopeHit.normal;
-        //         moveDir = Vector3.ProjectOnPlane(moveDir, slopeNormal).normalized;
-        //     }
-        // }
         // ---- SLOPE HANDLING ----
         if (isGrounded && moveDir.sqrMagnitude > 0.01f)
         {
-            // Cast down to find slope normal
             if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit groundHit, 2f, groundMask))
             {
                 Vector3 groundNormal = groundHit.normal;
-
-                // Project movement onto the ground plane
                 moveDir = Vector3.ProjectOnPlane(moveDir, groundNormal).normalized;
             }
+        }
+
+        // ---- Step 4: Rotate main joint toward movement ----
+        if (moveDir.sqrMagnitude > 0.01f)
+        {
+            Quaternion desiredRotation = Quaternion.LookRotation(moveDir, Vector3.up);
+            mainJoint.targetRotation = Quaternion.RotateTowards(
+                mainJoint.targetRotation,
+                desiredRotation,
+                Time.fixedDeltaTime * 300f
+            );
         }
 
         // Calculate horizontal velocity
@@ -263,16 +256,17 @@ public class PlayerMovement : NetworkBehaviour
         // Apply movement
         rb.linearVelocity = new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z);
 
-        if (input != Vector2.zero)
-        {
-            animator.SetFloat("xMove", input.x);
-            animator.SetFloat("yMove", input.y);
-            CurrentState = PlayerStates.WALK;
-        }
-        else
-        {
-            CurrentState = PlayerStates.IDLE;
-        }
+        // Update animator
+        // if (input != Vector2.zero)
+        // {
+        //     animator.SetFloat("xMove", input.x);
+        //     animator.SetFloat("yMove", input.y);
+        //     CurrentState = PlayerStates.WALK;
+        // }
+        // else
+        // {
+        //     CurrentState = PlayerStates.IDLE;
+        // }
     }
 
     void DebugAnimatorState()
@@ -376,4 +370,5 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    
 }

@@ -937,7 +937,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   walkSpeed: 5
   sprintMultiplier: 2
-  jumpForce: 5
+  jumpForce: 8
   moveSpeed: 0
   rb: {fileID: 0}
   verticalVelocity: 0
@@ -959,8 +959,8 @@ MonoBehaviour:
   - {fileID: 1306644125790248878}
   fallDamageThreshold: -10
   fallDamageMultiplier: 2
-  ladderDetectionRadius: 1
-  ladderClimbSpeed: 3
+  ladderDetectionRadius: 1.25
+  ladderClimbSpeed: 10
   animator: {fileID: 5179366559720851547}
   netAnimator: {fileID: -1728222716589372832}
 --- !u!114 &8752814078426505919

@@ -11,7 +11,7 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Movement Settings")]
     public float walkSpeed = 5f;
     public float sprintMultiplier = 2f;
-    public float jumpForce = 5f;
+    public float jumpForce;
     public float moveSpeed;
     public Rigidbody rb;
     public float verticalVelocity = 0f;
@@ -46,8 +46,8 @@ public class PlayerMovement : NetworkBehaviour
     private float previousVerticalVelocity = 0f; // Track previous frame's velocity
 
     [Header("Ladder Climbing Settings")]
-    public float ladderDetectionRadius = 1f; // How close the player needs to be to grab the ladder
-    public float ladderClimbSpeed = 3f;     // Speed at which the player climbs
+    public float ladderDetectionRadius; // How close the player needs to be to grab the ladder
+    public float ladderClimbSpeed;     // Speed at which the player climbs
 
     private bool isClimbing = false;
     private Transform currentLadder;
@@ -160,9 +160,8 @@ public class PlayerMovement : NetworkBehaviour
         // Jump input
         if (jumpAction.action.triggered && isGrounded)
         {
-            SetRagdollActive(false); // disable ragdoll temporarily
-            verticalVelocity = jumpForce;
-            isGrounded = false;
+            float jumpVelocity = Mathf.Sqrt(2f * Mathf.Abs(Physics.gravity.y) * jumpForce);
+            rb.AddForce(Vector3.up * jumpVelocity * rb.mass, ForceMode.Impulse);
         }
 
         if (isSprinting && rb.linearVelocity.magnitude > 0.1f) // only drain if moving
@@ -200,10 +199,10 @@ public class PlayerMovement : NetworkBehaviour
         HandleMovement();
 
         // Optional: Update ragdoll limbs after everything
-        // for (int i = 0; i < syncPhysicsObjects.Length; i++)
-        // {
-        //     syncPhysicsObjects[i].UpdateJointFromAnimation();
-        // }
+        for (int i = 0; i < syncPhysicsObjects.Length; i++)
+        {
+            syncPhysicsObjects[i].UpdateJointFromAnimation();
+        }
     }
 
     private bool IsRagdollActive()
@@ -226,7 +225,7 @@ public class PlayerMovement : NetworkBehaviour
 
         // Ground check
         bool wasGrounded = isGrounded;
-        isGrounded = Physics.CheckSphere(feetPos, groundCheckRadius, groundMask);
+        isGrounded = Physics.CheckSphere(feetPos, groundCheckRadius, groundMask & ~LayerMask.GetMask("Ragdoll"));
 
         // Detect landing
         bool justLanded = !wasGrounded && isGrounded;
@@ -265,17 +264,6 @@ public class PlayerMovement : NetworkBehaviour
             }
         }
 
-        // ---- Rotate player toward movement ----
-        if (moveDir.sqrMagnitude > 0.01f)
-        {
-            Quaternion desiredRotation = Quaternion.LookRotation(moveDir, Vector3.up);
-            rb.MoveRotation(Quaternion.RotateTowards(
-                rb.rotation,
-                desiredRotation,
-                Time.fixedDeltaTime * 300f
-            ));
-        }
-
         // ---- Only apply horizontal velocity if there is input ----
         Vector3 horizontalVelocity = Vector3.zero;
         if (moveDir.sqrMagnitude > 0.01f)
@@ -284,7 +272,10 @@ public class PlayerMovement : NetworkBehaviour
         }
 
         // Apply movement
-        rb.linearVelocity = new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z);
+        Vector3 velocity = rb.linearVelocity;
+        velocity.x = horizontalVelocity.x;
+        velocity.z = horizontalVelocity.z;
+        rb.linearVelocity = velocity;
     }
 
 
@@ -350,14 +341,11 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-
     private void LadderClimb()
     {
-        // Reset climbing state
+        // Detect nearby ladders
         isClimbing = false;
         currentLadder = null;
-
-        // Detect nearby ladders using OverlapSphere
         Collider[] hits = Physics.OverlapSphere(transform.position, ladderDetectionRadius);
         foreach (var hit in hits)
         {
@@ -369,25 +357,25 @@ public class PlayerMovement : NetworkBehaviour
             }
         }
 
-        if (isClimbing && currentLadder != null)
-        {
-            // Disable gravity while climbing
-            verticalVelocity = 0f;
+        if (!isClimbing || currentLadder == null) return;
 
-            // Get vertical input (W/S or up/down)
-            Vector2 input = moveAction.action.ReadValue<Vector2>();
-            verticalVelocity = input.y * ladderClimbSpeed;
+        // Disable jumping/gravity while climbing
+        verticalVelocity = 0f;
 
-            // Keep X/Z position unchanged to allow free movement around ladder
-            Vector3 climbPosition = new Vector3(
-                transform.position.x, // keep current X
-                transform.position.y + verticalVelocity * Time.fixedDeltaTime, // move Y
-                transform.position.z  // keep current Z
-            );
+        // Get vertical input (W/S or up/down)
+        Vector2 input = moveAction.action.ReadValue<Vector2>();
+        float climbY = input.y * ladderClimbSpeed * Time.fixedDeltaTime;
 
-            rb.MovePosition(climbPosition);
-        }
+        // Move the player smoothly along the ladder
+        Vector3 climbPosition = transform.position + new Vector3(0f, climbY, 0f);
+        rb.MovePosition(climbPosition);
+
+        // Optional: zero out Y velocity in Rigidbody to prevent conflicts
+        Vector3 v = rb.linearVelocity;
+        v.y = 0f;
+        rb.linearVelocity = v;
     }
+
 
     
 }

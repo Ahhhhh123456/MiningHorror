@@ -947,7 +947,6 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 192
-  mainJoint: {fileID: 1183212209136153235}
   ragdollRigidbodies:
   - {fileID: 1148226422860639255}
   - {fileID: 8407664964022780956}
@@ -1542,7 +1541,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 873260670401626848}
-  - component: {fileID: 3580346052302440310}
   m_Layer: 0
   m_Name: Head
   m_TagString: MainCamera
@@ -1566,27 +1564,6 @@ Transform:
   - {fileID: 4922830073900238357}
   m_Father: {fileID: 1857678587941897687}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &3580346052302440310
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3985166215517400919}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.38830036
-  m_Center: {x: 0, y: 0.14365476, z: -0.10872185}
 --- !u!1 &4091777110920718805
 GameObject:
   m_ObjectHideFlags: 0
@@ -3229,7 +3206,7 @@ ConfigurableJoint:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 201943710597163091}
   serializedVersion: 4
-  m_ConnectedBody: {fileID: 0}
+  m_ConnectedBody: {fileID: 7567113563126236500}
   m_ConnectedArticulationBody: {fileID: 0}
   m_Anchor: {x: 0, y: 0, z: 0}
   m_Axis: {x: 1, y: 0, z: 0}

@@ -35,7 +35,7 @@ public class PlayerMovement : NetworkBehaviour
     private bool isSprinting = false;
 
     [Header("Ragdoll Settings")]
-    [SerializeField] private ConfigurableJoint mainJoint;
+    // [SerializeField] private ConfigurableJoint mainJoint;
     SyncPhysicsObject[] syncPhysicsObjects;
     [SerializeField] private Rigidbody[] ragdollRigidbodies;
     [SerializeField] private Collider[] ragdollColliders;
@@ -124,6 +124,7 @@ public class PlayerMovement : NetworkBehaviour
 
         animator = GetComponentInChildren<Animator>();
         netAnimator = GetComponent<NetworkAnimator>();
+
     }
 
     void Awake()
@@ -159,7 +160,9 @@ public class PlayerMovement : NetworkBehaviour
         // Jump input
         if (jumpAction.action.triggered && isGrounded)
         {
+            SetRagdollActive(false); // disable ragdoll temporarily
             verticalVelocity = jumpForce;
+            isGrounded = false;
         }
 
         if (isSprinting && rb.linearVelocity.magnitude > 0.1f) // only drain if moving
@@ -181,15 +184,35 @@ public class PlayerMovement : NetworkBehaviour
 
     }
 
+    private void SetRagdollActive(bool active)
+    {
+        foreach (var limbRb in ragdollRigidbodies)
+            limbRb.isKinematic = !active; // ragdoll physics ON → non-kinematic
+
+        foreach (var col in ragdollColliders)
+            col.enabled = active; // optional: disable colliders when ragdoll off
+
+        rb.isKinematic = active; // main Rigidbody should be kinematic when ragdoll active
+    }
+
     void FixedUpdate()
     {
         HandleMovement();
 
         // Optional: Update ragdoll limbs after everything
-        for (int i = 0; i < syncPhysicsObjects.Length; i++)
+        // for (int i = 0; i < syncPhysicsObjects.Length; i++)
+        // {
+        //     syncPhysicsObjects[i].UpdateJointFromAnimation();
+        // }
+    }
+
+    private bool IsRagdollActive()
+    {
+        foreach (var limbRb in ragdollRigidbodies)
         {
-            syncPhysicsObjects[i].UpdateJointFromAnimation();
+            if (!limbRb.isKinematic) return true;
         }
+        return false;
     }
 
     public void HandleMovement()
@@ -214,10 +237,9 @@ public class PlayerMovement : NetworkBehaviour
             FallDamage(verticalVelocity);
         }
 
-        // Gravity / vertical velocity
         if (isGrounded && verticalVelocity < 0f)
         {
-            verticalVelocity = -2f; // small downward force to stick to ground
+            verticalVelocity = -0.1f; // keep the player grounded without drifting
         }
         else
         {
@@ -226,6 +248,10 @@ public class PlayerMovement : NetworkBehaviour
 
         // Horizontal input
         Vector2 input = moveAction.action.ReadValue<Vector2>();
+
+        // Deadzone check
+        if (input.sqrMagnitude < 0.01f) input = Vector2.zero;
+
         Vector3 moveDir = transform.right * input.x + transform.forward * input.y;
         moveDir.y = 0f;
 
@@ -239,35 +265,28 @@ public class PlayerMovement : NetworkBehaviour
             }
         }
 
-        // ---- Step 4: Rotate main joint toward movement ----
+        // ---- Rotate player toward movement ----
         if (moveDir.sqrMagnitude > 0.01f)
         {
             Quaternion desiredRotation = Quaternion.LookRotation(moveDir, Vector3.up);
-            mainJoint.targetRotation = Quaternion.RotateTowards(
-                mainJoint.targetRotation,
+            rb.MoveRotation(Quaternion.RotateTowards(
+                rb.rotation,
                 desiredRotation,
                 Time.fixedDeltaTime * 300f
-            );
+            ));
         }
 
-        // Calculate horizontal velocity
-        Vector3 horizontalVelocity = moveDir.normalized * moveSpeed;
+        // ---- Only apply horizontal velocity if there is input ----
+        Vector3 horizontalVelocity = Vector3.zero;
+        if (moveDir.sqrMagnitude > 0.01f)
+        {
+            horizontalVelocity = moveDir.normalized * moveSpeed;
+        }
 
         // Apply movement
         rb.linearVelocity = new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z);
-
-        // Update animator
-        // if (input != Vector2.zero)
-        // {
-        //     animator.SetFloat("xMove", input.x);
-        //     animator.SetFloat("yMove", input.y);
-        //     CurrentState = PlayerStates.WALK;
-        // }
-        // else
-        // {
-        //     CurrentState = PlayerStates.IDLE;
-        // }
     }
+
 
     void DebugAnimatorState()
     {

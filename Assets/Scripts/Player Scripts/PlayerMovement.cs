@@ -40,6 +40,8 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private Rigidbody[] ragdollRigidbodies;
     [SerializeField] private Collider[] ragdollColliders;
 
+    public NetworkVariable<bool> isRagdollActive = new NetworkVariable<bool>(false);
+
     [Header("Fall Damage Settings")]
     public float fallDamageThreshold = -10f; // Minimum downward velocity to start taking damage
     public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
@@ -52,53 +54,6 @@ public class PlayerMovement : NetworkBehaviour
     private bool isClimbing = false;
     private Transform currentLadder;
 
-    public Animator animator;
-
-    public NetworkAnimator netAnimator;
-
-    // public enum PlayerStates
-    // {
-    //     IDLE,
-    //     WALK,
-    //     JUMP,
-    // }
-
-    // PlayerStates CurrentState
-    // {
-    //     set
-    //     {
-    //         playerCurrentState = value;
-
-    //         if (!IsOwner) return;
-
-    //         // switch(playerCurrentState)
-    //         // {
-    //         //     case PlayerStates.IDLE:
-    //         //         animator.Play("Idle");
-    //         //         break;
-    //         //     case PlayerStates.WALK:
-    //         //         animator.Play("Walk");
-    //         //         break;
-    //         //     case PlayerStates.JUMP:
-    //         //         animator.SetTrigger("Jump");
-    //         //         break;
-    //         // }
-    //         switch(playerCurrentState)
-    //         {
-    //             case PlayerStates.IDLE:
-    //                 animator.SetFloat("xMove", 0f);
-    //                 animator.SetFloat("yMove", 0f);
-    //                 break;
-    //             case PlayerStates.WALK:
-    //                 break;
-    //             case PlayerStates.JUMP:
-    //                 animator.SetTrigger("Jump");
-    //                 break;
-    //         }
-    //     }
-    // }
-
-    // PlayerStates playerCurrentState;
 
 
     void Start()
@@ -120,10 +75,18 @@ public class PlayerMovement : NetworkBehaviour
             if (audioListener) audioListener.enabled = false;
         }
 
+        isRagdollActive.OnValueChanged += (oldVal, newVal) =>
+        {
+            ApplyRagdoll(newVal);
+        };  
+
+        if (IsServer)
+        {
+            isRagdollActive.Value = true; // triggers ApplyRagdoll on all clients
+        }
+
         UpdateMoveSpeed();
 
-        animator = GetComponentInChildren<Animator>();
-        netAnimator = GetComponent<NetworkAnimator>();
 
     }
 
@@ -183,20 +146,39 @@ public class PlayerMovement : NetworkBehaviour
 
     }
 
-    private void SetRagdollActive(bool active)
+    // private void SetRagdollActive(bool active)
+    // {
+    //     foreach (var limbRb in ragdollRigidbodies)
+    //         limbRb.isKinematic = !active; // ragdoll physics ON → non-kinematic
+
+    //     foreach (var col in ragdollColliders)
+    //         col.enabled = active; // optional: disable colliders when ragdoll off
+
+    //     rb.isKinematic = active; // main Rigidbody should be kinematic when ragdoll active
+    // }
+    [ServerRpc(RequireOwnership = false)]
+    public void SetRagdollServerRpc(bool active)
+    {
+        isRagdollActive.Value = active;
+        ApplyRagdoll(active);
+    }
+
+    private void ApplyRagdoll(bool active)
     {
         foreach (var limbRb in ragdollRigidbodies)
-            limbRb.isKinematic = !active; // ragdoll physics ON → non-kinematic
+            limbRb.isKinematic = !active;
 
         foreach (var col in ragdollColliders)
-            col.enabled = active; // optional: disable colliders when ragdoll off
+            col.enabled = active;
 
-        rb.isKinematic = active; // main Rigidbody should be kinematic when ragdoll active
+        rb.isKinematic = false; // keep root non-kinematic so it can move
     }
 
     void FixedUpdate()
     {
         HandleMovement();
+
+        if (!IsOwner) return;
 
         // Optional: Update ragdoll limbs after everything
         for (int i = 0; i < syncPhysicsObjects.Length; i++)
@@ -278,21 +260,6 @@ public class PlayerMovement : NetworkBehaviour
         rb.linearVelocity = velocity;
     }
 
-
-    void DebugAnimatorState()
-    {
-        if (animator == null) return;
-
-        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0); // 0 = base layer
-        if (stateInfo.IsName("LadderClimb"))
-            Debug.Log("Currently in: LadderClimb");
-        else if (stateInfo.IsName("Walk"))
-            Debug.Log("Currently in: Walk");
-        else if (stateInfo.IsName("Idle"))
-            Debug.Log("Currently in: Idle");
-        else if (stateInfo.IsName("Jump"))
-            Debug.Log("Currently in: Jump");
-    }
 
 
     public void UpdateMoveSpeed()

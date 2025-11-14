@@ -1,6 +1,6 @@
 using JetBrains.Rider.Unity.Editor;
 using UnityEngine;
-
+using Unity.Netcode;
 public class SyncPhysicsObject : MonoBehaviour
 {
     Rigidbody rigidbody3D;
@@ -28,11 +28,30 @@ public class SyncPhysicsObject : MonoBehaviour
         }
     }
 
+    // public void UpdateJointFromAnimation()
+    // {
+    //     if (!syncAnimation)
+    //         return;
+
+    //     ConfigurableJointExtensions.SetTargetRotationLocal(joint, animatedRigidbody3D.transform.localRotation, startLocalRotation);
+    // }
+
     public void UpdateJointFromAnimation()
     {
         if (!syncAnimation)
             return;
 
-        ConfigurableJointExtensions.SetTargetRotationLocal(joint, animatedRigidbody3D.transform.localRotation, startLocalRotation);
+        // Get the NetworkObject on this ragdoll bone or its parent
+        NetworkObject netObj = GetComponentInParent<NetworkObject>();
+
+        // Only the owner should drive animation → prevent spazzing
+        if (netObj == null || !netObj.IsOwner)
+            return;
+
+        ConfigurableJointExtensions.SetTargetRotationLocal(
+            joint,
+            animatedRigidbody3D.transform.localRotation,
+            startLocalRotation
+        );
     }
 }

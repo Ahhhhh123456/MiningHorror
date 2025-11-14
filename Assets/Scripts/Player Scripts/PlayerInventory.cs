@@ -5,6 +5,7 @@ using TMPro;
 using Unity.Netcode;
 using System;
 using Unity.Collections;
+using UnityEngine.SceneManagement;
 
 [Serializable]
 public struct OreEntry : INetworkSerializable, IEquatable<OreEntry>
@@ -88,6 +89,39 @@ public class PlayerInventory : NetworkBehaviour
         itemType = FindObjectOfType<ItemType>();
     }
 
+    //-------- Functions to reload references on scene change -------------- //
+
+    private void OnEnable()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
+    }
+
+    public void ReinitializeSceneReferences()
+    {
+        mineType = FindObjectOfType<MineType>();
+        itemType = FindObjectOfType<ItemType>();
+        playerMovement = GetComponent<PlayerMovement>();
+        
+        Debug.Log($"[PlayerInventory] Reinitialized references: mineType={mineType}, itemType={itemType}, playerMovement={playerMovement}");
+    }
+
+    private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode, 
+                            List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        if (!IsOwner) return; // Only reinitialize for this client
+
+        // Re-fetch scene-specific references
+        ReinitializeSceneReferences();
+    }
+
+    // ----------------------------------------------------------------------//
     private void Awake()
     {
         // Build dictionary from inspector entries

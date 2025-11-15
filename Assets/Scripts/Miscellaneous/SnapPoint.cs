@@ -7,6 +7,7 @@ public class SnapPoint : NetworkBehaviour
     public float snapRadius = 0.5f;
 
     private NetworkObject snappedItem;
+    private bool isSnapping = false;
 
     public NetworkVariable<bool> isOccupied = new NetworkVariable<bool>(false);
 
@@ -21,6 +22,8 @@ public class SnapPoint : NetworkBehaviour
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(localClientId, out var client))
         {
             var playerInventory = client.PlayerObject.GetComponent<PlayerInventory>();
+            
+            // Check if player is holding an item
             if (playerInventory != null && playerInventory.currentHeldItem != null)
             {
                 float distance = Vector3.Distance(
@@ -28,19 +31,37 @@ public class SnapPoint : NetworkBehaviour
                     transform.position
                 );
 
+                // Player is close enough to snap
                 if (distance <= snapRadius)
                 {
+                    if (isSnapping) return; // We are already processing a snap, stop.
+
+                    // Check if the held item matches the snap point's tag
                     if (playerInventory.currentHeldItem.name == gameObject.tag.ToString())
                     {
-                        SnapItemServerRpc();
+                        isSnapping = true; // Set the cooldown
+                        SnapItemServerRpc(); // Tell server to spawn the snapped item
+                        
+                        // ✅ MOVED THIS LINE INSIDE THE IF BLOCK
+                        RemovePlayerItemSnapServerRpc(playerInventory.currentHeldItem.name); 
                     }
                     else
                     {
+                        // Item doesn't match, do nothing
                         return;
                     }
-                    RemovePlayerItemSnapServerRpc(playerInventory.currentHeldItem.name);
                 }
-
+                else
+                {
+                    // Player is holding an item, but is too far away
+                    isSnapping = false; // Reset the snap cooldown (This is Fix 3, and it's CORRECT)
+                }
+            }
+            else
+            {
+                // Player is not holding any item.
+                // We DON'T reset 'isSnapping' here (Fix 4).
+                // Resetting it here causes the double-spawn bug.
             }
         }
     }
@@ -60,7 +81,6 @@ public class SnapPoint : NetworkBehaviour
             Debug.Log($"Removing {itemName} from inventory of client {client.ClientId}");
             if (playerInventory != null)
             {
-                playerInventory.RemoveFromInventory(itemName);
                 playerInventory.RemoveItemServer(itemName);
                 playerInventory.ClearHeldItemClientRpc();
             }

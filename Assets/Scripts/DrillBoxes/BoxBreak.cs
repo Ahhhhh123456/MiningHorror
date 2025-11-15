@@ -62,7 +62,7 @@ public class BoxBreak : NetworkBehaviour
 
                 for (int i = 0; i < toRemove; i++)
                 {
-                    inventoryScript.RemoveFromInventory(oreName);
+                    inventoryScript.RequestDropSelectedItem();
                     inventoryScript.RemoveItemServer(oreName);
                     RemoveBoxOreValue(oreName); // update the NetworkedBoxData
                 }

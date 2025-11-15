@@ -55,7 +55,7 @@ public class Dropped : NetworkBehaviour
 
         Dropped droppedScript = netObj.GetComponent<Dropped>();
         if (droppedScript == null)
-        {
+        {   
             Debug.LogWarning($"[Server] Object {networkId} has no Dropped script.");
             return;
         }
@@ -69,11 +69,11 @@ public class Dropped : NetworkBehaviour
 
         PlayerInventory inventoryScript = client.PlayerObject.GetComponent<PlayerInventory>();
 
-        if (inventoryScript.NetworkItems.Count == inventoryScript.maxSlots)
-        {
-            Debug.Log($"[Server] Client {senderClientId} picked up {(droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name)}");
-            return;
-        }
+        // if (inventoryScript.NetworkItems.Count == inventoryScript.hotbarSize)
+        // {
+        //     Debug.Log($"[Server] Client {senderClientId} picked up {(droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name)}");
+        //     return;
+        // }
 
         if (inventoryScript == null)
         {
@@ -81,20 +81,35 @@ public class Dropped : NetworkBehaviour
             return;
         }
 
-        // Use server-authoritative add
+        // 1. Create variables to track the result
+        bool addWasSuccessful;
+        string itemNameForLog;
+
+        // 2. Try to add the item and store the result
         if (droppedScript.oreData != null)
         {
-            inventoryScript.AddItemServer(droppedScript.oreData.oreName, droppedScript.oreData);
+            // This is an ore
+            itemNameForLog = droppedScript.oreData.oreName;
+            addWasSuccessful = inventoryScript.AddItemServer(itemNameForLog, droppedScript.oreData);
         }
         else
         {
-            inventoryScript.AddItemServer(netObj.name);
+            // This is a general item
+            itemNameForLog = netObj.name;
+            addWasSuccessful = inventoryScript.AddItemServer(itemNameForLog);
         }
-        // Despawn the dropped object
-        if (inventoryScript)
-        Debug.Log($"[Server] Client {senderClientId} is picking up { (droppedScript.oreData != null ? droppedScript.oreData.oreName : netObj.name) }");
-        netObj.Despawn();
 
+        // 3. ONLY despawn the item if it was successfully added
+        if (addWasSuccessful)
+        {
+            Debug.Log($"[Server] Client {senderClientId} picked up {itemNameForLog}.");
+            netObj.Despawn();
+        }
+        else
+        {
+            Debug.Log($"[Server] Client {senderClientId} FAILED to pick up {itemNameForLog} (Inventory full).");
+            // We do NOT despawn, so the item stays on the ground
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]

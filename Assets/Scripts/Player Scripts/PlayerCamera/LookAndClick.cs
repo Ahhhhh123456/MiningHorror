@@ -214,39 +214,8 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         string itemName = playerInventory.NetworkItems[slotIndex].ToString();
 
-        // Remove from networked inventory
-        playerInventory.RemoveFromInventory(itemName);
-
-        // Instantiate using PlayerInventory’s logic
-        GameObject droppedItem = playerInventory.CreateItemInstance(itemName, playerInventory.holdPosition);
-        if (droppedItem == null) return;
-
-        droppedItem.transform.SetParent(null); // make sure it’s world-space
-
-        // Add Rigidbody for physics
-        Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
-        if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();
-        rb.isKinematic = false;
-        rb.useGravity = true;
-
-        // Add small push
-        rb.AddForce(playerInventory.holdPosition.forward * 2f, ForceMode.Impulse);
-
-        // Spawn networked object
-        if (droppedItem.TryGetComponent<NetworkObject>(out NetworkObject netObj))
-            netObj.Spawn();
-    }
-
-
-
-    [ClientRpc]
-    private void ClearHeldItemClientRpc(ClientRpcParams clientRpcParams = default)
-    {
-        if (playerInventory.currentHeldItem != null)
-        {
-            Destroy(playerInventory.currentHeldItem);
-            playerInventory.currentHeldItem = null;
-        }
+        // Remove from networked inventory (this will also spawn the dropped item)
+        playerInventory.RequestDropSelectedItem();
     }
 
     private void Mining()

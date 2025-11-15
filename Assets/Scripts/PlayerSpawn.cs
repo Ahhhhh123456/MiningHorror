@@ -19,15 +19,18 @@ public class PlayerSpawn : NetworkBehaviour
 
     private void OnSceneLoaded(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        // ✅ Only the server controls player spawn position
         if (!IsServer) return;
 
-        if (SceneSpawnPoint.Instance != null)
-        {
-            transform.SetPositionAndRotation(
-                SceneSpawnPoint.Instance.spawnLocation.position,
-                SceneSpawnPoint.Instance.spawnLocation.rotation
-            );
-        }
+        Vector3 spawnPos = SceneSpawnPoint.Instance.spawnLocation.position;
+        Quaternion spawnRot = SceneSpawnPoint.Instance.spawnLocation.rotation;
+
+        transform.SetPositionAndRotation(spawnPos, spawnRot); // server
+        MovePlayerClientRpc(spawnPos, spawnRot); // clients
+    }
+
+    [ClientRpc]
+    private void MovePlayerClientRpc(Vector3 position, Quaternion rotation)
+    {
+        transform.SetPositionAndRotation(position, rotation);
     }
 }

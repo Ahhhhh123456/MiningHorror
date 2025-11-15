@@ -752,6 +752,7 @@ GameObject:
   - component: {fileID: 3054592535333448796}
   - component: {fileID: -1728222716589372832}
   - component: {fileID: -1560127733828016002}
+  - component: {fileID: 630638947471582635}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -939,7 +940,7 @@ MonoBehaviour:
   sprintMultiplier: 2
   jumpForce: 8
   moveSpeed: 0
-  rb: {fileID: 0}
+  rb: {fileID: 7567113563126236500}
   verticalVelocity: 0
   sprintAction: {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   jumpAction: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
@@ -957,12 +958,12 @@ MonoBehaviour:
   - {fileID: 8680547482929145994}
   - {fileID: 3510390375704925609}
   - {fileID: 1306644125790248878}
+  isRagdollActive:
+    m_InternalValue: 0
   fallDamageThreshold: -10
   fallDamageMultiplier: 2
   ladderDetectionRadius: 1.25
   ladderClimbSpeed: 10
-  animator: {fileID: 5179366559720851547}
-  netAnimator: {fileID: -1728222716589372832}
 --- !u!114 &8752814078426505919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1321,6 +1322,23 @@ MonoBehaviour:
   - {fileID: 729531574931480515, guid: 3c4a81b6e5c08b745861dacabb6c3ede, type: 3}
   - {fileID: 6611217039265726838, guid: ffd163fb0966a1243b9e500081a3bfd2, type: 3}
   updateRate: 0.1
+--- !u!114 &630638947471582635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3380701076809917854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkRigidbodyBaseExpanded: 0
+  UseRigidBodyForMotion: 1
+  AutoUpdateKinematicState: 0
+  AutoSetKinematicOnDespawn: 0
 --- !u!1 &3382507352548371615
 GameObject:
   m_ObjectHideFlags: 0

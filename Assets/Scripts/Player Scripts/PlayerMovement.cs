@@ -80,15 +80,11 @@ public class PlayerMovement : NetworkBehaviour
             ApplyRagdoll(newVal);
         };  
 
-        if (IsServer)
-        {
-            isRagdollActive.Value = true; // triggers ApplyRagdoll on all clients
-        }
-
         UpdateMoveSpeed();
 
 
     }
+    
 
     void Awake()
     {
@@ -157,11 +153,17 @@ public class PlayerMovement : NetworkBehaviour
     //     rb.isKinematic = active; // main Rigidbody should be kinematic when ragdoll active
     // }
     [ServerRpc(RequireOwnership = false)]
-    public void SetRagdollServerRpc(bool active)
+    public void SetRagdollServerRpc(bool active, ServerRpcParams rpcParams = default)
     {
+        ulong senderClientId = rpcParams.Receive.SenderClientId;
+
         isRagdollActive.Value = active;
+
+        Debug.Log($"Client {senderClientId} requested ragdoll state: {active}");
+
         ApplyRagdoll(active);
     }
+
 
     private void ApplyRagdoll(bool active)
     {
@@ -172,6 +174,8 @@ public class PlayerMovement : NetworkBehaviour
             col.enabled = active;
 
         rb.isKinematic = false; // keep root non-kinematic so it can move
+
+        Debug.Log("Ragdoll state changed: " + active);
     }
 
     void FixedUpdate()

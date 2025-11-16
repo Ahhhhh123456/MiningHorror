@@ -5,6 +5,7 @@ using TMPro;
 using Unity.Netcode;
 using System;
 using Unity.Collections;
+using UnityEngine.SceneManagement;
 
 [Serializable]
 public struct OreEntry : INetworkSerializable, IEquatable<OreEntry>
@@ -54,6 +55,8 @@ public class PlayerInventory : NetworkBehaviour
     public Transform pickaxePosition;
 
     public bool holdPickaxe = false;
+
+    public bool IsHoldingCompass = false;
     public GameObject currentHeldItem;
     private Dictionary<string, GameObject> prefabLookup;
 
@@ -86,6 +89,39 @@ public class PlayerInventory : NetworkBehaviour
         itemType = FindObjectOfType<ItemType>();
     }
 
+    //-------- Functions to reload references on scene change -------------- //
+
+    private void OnEnable()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
+    }
+
+    public void ReinitializeSceneReferences()
+    {
+        mineType = FindObjectOfType<MineType>();
+        itemType = FindObjectOfType<ItemType>();
+        playerMovement = GetComponent<PlayerMovement>();
+        
+        Debug.Log($"[PlayerInventory] Reinitialized references: mineType={mineType}, itemType={itemType}, playerMovement={playerMovement}");
+    }
+
+    private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode, 
+                            List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        if (!IsOwner) return; // Only reinitialize for this client
+
+        // Re-fetch scene-specific references
+        ReinitializeSceneReferences();
+    }
+
+    // ----------------------------------------------------------------------//
     private void Awake()
     {
         // Build dictionary from inspector entries
@@ -399,7 +435,7 @@ public class PlayerInventory : NetworkBehaviour
     [ClientRpc]
     public void UpdateHeldItemClientRpc(int index)
     {
-        
+
         // Destroy current held item if it exists
         if (currentHeldItem != null)
         {
@@ -438,8 +474,19 @@ public class PlayerInventory : NetworkBehaviour
         else
         {
             holdPickaxe = false;
-            Debug.Log("Not holding pickaxe.");
+            Debug.Log($"Not holding pickaxe. Holding {itemName}");
         }
+
+        if (itemName.Contains("Compass"))
+        {
+            IsHoldingCompass = true;
+            Debug.Log("Holding compass.");
+        }
+        else
+        {
+            IsHoldingCompass = false;
+        }
+
 
         // Instantiate the held item for all clients
         currentHeldItem = Instantiate(prefab, targetHoldPosition);
@@ -454,6 +501,8 @@ public class PlayerInventory : NetworkBehaviour
             rb.useGravity = false;
         }
     }
+    
+
 
     public GameObject GetPrefabForItem(string itemName)
     {
@@ -471,7 +520,7 @@ public class PlayerInventory : NetworkBehaviour
         }
         return 0;
     }
-    
+
 
     public GameObject CreateItemInstance(string itemName, Transform parent = null)
     {

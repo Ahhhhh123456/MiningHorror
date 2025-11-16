@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements.Experimental;
 using NUnit.Framework.Internal.Filters;
@@ -10,7 +11,7 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Movement Settings")]
     public float walkSpeed = 5f;
     public float sprintMultiplier = 2f;
-    public float jumpForce = 5f;
+    public float jumpForce;
     public float moveSpeed;
     public Rigidbody rb;
     public float verticalVelocity = 0f;
@@ -33,49 +34,26 @@ public class PlayerMovement : NetworkBehaviour
     private bool wasGrounded = false; // Track previous grounded state
     private bool isSprinting = false;
 
+    [Header("Ragdoll Settings")]
+    // [SerializeField] private ConfigurableJoint mainJoint;
+    SyncPhysicsObject[] syncPhysicsObjects;
+    [SerializeField] private Rigidbody[] ragdollRigidbodies;
+    [SerializeField] private Collider[] ragdollColliders;
+
+    public NetworkVariable<bool> isRagdollActive = new NetworkVariable<bool>(false);
+
     [Header("Fall Damage Settings")]
     public float fallDamageThreshold = -10f; // Minimum downward velocity to start taking damage
     public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
     private float previousVerticalVelocity = 0f; // Track previous frame's velocity
 
     [Header("Ladder Climbing Settings")]
-    public float ladderDetectionRadius = 1f; // How close the player needs to be to grab the ladder
-    public float ladderClimbSpeed = 3f;     // Speed at which the player climbs
+    public float ladderDetectionRadius; // How close the player needs to be to grab the ladder
+    public float ladderClimbSpeed;     // Speed at which the player climbs
 
     private bool isClimbing = false;
     private Transform currentLadder;
 
-    public Animator animator;
-
-    public enum PlayerStates
-    {
-        IDLE,
-        WALK,
-        JUMP,
-    }
-
-    PlayerStates CurrentState
-    {
-        set
-        {
-            playerCurrentState = value;
-
-            switch(playerCurrentState)
-            {
-                case PlayerStates.IDLE:
-                    animator.Play("Idle");
-                    break;
-                case PlayerStates.WALK:
-                    animator.Play("Walk");
-                    break;
-                case PlayerStates.JUMP:
-                    animator.Play("Jump");
-                    break;
-            }
-        }
-    }
-
-    PlayerStates playerCurrentState;
 
 
     void Start()
@@ -97,9 +75,20 @@ public class PlayerMovement : NetworkBehaviour
             if (audioListener) audioListener.enabled = false;
         }
 
+        isRagdollActive.OnValueChanged += (oldVal, newVal) =>
+        {
+            ApplyRagdoll(newVal);
+        };  
+
         UpdateMoveSpeed();
 
-        animator = GetComponentInChildren<Animator>();
+
+    }
+    
+
+    void Awake()
+    {
+        syncPhysicsObjects = GetComponentsInChildren<SyncPhysicsObject>();
     }
 
     void OnEnable()
@@ -126,10 +115,12 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner) return;
 
+
         // Jump input
         if (jumpAction.action.triggered && isGrounded)
         {
-            verticalVelocity = jumpForce;
+            float jumpVelocity = Mathf.Sqrt(2f * Mathf.Abs(Physics.gravity.y) * jumpForce);
+            rb.AddForce(Vector3.up * jumpVelocity * rb.mass, ForceMode.Impulse);
         }
 
         if (isSprinting && rb.linearVelocity.magnitude > 0.1f) // only drain if moving
@@ -151,9 +142,62 @@ public class PlayerMovement : NetworkBehaviour
 
     }
 
+    // private void SetRagdollActive(bool active)
+    // {
+    //     foreach (var limbRb in ragdollRigidbodies)
+    //         limbRb.isKinematic = !active; // ragdoll physics ON → non-kinematic
+
+    //     foreach (var col in ragdollColliders)
+    //         col.enabled = active; // optional: disable colliders when ragdoll off
+
+    //     rb.isKinematic = active; // main Rigidbody should be kinematic when ragdoll active
+    // }
+    [ServerRpc(RequireOwnership = false)]
+    public void SetRagdollServerRpc(bool active, ServerRpcParams rpcParams = default)
+    {
+        ulong senderClientId = rpcParams.Receive.SenderClientId;
+
+        isRagdollActive.Value = active;
+
+        Debug.Log($"Client {senderClientId} requested ragdoll state: {active}");
+
+        ApplyRagdoll(active);
+    }
+
+
+    private void ApplyRagdoll(bool active)
+    {
+        foreach (var limbRb in ragdollRigidbodies)
+            limbRb.isKinematic = !active;
+
+        foreach (var col in ragdollColliders)
+            col.enabled = active;
+
+        rb.isKinematic = false; // keep root non-kinematic so it can move
+
+        Debug.Log("Ragdoll state changed: " + active);
+    }
+
     void FixedUpdate()
     {
         HandleMovement();
+
+        if (!IsOwner) return;
+
+        // Optional: Update ragdoll limbs after everything
+        for (int i = 0; i < syncPhysicsObjects.Length; i++)
+        {
+            syncPhysicsObjects[i].UpdateJointFromAnimation();
+        }
+    }
+
+    private bool IsRagdollActive()
+    {
+        foreach (var limbRb in ragdollRigidbodies)
+        {
+            if (!limbRb.isKinematic) return true;
+        }
+        return false;
     }
 
     public void HandleMovement()
@@ -167,7 +211,7 @@ public class PlayerMovement : NetworkBehaviour
 
         // Ground check
         bool wasGrounded = isGrounded;
-        isGrounded = Physics.CheckSphere(feetPos, groundCheckRadius, groundMask);
+        isGrounded = Physics.CheckSphere(feetPos, groundCheckRadius, groundMask & ~LayerMask.GetMask("Ragdoll"));
 
         // Detect landing
         bool justLanded = !wasGrounded && isGrounded;
@@ -178,10 +222,9 @@ public class PlayerMovement : NetworkBehaviour
             FallDamage(verticalVelocity);
         }
 
-        // Gravity / vertical velocity
         if (isGrounded && verticalVelocity < 0f)
         {
-            verticalVelocity = -2f; // small downward force to stick to ground
+            verticalVelocity = -0.1f; // keep the player grounded without drifting
         }
         else
         {
@@ -190,48 +233,36 @@ public class PlayerMovement : NetworkBehaviour
 
         // Horizontal input
         Vector2 input = moveAction.action.ReadValue<Vector2>();
+
+        // Deadzone check
+        if (input.sqrMagnitude < 0.01f) input = Vector2.zero;
+
         Vector3 moveDir = transform.right * input.x + transform.forward * input.y;
         moveDir.y = 0f;
 
-        if (moveDir.sqrMagnitude > 0.01f)
+        // ---- SLOPE HANDLING ----
+        if (isGrounded && moveDir.sqrMagnitude > 0.01f)
         {
-            CapsuleCollider wallChecker = GetComponent<CapsuleCollider>();
-
-            Vector3 point1 = transform.position + wallChecker.center + Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
-            Vector3 point2 = transform.position + wallChecker.center - Vector3.up * (wallChecker.height / 2 - wallChecker.radius);
-
-            float checkDistance = 0.1f;
-
-            if (Physics.CapsuleCast(point1, point2, wallChecker.radius, moveDir.normalized, out RaycastHit hit, checkDistance))
+            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit groundHit, 2f, groundMask))
             {
-                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
-
-                // If hitting a wall or steep slope, cancel horizontal input
-                if (slopeAngle > 45f)
-                {
-                    moveDir = Vector3.zero;
-                }
+                Vector3 groundNormal = groundHit.normal;
+                moveDir = Vector3.ProjectOnPlane(moveDir, groundNormal).normalized;
             }
         }
 
-        // Calculate horizontal velocity
-        Vector3 horizontalVelocity = moveDir.normalized * moveSpeed;
+        // ---- Only apply horizontal velocity if there is input ----
+        Vector3 horizontalVelocity = Vector3.zero;
+        if (moveDir.sqrMagnitude > 0.01f)
+        {
+            horizontalVelocity = moveDir.normalized * moveSpeed;
+        }
 
         // Apply movement
-        rb.linearVelocity = new Vector3(horizontalVelocity.x, verticalVelocity, horizontalVelocity.z);
-
-        if (input != Vector2.zero)
-        {
-            animator.SetFloat("xMove", input.x);
-            animator.SetFloat("yMove", input.y);
-            CurrentState = PlayerStates.WALK;
-        }
-        else
-        {
-            CurrentState = PlayerStates.IDLE;
-        }
+        Vector3 velocity = rb.linearVelocity;
+        velocity.x = horizontalVelocity.x;
+        velocity.z = horizontalVelocity.z;
+        rb.linearVelocity = velocity;
     }
-
 
 
 
@@ -281,14 +312,11 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-
     private void LadderClimb()
     {
-        // Reset climbing state
+        // Detect nearby ladders
         isClimbing = false;
         currentLadder = null;
-
-        // Detect nearby ladders using OverlapSphere
         Collider[] hits = Physics.OverlapSphere(transform.position, ladderDetectionRadius);
         foreach (var hit in hits)
         {
@@ -300,24 +328,25 @@ public class PlayerMovement : NetworkBehaviour
             }
         }
 
-        if (isClimbing && currentLadder != null)
-        {
-            // Disable gravity while climbing
-            verticalVelocity = 0f;
+        if (!isClimbing || currentLadder == null) return;
 
-            // Get vertical input (W/S or up/down)
-            Vector2 input = moveAction.action.ReadValue<Vector2>();
-            verticalVelocity = input.y * ladderClimbSpeed;
+        // Disable jumping/gravity while climbing
+        verticalVelocity = 0f;
 
-            // Keep X/Z position unchanged to allow free movement around ladder
-            Vector3 climbPosition = new Vector3(
-                transform.position.x, // keep current X
-                transform.position.y + verticalVelocity * Time.fixedDeltaTime, // move Y
-                transform.position.z  // keep current Z
-            );
+        // Get vertical input (W/S or up/down)
+        Vector2 input = moveAction.action.ReadValue<Vector2>();
+        float climbY = input.y * ladderClimbSpeed * Time.fixedDeltaTime;
 
-            rb.MovePosition(climbPosition);
-        }
+        // Move the player smoothly along the ladder
+        Vector3 climbPosition = transform.position + new Vector3(0f, climbY, 0f);
+        rb.MovePosition(climbPosition);
+
+        // Optional: zero out Y velocity in Rigidbody to prevent conflicts
+        Vector3 v = rb.linearVelocity;
+        v.y = 0f;
+        rb.linearVelocity = v;
     }
 
+
+    
 }

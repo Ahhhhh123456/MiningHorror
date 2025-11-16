@@ -1,10 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
+using System.Collections.Generic;
+using System.Collections;
 public class LookAndClickInteraction : NetworkBehaviour
 {
     public Camera playerCamera;                // assign your FPS camera in Inspector
-    public float interactRange = 1f;           // how far you can look and interact
+    public float interactRange;           // how far you can look and interact
     public InputActionReference clickAction;   // assign your "Click" action
 
     public InputActionReference eButtonAction;   // assign your "E button" action
@@ -28,9 +30,13 @@ public class LookAndClickInteraction : NetworkBehaviour
     public float mineInterval = 0.005f; // seconds between mining ticks
     private float mineTimer = 0f;
 
+    // public MarchingCubes caveGenerator; // drag your cave object here
+    public float mineRadius = 100f;     // size of mining tool
+    public float mineDepth = 200f;        // how much density to subtract per hit
+
     [Header("Holding Settings")]
 
-    [SerializeField] private float interactionDistance = 3f;
+    [SerializeField] private float interactionDistance;
     [SerializeField] private LayerMask interactableLayer;
     
     private PlayerInventory playerInventory;
@@ -38,7 +44,18 @@ public class LookAndClickInteraction : NetworkBehaviour
     private BoxBreak boxBreak;
 
     private Dropped dropScript;
+
+    private Explode explodeScript;
+    //private TrackBoxes trackBoxes;
     private bool isHoldingItem = false;
+
+    [Header("Compass Settings")]
+    public List<GameObject> targetPrefabs; // list of target prefabs to track
+    public float updateRate = 0.1f; // how often to update arrow
+
+    private Vector3 closestTargetPosition;
+    private float timer;
+    private TrackBoxes compassscript;
 
     public void Start()
     {
@@ -47,6 +64,7 @@ public class LookAndClickInteraction : NetworkBehaviour
         playerInventory = FindObjectOfType<PlayerInventory>();
         loadingBar = GetComponent<LoadingBar>();
         boxBreak = FindObjectOfType<BoxBreak>();
+        compassscript = FindObjectOfType<TrackBoxes>();
 
     }
 
@@ -107,6 +125,8 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         ChooseInventorySlot();
         Mining();
+        compassTrack();
+        DebugDirection();
     }
 
 
@@ -143,13 +163,6 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
         {
-            // if (dropScript != null && eButtonAction.action.WasPressedThisFrame() && hit.collider.CompareTag("Dropped"))
-            // {
-            //     // Instead of picking up locally, call the networked method
-            //     Debug.Log("Picking up item: " + hit.collider.gameObject.name);
-            //     dropScript.PickedUp(hit.collider.gameObject);
-            //     return;
-            // }
             if (eButtonAction.action.WasPressedThisFrame() && hit.collider.CompareTag("Dropped"))
             {
                 Dropped hitDrop = hit.collider.GetComponent<Dropped>();
@@ -214,28 +227,49 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         string itemName = playerInventory.NetworkItems[slotIndex].ToString();
 
-        // Remove from networked inventory
         playerInventory.RemoveFromInventory(itemName);
 
-        // Instantiate using PlayerInventory’s logic
         GameObject droppedItem = playerInventory.CreateItemInstance(itemName, playerInventory.holdPosition);
         if (droppedItem == null) return;
 
-        droppedItem.transform.SetParent(null); // make sure it’s world-space
+        droppedItem.transform.SetParent(null);
 
-        // Add Rigidbody for physics
+
         Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
         if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();
         rb.isKinematic = false;
         rb.useGravity = true;
 
-        // Add small push
+
         rb.AddForce(playerInventory.holdPosition.forward * 2f, ForceMode.Impulse);
 
-        // Spawn networked object
+
         if (droppedItem.TryGetComponent<NetworkObject>(out NetworkObject netObj))
             netObj.Spawn();
+
+        if (itemName == "Dynamite")
+        {
+            Explode explodeScript = droppedItem.GetComponent<Explode>();
+            if (explodeScript != null)
+            {
+                Debug.Log("Found Explode script on dropped item.");
+                StartCoroutine(DoThingAfterSeconds(explodeScript, 3f));
+                    
+            }
+            else
+            {
+                Debug.LogWarning("Dropped Dynamite has no Explode script!");
+            }
+        }
     }
+
+    IEnumerator DoThingAfterSeconds(Explode explodeScript, float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        Debug.Log("3 seconds have passed!");
+        explodeScript.ExplosionServerRpc();
+    }
+
 
 
 
@@ -249,48 +283,120 @@ public class LookAndClickInteraction : NetworkBehaviour
         }
     }
 
-    private void Mining()
+
+    private void compassTrack()
     {
-        if (playerInventory.holdPickaxe == true)
+        if (!playerInventory.IsHoldingCompass) return;
+
+        if (playerInventory.IsHoldingCompass)
         {
-            if (clickAction.action.WasReleasedThisFrame())
-            {
-                if (currentMineTarget != null)
-                {
-                    currentMineTarget.holdCount = 0;
-                    Debug.Log("Stopped Mining Cube");
-                    currentMineTarget = null;
-                }
-                mineTimer = 0f; // reset timer
-            }
-
-            if (clickAction.action.IsPressed())
-            {
-                Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-                RaycastHit hit;
-
-                if (Physics.Raycast(ray, out hit, interactRange))
-                {
-                    MineType mineTypeScript = hit.collider.GetComponent<MineType>();
-                    if (mineTypeScript != null)
-                    {
-                        currentMineTarget = mineTypeScript;
-
-                        // Update timer
-                        mineTimer += Time.deltaTime;
-
-                        // Call Mining only when enough time has passed
-                        if (mineTimer >= mineInterval)
-                        {   
-                            // Passes camera and position of where the player mines
-                            currentMineTarget.MiningOre(playerCamera.transform.forward, hit.normal);
-                            mineTimer -= mineInterval; // reset timer but keep overflow
-                        }
-                    }
-
-
-                }
-            }
+            timer += Time.deltaTime;
+            if (timer < updateRate) return;
+            timer = 0f;
+            compassscript.RequestClosestTargetServerRpc();
         }
     }
+
+    private void DebugDirection()
+    {
+
+        // Only when we actually have a target
+        if (closestTargetPosition == Vector3.zero) return;
+
+        // Direction from this object to target
+        Vector3 direction = (closestTargetPosition - transform.position).normalized;
+
+        // Log the direction for debugging
+        Debug.Log($"Direction to closest target: {direction}");
+
+        // Draw the direction in the scene view
+        Debug.DrawRay(transform.position, direction * 5f, Color.green);
+    }
+    private void Mining()
+    {
+        if (!playerInventory.holdPickaxe) return;
+
+        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        RaycastHit[] hits = Physics.RaycastAll(ray, interactRange);
+
+        // Stop mining when releasing click
+        if (clickAction.action.WasReleasedThisFrame())
+        {
+            if (currentMineTarget != null)
+            {
+                currentMineTarget.holdCount = 0;
+                Debug.Log("Stopped Mining Cube");
+                currentMineTarget = null;
+            }
+            mineTimer = 0f;
+        }
+
+        if (!clickAction.action.IsPressed()) return;
+
+        if (hits.Length == 0) return;
+
+        // STEP 1 — PICK PRIORITIZED TARGET
+        RaycastHit? caveHit = null;
+        RaycastHit? oreHit = null;
+
+        foreach (var h in hits)
+        {
+            GameObject obj = h.collider.gameObject;
+
+            if (obj.CompareTag("Cave"))
+            {
+                caveHit = h;
+                break; // Cave wins outright
+            }
+            else if (obj.CompareTag("Dropped"))
+            {
+                // Ignore dropped items entirely
+                continue;
+            }
+            else if (h.collider.TryGetComponent(out MineType mt))
+            {
+                // Catch possible ore
+                // only choose the *closest* ore if multiple
+                if (oreHit == null || h.distance < oreHit.Value.distance)
+                    oreHit = h;
+            }
+        }
+
+        // STEP 2 — PERFORM ACTIONS BASED ON PRIORITY
+        if (caveHit.HasValue)
+        {
+            var helper = caveHit.Value.collider.GetComponent<MeshysHelper>();
+            if (helper != null)
+            {
+                mineTimer += Time.deltaTime;
+                if (mineTimer >= mineInterval)
+                {
+                    helper.caveGenerator.MineCaveServerRpc(
+                        caveHit.Value.point, mineRadius, mineDepth, false);
+                    mineTimer -= mineInterval;
+                }
+            }
+            return;
+        }
+
+        if (oreHit.HasValue)
+        {
+            var hit = oreHit.Value;
+            var mineTypeScript = hit.collider.GetComponent<MineType>();
+
+            currentMineTarget = mineTypeScript;
+            mineTimer += Time.deltaTime;
+
+            if (mineTimer >= mineInterval)
+            {
+                currentMineTarget.MiningOre(playerCamera.transform.forward, hit.normal);
+                mineTimer -= mineInterval;
+            }
+            return;
+        }
+
+        // If we get here, nothing valid to mine
+    }
+
+
 }

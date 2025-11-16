@@ -62,7 +62,7 @@ public class SteamLobbyManager : MonoBehaviour
             if (!NetworkManager.Singleton.IsListening)
             {
                 Debug.Log("Creating Steam Lobby...");
-                SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, 2); // Max 2 players
+                SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, 4); // Max 4 players
             }
             else
             {

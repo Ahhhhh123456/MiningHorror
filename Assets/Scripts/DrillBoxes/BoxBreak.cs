@@ -14,13 +14,63 @@ public class BoxBreak : NetworkBehaviour
     private Dropped droppedScript;
 
     private NetworkedBoxData networkedBoxData;
+
+    private bool initialized = false;
     public void Start()
     {
         playerInventory = FindObjectOfType<PlayerInventory>();
         droppedScript = FindObjectOfType<Dropped>();
-        networkedBoxData = GetComponent<NetworkedBoxData>();
-        networkedBoxData.InitializeFromDrillBoxData(boxData);
     }
+
+    public void Awake()
+    {
+        networkedBoxData = GetComponent<NetworkedBoxData>();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (IsServer)
+        {
+            // Subscribe to connection events
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        }
+    }
+
+        private void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null && IsServer)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
+    }
+
+    private void OnClientConnected(ulong clientId)
+    {
+        TryInitializeBox();
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        TryInitializeBox();
+    }
+
+    private void TryInitializeBox()
+    {
+        if (!IsServer) return;
+
+        int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
+
+        if (playerCount > 0)
+        {
+            networkedBoxData.InitializeFromDrillBoxData(boxData);
+            initialized = true;
+        }
+    }
+
 
     public void WhoBrokeBox()
     {

@@ -39,6 +39,8 @@ public class MarchingCubes : NetworkBehaviour
     // Similar to MineType's holdCount
     private int holdCount = 0;
 
+    public ParticleSystem mineParticlePrefab; 
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -595,6 +597,8 @@ public class MarchingCubes : NetworkBehaviour
         // Update affected chunks locally
         UpdateAffectedChunks(worldPos, radius);
 
+        PlayMineEffectsClientRpc(worldPos);
+
         // Rebuild navmesh
         if (surface != null)
         {
@@ -602,6 +606,21 @@ public class MarchingCubes : NetworkBehaviour
             //surface.UpdateNavMesh(surface.navMeshData);
             Debug.Log("NavMesh updated after mining.");
         }
+    }
+
+    [ClientRpc]
+    private void PlayMineEffectsClientRpc(Vector3 position)
+    {
+        // SOUND
+        AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
+
+        // PARTICLES (assign via Inspector)
+        // if (mineParticlePrefab != null)
+        // {
+        //     var ps = Instantiate(mineParticlePrefab, position, Quaternion.identity);
+        //     ps.Play();
+        //     Destroy(ps.gameObject, ps.main.duration + ps.main.startLifetime.constantMax);
+        // }
     }
 
 

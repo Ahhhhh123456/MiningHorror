@@ -3916,6 +3916,7 @@ MonoBehaviour:
   - {fileID: 3757863753513745559, guid: dec1a671e7572e24b84b231aa5b54d26, type: 3}
   - {fileID: 7040635711557364015, guid: f21de0c4bed194a4fbbe02ca1990333a, type: 3}
   meshysPrefab: {fileID: 3351218058396261916, guid: d515deac896e6854e9f3cb8b0a5e2d86, type: 3}
+  mineParticlePrefab: {fileID: 29186453002920994, guid: db32ecee90d496244b669532db5d9609, type: 3}
 --- !u!114 &638049938605552822
 MonoBehaviour:
   m_ObjectHideFlags: 0

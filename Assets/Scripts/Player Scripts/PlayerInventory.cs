@@ -481,6 +481,7 @@ public class PlayerInventory : NetworkBehaviour
         {
             IsHoldingCompass = true;
             Debug.Log("Holding compass.");
+
         }
         else
         {
@@ -500,6 +501,17 @@ public class PlayerInventory : NetworkBehaviour
             rb.isKinematic = true;
             rb.useGravity = false;
         }
+
+
+        if (itemName.Contains("Compass"))
+        {
+            TrackBoxes trackBoxes = GetComponent<TrackBoxes>();
+            if (trackBoxes != null)
+            {
+                trackBoxes.OnCompassEquipped(currentHeldItem.transform);
+            }
+        }
+
     }
     
 

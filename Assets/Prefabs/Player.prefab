@@ -1133,8 +1133,8 @@ MonoBehaviour:
     holdRotation: {x: -90, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Compass
-    prefab: {fileID: 760378346170225441, guid: a1b516d462511c24f99555ea8316593a, type: 3}
-    holdRotation: {x: 0, y: 90, z: 100}
+    prefab: {fileID: 5127088424060007351, guid: a1b516d462511c24f99555ea8316593a, type: 3}
+    holdRotation: {x: 0, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &5579227905233273499
 MonoBehaviour:
@@ -1321,7 +1321,9 @@ MonoBehaviour:
   - {fileID: 4608852769024827792, guid: f6140c807bdcdc54bbb994d138d9e544, type: 3}
   - {fileID: 729531574931480515, guid: 3c4a81b6e5c08b745861dacabb6c3ede, type: 3}
   - {fileID: 6611217039265726838, guid: ffd163fb0966a1243b9e500081a3bfd2, type: 3}
-  updateRate: 0.1
+  updateRate: 0.05
+  compassArrow: {fileID: 0}
+  smoothRotate: 50
 --- !u!114 &630638947471582635
 MonoBehaviour:
   m_ObjectHideFlags: 0

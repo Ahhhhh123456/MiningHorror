@@ -19,6 +19,12 @@ public class MonsterFollow : NetworkBehaviour
     private Vector3 spawnPosition;
     private float roamTimer;
 
+    [Header("Attack Settings")]
+    public float attackRange = 1.8f;
+    public float attackDamage = 10f;
+    public float attackCooldown = 1.0f;
+    private float nextAttackTime = 0f;
+
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -59,13 +65,22 @@ public class MonsterFollow : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsServer) return; 
+        if (!IsServer) return;
 
-        targetPlayer = GetClosestPlayer(); 
-
+        targetPlayer = GetClosestPlayer();
         if (targetPlayer != null)
         {
             float distance = Vector3.Distance(transform.position, targetPlayer.position);
+
+            // Attack if close enough
+            if (distance <= attackRange)
+            {
+                TryAttackPlayer(targetPlayer);
+                agent.ResetPath(); // stop moving while attacking
+                return;
+            }
+
+            // Chase if in chase range
             if (distance < chaseRange)
             {
                 ChasePlayer();
@@ -116,5 +131,21 @@ public class MonsterFollow : NetworkBehaviour
             agent.SetDestination(roamTarget);
             roamTimer = roamWaitTime;
         }
+    }
+
+    private void TryAttackPlayer(Transform player)
+    {
+        // Cooldown
+        if (Time.time < nextAttackTime) return;
+        nextAttackTime = Time.time + attackCooldown;
+
+        // Get PlayerHealth component
+        PlayerHealth health = player.GetComponent<PlayerHealth>();
+        if (health != null)
+        {
+            health.TakeDamageServerRpc(attackDamage);
+        }
+
+        Debug.Log($"Monster attacked player {player.name} for {attackDamage} damage.");
     }
 }

@@ -42,10 +42,10 @@ public class PlayerMovement : NetworkBehaviour
 
     public NetworkVariable<bool> isRagdollActive = new NetworkVariable<bool>(false);
 
-    [Header("Fall Damage Settings")]
-    public float fallDamageThreshold = -10f; // Minimum downward velocity to start taking damage
-    public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
-    private float previousVerticalVelocity = 0f; // Track previous frame's velocity
+    // [Header("Fall Damage Settings")]
+    // public float fallDamageThreshold = -10f; // Minimum downward velocity to start taking damage
+    // public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
+    // private float previousVerticalVelocity = 0f; // Track previous frame's velocity
 
     [Header("Ladder Climbing Settings")]
     public float ladderDetectionRadius; // How close the player needs to be to grab the ladder
@@ -217,10 +217,10 @@ public class PlayerMovement : NetworkBehaviour
         bool justLanded = !wasGrounded && isGrounded;
 
         // Apply fall damage if just landed
-        if (justLanded && verticalVelocity < fallDamageThreshold)
-        {
-            FallDamage(verticalVelocity);
-        }
+        // if (justLanded && verticalVelocity < fallDamageThreshold)
+        // {
+        //     FallDamage(verticalVelocity);
+        // }
 
         if (isGrounded && verticalVelocity < 0f)
         {
@@ -300,17 +300,17 @@ public class PlayerMovement : NetworkBehaviour
 
 
 
-    private void FallDamage(float impactVelocity)
-    {
-        float damage = Mathf.Abs(impactVelocity) * fallDamageMultiplier;
-        Debug.Log("Fall damage taken: " + damage);
+    // private void FallDamage(float impactVelocity)
+    // {
+    //     float damage = Mathf.Abs(impactVelocity) * fallDamageMultiplier;
+    //     Debug.Log("Fall damage taken: " + damage);
 
-        PlayerHealth health = GetComponent<PlayerHealth>();
-        if (health != null)
-        {
-            health.TakeDamageServerRpc(damage);
-        }
-    }
+    //     PlayerHealth health = GetComponent<PlayerHealth>();
+    //     if (health != null)
+    //     {
+    //         health.TakeDamageServerRpc(damage);
+    //     }
+    // }
 
     private void LadderClimb()
     {

@@ -110,6 +110,25 @@ public class PlayerInventory : NetworkBehaviour
         playerMovement = GetComponent<PlayerMovement>();
         
         Debug.Log($"[PlayerInventory] Reinitialized references: mineType={mineType}, itemType={itemType}, playerMovement={playerMovement}");
+        ResetInventoryServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ResetInventoryServerRpc()
+    {
+        ResetInventory(); // safe, runs on server
+        Debug.Log("[PlayerInventory] Inventory reset on scene load.");
+    }
+
+    public void ResetInventory()
+    {
+        NetworkOres.Clear();
+        NetworkItems.Clear();
+        playerWeight = 0;
+
+        // Clear held item
+        currentSlotIndex = -1;
+        ClearHeldItemClientRpc();
     }
 
     private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode, 

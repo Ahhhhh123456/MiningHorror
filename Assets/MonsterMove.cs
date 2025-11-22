@@ -19,11 +19,15 @@ public class MonsterFollow : NetworkBehaviour
     private Vector3 spawnPosition;
     private float roamTimer;
 
+    private warden1Animator monsterAnim;
+
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
         agent.speed = moveSpeed;
         spawnPosition = transform.position;
+
+        monsterAnim = GetComponent<warden1Animator>();
     }
 
     private void Start()
@@ -74,12 +78,19 @@ public class MonsterFollow : NetworkBehaviour
         }
 
         Roam();
+
+        if (agent.velocity.magnitude < 0.1f)
+        {
+            // monsterAnim?.SetIdle();
+        }
     }
 
     private void ChasePlayer()
     {
         agent.SetDestination(targetPlayer.position);
         agent.stoppingDistance = stopRange;
+
+        monsterAnim?.SetWalk();
     }
 
     private Transform GetClosestPlayer()
@@ -115,6 +126,8 @@ public class MonsterFollow : NetworkBehaviour
             agent.stoppingDistance = 0;
             agent.SetDestination(roamTarget);
             roamTimer = roamWaitTime;
+
+            monsterAnim?.SetWalk();
         }
     }
 }

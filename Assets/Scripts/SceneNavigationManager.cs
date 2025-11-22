@@ -3,15 +3,23 @@ using UnityEngine.SceneManagement; // Required for loading scenes
 
 public class SceneNavigationManager : MonoBehaviour
 {
-    /**
-     * This one public function can handle your "Play", "Create Lobby", 
-     * and "Options" buttons. We give it a parameter (sceneName)
-     * so it knows which scene to load.
-     */
+    SteamLobbyManager steamLobbyManager;
+
     public void LoadScene(string sceneName)
     {
-        // Make sure the sceneName you provided exists in your Build Settings
+        // Load the scene
         SceneManager.LoadScene(sceneName);
+
+        // Find the SteamLobbyManager in the scene
+        SteamLobbyManager lobbyManager = FindObjectOfType<SteamLobbyManager>();
+        if (lobbyManager != null)
+        {
+            lobbyManager.MakeLobby();
+        }
+        else
+        {
+            Debug.LogError("SteamLobbyManager not found in scene!");
+        }
     }
 
     /**

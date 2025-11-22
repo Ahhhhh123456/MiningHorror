@@ -133,12 +133,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  moveSpeed: 1
+  moveSpeed: 3
   chaseRange: 8
-  stopRange: 10
-  turnSpeed: 2
+  stopRange: 0
+  turnSpeed: 1
   roamRadius: 20
   roamWaitTime: 20
+  attackRange: 1.8
+  attackDamage: 10
+  attackCooldown: 1
 --- !u!114 &1423340175446991468
 MonoBehaviour:
   m_ObjectHideFlags: 0

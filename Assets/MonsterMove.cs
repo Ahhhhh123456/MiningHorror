@@ -5,14 +5,14 @@ using UnityEngine.AI; // <--- IMPORTANT
 public class MonsterFollow : NetworkBehaviour
 {
     [Header("Movement Settings")]
-    public float moveSpeed = 3f;
-    public float chaseRange = 10f;
-    public float stopRange = 2f;
-    public float turnSpeed = 20f;
+    public float moveSpeed;
+    public float chaseRange;
+    public float stopRange;
+    public float turnSpeed;
 
     [Header("Roaming Settings")]
-    public float roamRadius = 5f;
-    public float roamWaitTime = 2f;
+    public float roamRadius;
+    public float roamWaitTime;
 
     private Transform targetPlayer;
     private NavMeshAgent agent;
@@ -20,11 +20,11 @@ public class MonsterFollow : NetworkBehaviour
     private float roamTimer;
 
     [Header("Attack Settings")]
-    public float attackRange = 1.8f;
-    public float attackDamage = 10f;
-    public float attackCooldown = 1.0f;
-    private float nextAttackTime = 0f;
-    private warden1Animator monsterAnim;
+    public float attackRange;
+    public float attackDamage;
+    public float attackCooldown;
+    private float nextAttackTime;
+    private Warden1Animator monsterAnim;
 
     private void Awake()
     {
@@ -32,7 +32,7 @@ public class MonsterFollow : NetworkBehaviour
         agent.speed = moveSpeed;
         spawnPosition = transform.position;
 
-        monsterAnim = GetComponent<warden1Animator>();
+        monsterAnim = GetComponent<Warden1Animator>();
     }
 
     private void Start()

@@ -1,51 +1,73 @@
 using UnityEngine;
+using Unity.Netcode;
+using Unity.Netcode.Components;
 
-public class warden1Animator : MonoBehaviour
+[RequireComponent(typeof(NetworkAnimator))]
+public class Warden1Animator : NetworkBehaviour
 {
-    public Animator animator;
+    [Header("Animator References")]
+    public Animator animator;                  // The runtime-created Animator (child)
+    private NetworkAnimator networkAnimator;   // NetworkAnimator to sync animation
 
-    public enum Warden1State
-    {
-        IDLE,
-        WALK
-    }
-
+    public enum Warden1State { IDLE, WALK }
     private Warden1State currentState;
 
-    Warden1State CurrentState
+    private Warden1State CurrentState
     {
         get => currentState;
         set
         {
-            if (currentState == value) return; // prevent replaying same animation
-
+            if (currentState == value) return;
             currentState = value;
 
-            switch (currentState)
+            // Only server drives animation parameters
+            if (IsServer)
             {
-                case Warden1State.IDLE:
-                    animator.Play("Idle");
-                    break;
-                case Warden1State.WALK:
-                    animator.Play("Walk");
-                    break;
+                animator.SetBool("isWalking", currentState == Warden1State.WALK);
+                // NetworkAnimator automatically syncs this parameter to clients
             }
         }
     }
 
-    void Start()
+    private void Awake()
     {
-        animator = GetComponentInChildren<Animator>();
-        CurrentState = Warden1State.IDLE;
+        // Find child Animator if not assigned
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
+        networkAnimator = GetComponent<NetworkAnimator>();
+
+        if (networkAnimator != null && animator != null)
+        {
+            networkAnimator.Animator = animator; // <-- Assign BEFORE network updates
+        }
+        else
+        {
+            Debug.LogError("Warden1Animator: Animator or NetworkAnimator missing!");
+        }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        CurrentState = Warden1State.IDLE; // Set initial state
+    }
+
+    #region Public Methods to Control Animation
     public void SetIdle()
     {
+        if (!IsServer) return;
         CurrentState = Warden1State.IDLE;
+        animator.SetBool("isWalking", false); // server sets this, NetworkAnimator syncs
     }
 
     public void SetWalk()
     {
+        if (!IsServer) return;
         CurrentState = Warden1State.WALK;
+        animator.SetBool("isWalking", true); // server sets this, NetworkAnimator syncs
     }
+
+    #endregion
+
 }

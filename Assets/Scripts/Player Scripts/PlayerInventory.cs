@@ -349,8 +349,10 @@ public class PlayerInventory : NetworkBehaviour
                     playerWeight -= itemWeight;
                     if (playerMovement != null)
                         playerMovement.UpdateMoveSpeed();
-
+                    holdPickaxe = false;
+                    IsHoldingCompass = false;
                     Debug.Log($"[Inventory] Dropped '{itemName}' (Weight {itemWeight}). Total weight: {playerWeight}");
+
                 }
                 else
                 {
@@ -575,6 +577,11 @@ public class PlayerInventory : NetworkBehaviour
         // Instantiate just like UpdateHeldItemClientRpc
         GameObject itemInstance = Instantiate(prefab, targetHoldPosition);
         itemInstance.name = prefab.name;
+        if (itemInstance.name.Contains("Dynamite"))
+        {
+            Debug.Log("Created dynamite instance.");
+            itemInstance.tag = "Untagged";
+        }
         itemInstance.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
         itemInstance.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
         Debug.Log($"Found rotation for {itemName}: {itemInstance.transform.localRotation.eulerAngles}");

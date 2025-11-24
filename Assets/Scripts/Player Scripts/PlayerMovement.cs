@@ -60,8 +60,10 @@ public class PlayerMovement : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.solverIterations = 12;          // default 6
+        rb.solverVelocityIterations = 12;  // default 1
 
         inventory = GetComponent<PlayerInventory>();
         stamina = GetComponent<PlayerStamina>();
@@ -84,7 +86,7 @@ public class PlayerMovement : NetworkBehaviour
 
 
     }
-    
+     
 
     void Awake()
     {

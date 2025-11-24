@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
 using Unity.AI.Navigation;
+using System;
 
 public class MarchingCubes : NetworkBehaviour
 {
@@ -41,6 +42,15 @@ public class MarchingCubes : NetworkBehaviour
 
     public ParticleSystem mineParticlePrefab; 
 
+
+    public static event Action OnCaveFinished;
+
+    private void CaveFinished()
+    {
+        // Call this when mesh + navmesh is fully generated
+        OnCaveFinished?.Invoke();
+    }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -55,6 +65,7 @@ public class MarchingCubes : NetworkBehaviour
             StartCoroutine(WaitForServerAndGenerate());
 
         }
+        CaveFinished();
     }
 
     private IEnumerator WaitForServerAndGenerate()
@@ -173,7 +184,7 @@ public class MarchingCubes : NetworkBehaviour
 
                     // --- Choose correct spawn chance
                     float chance = nearAir ? surfaceChance : deepChance;
-                    if (Random.value > chance)
+                    if (UnityEngine.Random.value > chance)
                         continue;
 
                     // --- Compute world-space position
@@ -182,12 +193,12 @@ public class MarchingCubes : NetworkBehaviour
                     if (nearAir)
                     {
                         // Surface ores: slight offset inward so they appear on walls
-                        pos += Random.insideUnitSphere * (resolution * 0.15f);
+                        pos += UnityEngine.Random.insideUnitSphere * (resolution * 0.15f);
                     }
                     else
                     {
                         // Deep ores: buried inside rock
-                        pos += Random.insideUnitSphere * (resolution * 0.3f);
+                        pos += UnityEngine.Random.insideUnitSphere * (resolution * 0.3f);
                     }
 
                     spawnPositions.Add(pos);
@@ -202,7 +213,7 @@ public class MarchingCubes : NetworkBehaviour
             for (int i = 0; i < batchSize && index < spawnPositions.Count; i++, index++)
             {
                 Vector3 spawnPos = spawnPositions[index];
-                GameObject chosenOre = orePrefabs[Random.Range(0, orePrefabs.Length)];
+                GameObject chosenOre = orePrefabs[UnityEngine.Random.Range(0, orePrefabs.Length)];
 
                 // NetworkObject oreInstance = Instantiate(chosenOre, spawnPos, Quaternion.identity)
                 //                             .GetComponent<NetworkObject>();
@@ -247,6 +258,7 @@ public class MarchingCubes : NetworkBehaviour
             Debug.LogWarning($"OreNameClientRpc: NetworkObject {networkId} not found on client yet.");
         }
     }
+    
 
     private void GenerateChunkMesh(int startX, int startY, int startZ)
     {
@@ -612,7 +624,7 @@ public class MarchingCubes : NetworkBehaviour
     private void PlayMineEffectsClientRpc(Vector3 position)
     {
         // SOUND
-        AudioManager.instance.PlaySFXClip("mine" + Random.Range(1, 5), transform);
+        AudioManager.instance.PlaySFXClip("mine" + UnityEngine.Random.Range(1, 5), transform);
 
         // PARTICLES (assign via Inspector)
         // if (mineParticlePrefab != null)

@@ -86,7 +86,6 @@ public class MonsterFollow : NetworkBehaviour
             // Chase if in chase range
             if (distance < chaseRange)
             {
-                Debug.Log($"Monster is chasing player {targetPlayer.name} at distance {distance}");
                 ChasePlayer();
                 return;
             }

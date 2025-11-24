@@ -114,30 +114,30 @@ public class MarchingCubes : NetworkBehaviour
                     GenerateChunkMesh(cx, cy, cz);
                 }
 
-        // if (IsServer)
-        // {
-        //     StartCoroutine(SpawnOresBatched());
-        //     BoxSpawner boxSpawner = GetComponent<BoxSpawner>();
-        //     if (boxSpawner != null && IsServer)
-        //     {
-        //         StartCoroutine(boxSpawner.SpawnBoxesOnSurface());
-        //     }
+        if (IsServer)
+        {
+            StartCoroutine(SpawnOresBatched());
+            BoxSpawner boxSpawner = GetComponent<BoxSpawner>();
+            if (boxSpawner != null && IsServer)
+            {
+                StartCoroutine(boxSpawner.SpawnBoxesOnSurface());
+            }
         
-        //     if (surface != null)
-        //     {
-        //         surface.BuildNavMesh();
-        //     }
-        //     else
-        //     {
-        //         Debug.LogWarning("NavMeshSurface component not found on MarchingCubes GameObject.");
-        //     }
+            if (surface != null)
+            {
+                surface.BuildNavMesh();
+            }
+            else
+            {
+                Debug.LogWarning("NavMeshSurface component not found on MarchingCubes GameObject.");
+            }
 
-        //     MonsterSpawn monsterSpawner = GetComponent<MonsterSpawn>();
-        //     if (monsterSpawner != null && IsServer)
-        //     {
-        //         StartCoroutine(monsterSpawner.SpawnMonstersOnSurface());
-        //     }
-        // }
+            MonsterSpawn monsterSpawner = GetComponent<MonsterSpawn>();
+            if (monsterSpawner != null && IsServer)
+            {
+                StartCoroutine(monsterSpawner.SpawnMonstersOnSurface());
+            }
+        }
                 
     }
     

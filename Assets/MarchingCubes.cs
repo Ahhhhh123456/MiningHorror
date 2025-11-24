@@ -293,6 +293,7 @@ public class MarchingCubes : NetworkBehaviour
                     if (inside && outside)
                         cellVertexIndex[x, y, z] = vertices.Count;
                     vertices.Add(ComputeDualVertex(startX + x, startY + y, startZ + z));
+                    
                         
                 }
 
@@ -505,9 +506,46 @@ public class MarchingCubes : NetworkBehaviour
         tris.Add(v3);
     }
     
+    // private void AddFaceIfValid(List<Vector3> verts, List<int> tris, int ia, int ib, int ic, int id)
+    // {
+    //     // all four indices must exist
+    //     if (ia < 0 || ib < 0 || ic < 0 || id < 0) return;
+
+    //     Vector3 a = verts[ia];
+    //     Vector3 b = verts[ib];
+    //     Vector3 c = verts[ic];
+    //     Vector3 d = verts[id];
+
+    //     // Quick distance checks to avoid near-duplicates
+    //     const float minSqrDist = 1e-6f;
+    //     if ((a - b).sqrMagnitude < minSqrDist ||
+    //         (b - c).sqrMagnitude < minSqrDist ||
+    //         (c - d).sqrMagnitude < minSqrDist ||
+    //         (d - a).sqrMagnitude < minSqrDist)
+    //         return;
+
+    //     // Triangles: (a,b,c) and (a,c,d) — check both areas
+    //     float area1 = TriangleAreaSqr(a, b, c);
+    //     float area2 = TriangleAreaSqr(a, c, d);
+
+    //     const float minAreaSqr = 1e-6f; // adjust upward if needed
+    //     if (area1 < minAreaSqr || area2 < minAreaSqr) return;
+
+    //     // Add with consistent winding (CCW) — if needed you can flip order to match normals.
+    //     // tris.Add(ia); tris.Add(ib); tris.Add(ic);
+    //     // tris.Add(ia); tris.Add(ic); tris.Add(id);
+    //     tris.Add(ia); tris.Add(ic); tris.Add(ib);
+    //     tris.Add(ia); tris.Add(id); tris.Add(ic);
+    // }
+
+    private float TriangleAreaSqr(Vector3 a, Vector3 b, Vector3 c)
+    {
+        return Vector3.Cross(b - a, c - a).sqrMagnitude * 0.25f; // squared area
+    }
+
     private void AddFaceIfValid(List<Vector3> verts, List<int> tris, int ia, int ib, int ic, int id)
     {
-        // all four indices must exist
+        // Quick index checks
         if (ia < 0 || ib < 0 || ic < 0 || id < 0) return;
 
         Vector3 a = verts[ia];
@@ -515,31 +553,91 @@ public class MarchingCubes : NetworkBehaviour
         Vector3 c = verts[ic];
         Vector3 d = verts[id];
 
-        // Quick distance checks to avoid near-duplicates
-        const float minSqrDist = 1e-6f;
-        if ((a - b).sqrMagnitude < minSqrDist ||
-            (b - c).sqrMagnitude < minSqrDist ||
-            (c - d).sqrMagnitude < minSqrDist ||
-            (d - a).sqrMagnitude < minSqrDist)
-            return;
+        // Reject NaN/Inf
+        if (!IsFinite(a) || !IsFinite(b) || !IsFinite(c) || !IsFinite(d)) return;
 
-        // Triangles: (a,b,c) and (a,c,d) — check both areas
-        float area1 = TriangleAreaSqr(a, b, c);
-        float area2 = TriangleAreaSqr(a, c, d);
+        // Local snap for stable comparisons (does NOT write back to verts)
+        a = SnapForCompare(a);
+        b = SnapForCompare(b);
+        c = SnapForCompare(c);
+        d = SnapForCompare(d);
 
-        const float minAreaSqr = 1e-6f; // adjust upward if needed
-        if (area1 < minAreaSqr || area2 < minAreaSqr) return;
+        // If any two corners collapse, try the other diagonal before rejecting
+        const float minSqrDist = 1e-8f; // small but not too large
+        bool abClose = (a - b).sqrMagnitude < minSqrDist;
+        bool bcClose = (b - c).sqrMagnitude < minSqrDist;
+        bool cdClose = (c - d).sqrMagnitude < minSqrDist;
+        bool daClose = (d - a).sqrMagnitude < minSqrDist;
 
-        // Add with consistent winding (CCW) — if needed you can flip order to match normals.
-        // tris.Add(ia); tris.Add(ib); tris.Add(ic);
-        // tris.Add(ia); tris.Add(ic); tris.Add(id);
-        tris.Add(ia); tris.Add(ic); tris.Add(ib);
-        tris.Add(ia); tris.Add(id); tris.Add(ic);
+        if (abClose && bcClose && cdClose && daClose)
+            return; // entire quad collapsed
+
+        // We'll pick the diagonal that yields larger total triangle area:
+        // Diagonal AC -> triangles (A,B,C) + (A,C,D)
+        // Diagonal BD -> triangles (B,C,D) + (B,D,A)
+        float areaDiagAC = TriangleAreaSqr(a, b, c) + TriangleAreaSqr(a, c, d);
+        float areaDiagBD = TriangleAreaSqr(b, c, d) + TriangleAreaSqr(b, d, a);
+
+        // If both diagonals give negligible area, drop it
+        const float minTotalArea = 1e-10f;
+        if (areaDiagAC < minTotalArea && areaDiagBD < minTotalArea) return;
+
+        // Choose diagonal with larger area
+        if (areaDiagAC >= areaDiagBD)
+        {
+            // Ensure each triangle is not degenerate before adding
+            if (TriangleAreaSqr(a, b, c) >= minTotalArea)
+                AddTriWithConsistentWinding(tris, ia, ib, ic, a, b, c);
+            if (TriangleAreaSqr(a, c, d) >= minTotalArea)
+                AddTriWithConsistentWinding(tris, ia, ic, id, a, c, d);
+        }
+        else
+        {
+            if (TriangleAreaSqr(b, c, d) >= minTotalArea)
+                AddTriWithConsistentWinding(tris, ib, ic, id, b, c, d);
+            if (TriangleAreaSqr(b, d, a) >= minTotalArea)
+                AddTriWithConsistentWinding(tris, ib, id, ia, b, d, a);
+        }
     }
 
-    private float TriangleAreaSqr(Vector3 a, Vector3 b, Vector3 c)
+    // Helper: adds a triangle but ensures consistent winding (CCW) relative to its local normal
+    private void AddTriWithConsistentWinding(List<int> tris, int i0, int i1, int i2, Vector3 p0, Vector3 p1, Vector3 p2)
     {
-        return Vector3.Cross(b - a, c - a).sqrMagnitude * 0.25f; // squared area
+        // Compute normal; if it's zero-length we skip (shouldn't happen due to area checks)
+        Vector3 n = Vector3.Cross(p1 - p0, p2 - p0);
+        if (n.sqrMagnitude < 1e-12f) return;
+
+        // We want CCW winding in object space. Choose that convention and add indices accordingly.
+        // The order (i0, i1, i2) is assumed to be CCW; if it's not, flip it.
+        // Determine current winding by computing the sign of a scalar (arbitrary but consistent):
+        // We'll use the Y component of normal as a cheap heuristic for flip detection only if it's significant;
+        // otherwise fall back to using the full normal and a consistent "out" direction (Vector3.up).
+        // This is intentionally conservative to avoid flipping valid triangles across seams.
+        if (Vector3.Dot(n, Vector3.up) < 0f)
+        {
+            // flip winding
+            tris.Add(i0); tris.Add(i2); tris.Add(i1);
+        }
+        else
+        {
+            tris.Add(i0); tris.Add(i1); tris.Add(i2);
+        }
+    }
+
+    // small helpers
+    private bool IsFinite(Vector3 v)
+    {
+        return float.IsFinite(v.x) && float.IsFinite(v.y) && float.IsFinite(v.z);
+    }
+
+    private Vector3 SnapForCompare(Vector3 v)
+    {
+        const float s = 1e-4f; // small snap step for stable comparisons only
+        return new Vector3(
+            Mathf.Round(v.x / s) * s,
+            Mathf.Round(v.y / s) * s,
+            Mathf.Round(v.z / s) * s
+        );
     }
 
 

@@ -3374,6 +3374,24 @@ MonoBehaviour:
   - clip: {fileID: 8300000, guid: e6c57aca996648f49bba484a4da99fa6, type: 3}
     volume: 0.5
     pitch: 1
+  - clip: {fileID: 8300000, guid: 1dc61320f987c6c4f8f4c4a43cb632c1, type: 3}
+    volume: 0.5
+    pitch: 1
+  - clip: {fileID: 8300000, guid: b737361bb75e0c94ea48b3757a1d3f28, type: 3}
+    volume: 0.5
+    pitch: 1
+  - clip: {fileID: 8300000, guid: bb22145f7544c944e994f19ee4274491, type: 3}
+    volume: 0.5
+    pitch: 1
+  - clip: {fileID: 8300000, guid: 6197e16aba78f3d4db884aaa3787d3e9, type: 3}
+    volume: 0.5
+    pitch: 1
+  - clip: {fileID: 8300000, guid: baabffc5c4859714d9dfdb4b20865abc, type: 3}
+    volume: 0.5
+    pitch: 1
+  - clip: {fileID: 8300000, guid: df8dcc771aad2fb42ab094944ecee486, type: 3}
+    volume: 0.5
+    pitch: 1
 --- !u!4 &1636150060
 Transform:
   m_ObjectHideFlags: 0
@@ -4210,6 +4228,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 724307797}
+  - {fileID: 1636150060}
   - {fileID: 638049938605552812}
   - {fileID: 165481574}
   - {fileID: 1562527361}
@@ -4230,7 +4249,6 @@ SceneRoots:
   - {fileID: 912094907}
   - {fileID: 408246418}
   - {fileID: 144507412}
-  - {fileID: 1636150060}
   - {fileID: 1567157312}
   - {fileID: 810052102}
   - {fileID: 577269986}

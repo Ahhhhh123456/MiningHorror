@@ -11,7 +11,7 @@ public class HoverText : MonoBehaviour
     void Update()
     {
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, interactableLayer))
+        if (Physics.Raycast(ray, out RaycastHit hit, 5f, interactableLayer))
         {
             hoverText.gameObject.SetActive(true);
 

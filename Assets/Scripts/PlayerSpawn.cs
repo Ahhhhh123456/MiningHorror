@@ -1,42 +1,36 @@
-using Unity.Netcode;
 using UnityEngine;
-using System.Collections;
+using Unity.Netcode;
+using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class PlayerSpawn : NetworkBehaviour
 {
-    [SerializeField] private Transform spawnPoint;
-
-    void Update()
+    private void OnEnable()
     {
-        // ✅ Only let the local player (the owner) read keyboard input
-        if (!IsOwner) return;
-
-        if (Input.GetKeyDown(KeyCode.J))
-        {
-            // Send the request to the server
-            RequestRespawnServerRpc();
-        }
+        if (NetworkManager.Singleton != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted += OnSceneLoaded;
     }
 
-    [ServerRpc]
-    private void RequestRespawnServerRpc(ServerRpcParams rpcParams = default)
+    private void OnDisable()
     {
-        if (spawnPoint != null)
-        {
-            // Move the player’s NetworkObject on the server
-            NetworkObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+        if (NetworkManager.Singleton != null)
+            NetworkManager.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
+    }
 
-            // Then sync to all clients
-            OnPlayerSpawnClientRpc();
-        }
+    private void OnSceneLoaded(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        if (!IsServer) return;
+
+        Vector3 spawnPos = SceneSpawnPoint.Instance.spawnLocation.position;
+        Quaternion spawnRot = SceneSpawnPoint.Instance.spawnLocation.rotation;
+
+        transform.SetPositionAndRotation(spawnPos, spawnRot); // server
+        MovePlayerClientRpc(spawnPos, spawnRot); // clients
     }
 
     [ClientRpc]
-    private void OnPlayerSpawnClientRpc()
+    private void MovePlayerClientRpc(Vector3 position, Quaternion rotation)
     {
-        if (spawnPoint != null)
-        {
-            NetworkObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
-        }
+        transform.SetPositionAndRotation(position, rotation);
     }
 }

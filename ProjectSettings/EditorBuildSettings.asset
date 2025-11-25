@@ -6,23 +6,17 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Scenes/SampleScene.unity
+    path: Assets/Resources/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 0
-    path: Assets/Scenes/BradyTestScene.unity
+  - enabled: 1
+    path: Assets/Resources/Scenes/BradyTestScene.unity
     guid: 9a85b58a2bec9214e9affccfe79e25dc
   - enabled: 1
-    path: Assets/Scenes/CaveGen.unity
+    path: Assets/Resources/Scenes/Marching Cubes.unity
     guid: 065eb5f84c1830b46b50710fe90672ea
   - enabled: 1
-    path: Assets/Scenes/Lobby.unity
-    guid: 101f8d90a79bece408acdcd395930e91
-  - enabled: 1
-    path: Assets/Scenes/Settings.unity
-    guid: 6fae05472d08ff94aa8dbcfae84f991e
-  - enabled: 1
-    path: Assets/Scenes/Title.unity
-    guid: d7d37427c3cbaa34e8d1a846889c1a4e
+    path: Assets/Resources/Scenes/CaveGen.unity
+    guid: b0f9b3f748db4a24f82de7d27605d37a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

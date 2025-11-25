@@ -59,6 +59,14 @@ public class PlayerMovement : NetworkBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+
+        if (!IsOwner)
+        {
+            rb.isKinematic = true;   // ⭐ Disable physics on remote clients
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            return;
+        }
+        
         rb.freezeRotation = true;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -182,9 +190,9 @@ public class PlayerMovement : NetworkBehaviour
 
     void FixedUpdate()
     {
-        HandleMovement();
-
         if (!IsOwner) return;
+
+        HandleMovement();
 
         // Optional: Update ragdoll limbs after everything
         for (int i = 0; i < syncPhysicsObjects.Length; i++)

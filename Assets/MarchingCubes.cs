@@ -330,8 +330,10 @@ public class MarchingCubes : NetworkBehaviour
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.SetVertices(vertices);
         mesh.SetTriangles(triangles, 0);
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
+
+        FixTriangleWindingUsingDensity(mesh);
+        // mesh.RecalculateNormals();
+        // mesh.RecalculateBounds();
 
         GameObject chunkObj = Instantiate(meshysPrefab); // instantiate as root (world)
         chunkObj.name = $"Meshys_{startX}_{startY}_{startZ}";
@@ -400,7 +402,103 @@ public class MarchingCubes : NetworkBehaviour
         chunks[chunkKey] = chunkObj;
     }
 
+    private void FixTriangleWindingUsingDensity(Mesh mesh)
+    {
+        Vector3[] verts = mesh.vertices;
+        int[] tris = mesh.triangles;
 
+        // ---- helpers ----
+
+        float SampleDensity(Vector3 gridPos)
+        {
+            int x0 = Mathf.Clamp((int)gridPos.x, 0, densityMap.GetLength(0) - 2);
+            int y0 = Mathf.Clamp((int)gridPos.y, 0, densityMap.GetLength(1) - 2);
+            int z0 = Mathf.Clamp((int)gridPos.z, 0, densityMap.GetLength(2) - 2);
+
+            int x1 = x0 + 1;
+            int y1 = y0 + 1;
+            int z1 = z0 + 1;
+
+            float xd = gridPos.x - x0;
+            float yd = gridPos.y - y0;
+            float zd = gridPos.z - z0;
+
+            float c000 = densityMap[x0, y0, z0];
+            float c100 = densityMap[x1, y0, z0];
+            float c010 = densityMap[x0, y1, z0];
+            float c110 = densityMap[x1, y1, z0];
+            float c001 = densityMap[x0, y0, z1];
+            float c101 = densityMap[x1, y0, z1];
+            float c011 = densityMap[x0, y1, z1];
+            float c111 = densityMap[x1, y1, z1];
+
+            float c00 = Mathf.Lerp(c000, c100, xd);
+            float c10 = Mathf.Lerp(c010, c110, xd);
+            float c01 = Mathf.Lerp(c001, c101, xd);
+            float c11 = Mathf.Lerp(c011, c111, xd);
+
+            float c0 = Mathf.Lerp(c00, c10, yd);
+            float c1 = Mathf.Lerp(c01, c11, yd);
+
+            return Mathf.Lerp(c0, c1, zd);
+        }
+
+        Vector3 EstimateGradient(Vector3 gridPos)
+        {
+            float hx = 0.5f;
+            float hy = 0.5f;
+            float hz = 0.5f;
+
+            float dx = SampleDensity(gridPos + new Vector3(hx, 0, 0)) -
+                    SampleDensity(gridPos - new Vector3(hx, 0, 0));
+            float dy = SampleDensity(gridPos + new Vector3(0, hy, 0)) -
+                    SampleDensity(gridPos - new Vector3(0, hy, 0));
+            float dz = SampleDensity(gridPos + new Vector3(0, 0, hz)) -
+                    SampleDensity(gridPos - new Vector3(0, 0, hz));
+
+            return new Vector3(dx, dy, dz) * 0.5f;
+        }
+
+        // ---- fix triangles ----
+
+        for (int i = 0; i < tris.Length; i += 3)
+        {
+            int a = tris[i];
+            int b = tris[i + 1];
+            int c = tris[i + 2];
+
+            Vector3 p0 = verts[a];
+            Vector3 p1 = verts[b];
+            Vector3 p2 = verts[c];
+
+            Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0).normalized;
+
+            // Convert world-space position to grid-space
+            Vector3 centroidGrid = (p0 + p1 + p2) / 3f / resolution;
+
+            Vector3 grad = EstimateGradient(centroidGrid);
+
+            // outward = direction of DECREASING density
+            Vector3 outward = -grad;
+
+            if (outward.sqrMagnitude < 1e-6f)
+                continue;
+
+            outward.Normalize();
+
+            // If triangle faces into solid, flip it
+            if (Vector3.Dot(normal, outward) < 0f)
+            {
+                // swap b and c
+                tris[i + 1] = c;
+                tris[i + 2] = b;
+            }
+        }
+
+        mesh.triangles = tris;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+    }
 
     private void GenerateDensityMap()
     {

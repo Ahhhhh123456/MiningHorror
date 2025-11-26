@@ -47,5 +47,15 @@ public class PlayerSpawn : NetworkBehaviour
         yield return new WaitForSeconds(0.1f);
         transform.SetPositionAndRotation(pos, rot);
     }
+
+    private void Update()
+    {
+        if (!IsOwner) return;
+
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+            TriggerSpawn();
+        }
+    }
 }
 

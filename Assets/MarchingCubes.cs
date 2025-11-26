@@ -82,6 +82,8 @@ public class MarchingCubes : NetworkBehaviour
         // Wait until navmesh is baked
         yield return new WaitUntil(() => surface.navMeshData != null);
 
+        yield return new WaitForSeconds(6.0f);
+
         // NOW the cave is fully ready on the client
         CaveFinished();  // 🔥 Fire event here instead
     }

@@ -141,8 +141,8 @@ MonoBehaviour:
   roamRadius: 8
   roamWaitTime: 50
   attackRange: 1.8
-  attackDamage: 10
-  attackCooldown: 1
+  attackDamage: 5
+  attackCooldown: 5
 --- !u!114 &1423340175446991468
 MonoBehaviour:
   m_ObjectHideFlags: 0

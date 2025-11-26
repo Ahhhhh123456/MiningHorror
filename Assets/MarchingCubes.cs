@@ -57,15 +57,14 @@ public class MarchingCubes : NetworkBehaviour
         if (IsServer)
         {
             CreateCave(); // spawn chunks here, not Start()
+            CaveFinished();  // 🔥 Fire event here instead
         }
         else if (IsClient)
         {
             // Clients also generate locally so they can see geometry
             Debug.Log("Client generating cave mesh locally.");
             StartCoroutine(WaitForServerAndGenerate());
-
         }
-        CaveFinished();
     }
 
     private IEnumerator WaitForServerAndGenerate()
@@ -74,13 +73,17 @@ public class MarchingCubes : NetworkBehaviour
 
         CreateCave();
 
-        yield return null; // wait a frame
+        yield return null;
 
         Physics.SyncTransforms();
 
-        surface.BuildNavMesh(); // bake NavMesh without interactables
+        surface.BuildNavMesh();
 
-        yield return null;
+        // Wait until navmesh is baked
+        yield return new WaitUntil(() => surface.navMeshData != null);
+
+        // NOW the cave is fully ready on the client
+        CaveFinished();  // 🔥 Fire event here instead
     }
 
 

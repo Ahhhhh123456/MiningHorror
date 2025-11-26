@@ -60,12 +60,12 @@ public class PlayerMovement : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
-        if (!IsOwner)
-        {
-            rb.isKinematic = true;   // ⭐ Disable physics on remote clients
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            return;
-        }
+        // if (!IsOwner)
+        // {
+        //     rb.isKinematic = true;   // ⭐ Disable physics on remote clients
+        //     rb.interpolation = RigidbodyInterpolation.Interpolate;
+        //     return;
+        // }
         
         rb.freezeRotation = true;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;

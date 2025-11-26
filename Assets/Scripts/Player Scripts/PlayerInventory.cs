@@ -134,7 +134,7 @@ public class PlayerInventory : NetworkBehaviour
     private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode, 
                             List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        if (!IsOwner) return; // Only reinitialize for this client
+        if (!IsClient) return; // Only reinitialize for this client
 
         // Re-fetch scene-specific references
         ReinitializeSceneReferences();

@@ -609,38 +609,6 @@ public class MarchingCubes : NetworkBehaviour
         tris.Add(v3);
     }
     
-    // private void AddFaceIfValid(List<Vector3> verts, List<int> tris, int ia, int ib, int ic, int id)
-    // {
-    //     // all four indices must exist
-    //     if (ia < 0 || ib < 0 || ic < 0 || id < 0) return;
-
-    //     Vector3 a = verts[ia];
-    //     Vector3 b = verts[ib];
-    //     Vector3 c = verts[ic];
-    //     Vector3 d = verts[id];
-
-    //     // Quick distance checks to avoid near-duplicates
-    //     const float minSqrDist = 1e-6f;
-    //     if ((a - b).sqrMagnitude < minSqrDist ||
-    //         (b - c).sqrMagnitude < minSqrDist ||
-    //         (c - d).sqrMagnitude < minSqrDist ||
-    //         (d - a).sqrMagnitude < minSqrDist)
-    //         return;
-
-    //     // Triangles: (a,b,c) and (a,c,d) — check both areas
-    //     float area1 = TriangleAreaSqr(a, b, c);
-    //     float area2 = TriangleAreaSqr(a, c, d);
-
-    //     const float minAreaSqr = 1e-6f; // adjust upward if needed
-    //     if (area1 < minAreaSqr || area2 < minAreaSqr) return;
-
-    //     // Add with consistent winding (CCW) — if needed you can flip order to match normals.
-    //     // tris.Add(ia); tris.Add(ib); tris.Add(ic);
-    //     // tris.Add(ia); tris.Add(ic); tris.Add(id);
-    //     tris.Add(ia); tris.Add(ic); tris.Add(ib);
-    //     tris.Add(ia); tris.Add(id); tris.Add(ic);
-    // }
-
     private float TriangleAreaSqr(Vector3 a, Vector3 b, Vector3 c)
     {
         return Vector3.Cross(b - a, c - a).sqrMagnitude * 0.25f; // squared area

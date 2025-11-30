@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.AI; // <--- IMPORTANT
+using System.Collections;
 
 public class MonsterFollow : NetworkBehaviour
 {
@@ -18,6 +19,9 @@ public class MonsterFollow : NetworkBehaviour
     private NavMeshAgent agent;
     private Vector3 spawnPosition;
     private float roamTimer;
+
+    private bool isTraversingOffMeshLink = false;
+
 
     [Header("Attack Settings")]
     public float attackRange;
@@ -92,6 +96,7 @@ public class MonsterFollow : NetworkBehaviour
         }
 
         Roam();
+        HandleOffMeshLinks();
 
         if (agent.velocity.magnitude < 0.1f)
         {
@@ -159,5 +164,51 @@ public class MonsterFollow : NetworkBehaviour
         }
 
         Debug.Log($"Monster attacked player {player.name} for {attackDamage} damage.");
+    }
+
+    private IEnumerator TraverseLink(NavMeshAgent agent)
+    {
+        OffMeshLinkData data = agent.currentOffMeshLinkData;
+
+        Vector3 startPos = agent.transform.position;
+        Vector3 endPos = data.endPos;
+
+        Debug.Log($"Monster started jumping from {startPos} to {endPos}");
+
+        float duration = 0.5f;  // Adjust for monster jump speed
+        float t = 0f;
+
+        // Height of the jump arc
+        float jumpHeight = 1.5f;
+
+        agent.updatePosition = false; // manual movement
+        agent.updateRotation = false;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / duration;
+
+            // Jump arc using a parabola
+            float height = 4 * jumpHeight * (t - t * t);
+
+            agent.transform.position = Vector3.Lerp(startPos, endPos, t) + Vector3.up * height;
+
+            yield return null;
+        }
+
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+
+        agent.CompleteOffMeshLink();
+        isTraversingOffMeshLink = false;
+    }
+
+    private void HandleOffMeshLinks()
+    {
+        if (!agent.isOnOffMeshLink || isTraversingOffMeshLink)
+            return;
+
+        isTraversingOffMeshLink = true;
+        StartCoroutine(TraverseLink(agent));
     }
 }

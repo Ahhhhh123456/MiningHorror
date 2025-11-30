@@ -50,6 +50,8 @@ public class PlayerInventory : NetworkBehaviour
     public List<UnityEngine.UI.Image> hotbarSlotImages; // Put the slot images here
     public Sprite emptySlotSprite; // optional sprite to show when the slot is empty
 
+    public Color filledSlotColor = Color.green;
+
     // public Dictionary<string, int> InventoryOreCount = new Dictionary<string, int>();
 
     // public List<string> InventoryItems = new List<string>();
@@ -112,11 +114,11 @@ public class PlayerInventory : NetworkBehaviour
         mineType = FindObjectOfType<MineType>();
         itemType = FindObjectOfType<ItemType>();
         playerMovement = GetComponent<PlayerMovement>();
-        
+
         Debug.Log($"[PlayerInventory] Reinitialized references: mineType={mineType}, itemType={itemType}, playerMovement={playerMovement}");
     }
 
-    private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode, 
+    private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode,
                             List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (!IsOwner) return; // Only reinitialize for this client
@@ -285,7 +287,8 @@ public class PlayerInventory : NetworkBehaviour
         {
             if (NetworkItems[i].ToString() == itemName)
             {
-                NetworkItems.RemoveAt(i);
+                // ✅ CORRECT FIX: Empty the slot, do not shrink the list
+                NetworkItems[i] = new FixedString32Bytes("");
 
                 if (itemType.itemDatabase.ContainsKey(itemName))
                     playerWeight -= itemType.itemDatabase[itemName].weight;
@@ -315,7 +318,7 @@ public class PlayerInventory : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void DropItemFromSlotServerRpc(int slotIndex)
+    public void DropItemFromSlotServerRpc(int slotIndex)
     {
         // 1. Get the item name from the slot
         string itemName = NetworkItems[slotIndex].ToString();
@@ -332,7 +335,7 @@ public class PlayerInventory : NetworkBehaviour
             if (playerMovement != null)
                 playerMovement.UpdateMoveSpeed(); // Tell player movement to update
         }
-        
+
         Debug.Log($"Dropped {itemName} from slot {slotIndex}");
 
         // 4. (Optional) Spawn the item prefab in the world
@@ -347,7 +350,7 @@ public class PlayerInventory : NetworkBehaviour
             NetworkObject droppedItemNetworkObject = Instantiate(prefabToDrop, spawnPos, transform.rotation).GetComponent<NetworkObject>();
 
             // Set its name correctly so it can be picked up again
-            droppedItemNetworkObject.name = prefabToDrop.name; 
+            droppedItemNetworkObject.name = prefabToDrop.name;
 
             // Spawn the item on the network
             droppedItemNetworkObject.Spawn();
@@ -420,7 +423,7 @@ public class PlayerInventory : NetworkBehaviour
         {
             if (NetworkItems[i].ToString().Equals(itemName, StringComparison.OrdinalIgnoreCase))
             {
-                NetworkItems.RemoveAt(i);
+                NetworkItems[i] = new FixedString32Bytes("");
 
                 if (itemType != null && itemType.itemDatabase != null && itemType.itemDatabase.ContainsKey(itemName))
                 {
@@ -501,8 +504,8 @@ public class PlayerInventory : NetworkBehaviour
         for (int i = 0; i < hotbarSize; i++)
         {
             // Make sure we have enough UI slots assigned
-            if (i >= hotbarSlotImages.Count) break; 
-            
+            if (i >= hotbarSlotImages.Count) break;
+
             // Get the item name from the slot
             string itemName = "";
             if (i < NetworkItems.Count) // Safety check
@@ -515,6 +518,7 @@ public class PlayerInventory : NetworkBehaviour
                 // Slot is EMPTY
                 hotbarSlotImages[i].sprite = emptySlotSprite; // Use empty sprite
                 hotbarSlotImages[i].enabled = (emptySlotSprite != null); // Hide if no empty sprite
+                hotbarSlotImages[i].color = Color.white;
             }
             else
             {
@@ -523,11 +527,12 @@ public class PlayerInventory : NetworkBehaviour
                 // We will add this 'icon' field in the next step.
                 // Sprite itemIcon = itemType.itemDatabase[itemName].icon; 
                 // hotbarSlotImages[i].sprite = itemIcon;
-                
+
                 // --- Temporary (until we add icons) ---
                 hotbarSlotImages[i].enabled = true;
                 hotbarSlotImages[i].sprite = null; // Or a default sprite
-                hotbarSlotImages[i].color = Color.white; // Just show a white box
+                hotbarSlotImages[i].color = filledSlotColor;
+
             }
         }
     }

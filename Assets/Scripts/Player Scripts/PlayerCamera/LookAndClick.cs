@@ -228,7 +228,7 @@ public class LookAndClickInteraction : NetworkBehaviour
         string itemName = playerInventory.NetworkItems[slotIndex].ToString();
 
         // Remove from networked inventory (this will also spawn the dropped item)
-        playerInventory.RequestDropSelectedItem();
+        playerInventory.DropItemFromSlotServerRpc(slotIndex);
     }
 
 

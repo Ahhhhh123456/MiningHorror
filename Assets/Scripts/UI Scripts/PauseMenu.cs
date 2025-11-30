@@ -9,6 +9,16 @@ public class PauseMenu : NetworkBehaviour
     public Button resumeButton;
     public Button optionsButton;
     public Button exitButton;
+    public GameObject optionsPanel;
+    public Button optionsBackButton;
+
+    [Header("Options Tabs")]
+    public Button generalButton;
+    public Button videoButton;
+    public Button audioButton;
+    public GameObject generalPanel;
+    public GameObject videoPanel;
+    public GameObject audioPanel;
 
     [Header("Settings")]
     public KeyCode pauseKey = KeyCode.Escape;
@@ -20,6 +30,14 @@ public class PauseMenu : NetworkBehaviour
         // Initialize UI
         if (pausePanel != null)
             pausePanel.SetActive(false);
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
+        if (generalPanel != null)
+            generalPanel.SetActive(false);
+        if (videoPanel != null)
+            videoPanel.SetActive(false);
+        if (audioPanel != null)
+            audioPanel.SetActive(false);
 
         // Add button listeners
         if (resumeButton != null)
@@ -27,6 +45,14 @@ public class PauseMenu : NetworkBehaviour
         
         if (optionsButton != null)
             optionsButton.onClick.AddListener(OpenOptions);
+        if (optionsBackButton != null)
+            optionsBackButton.onClick.AddListener(CloseOptions);
+        if (generalButton != null)
+            generalButton.onClick.AddListener(OpenGeneralTab);
+        if (videoButton != null)
+            videoButton.onClick.AddListener(OpenVideoTab);
+        if (audioButton != null)
+            audioButton.onClick.AddListener(OpenAudioTab);
         
         if (exitButton != null)
             exitButton.onClick.AddListener(ExitGame);
@@ -53,10 +79,9 @@ public class PauseMenu : NetworkBehaviour
         // Show pause panel
         if (pausePanel != null)
             pausePanel.SetActive(true);
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
 
-        // Pause time
-        Time.timeScale = 0f;
-        
         // Lock cursor for UI interaction
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -77,9 +102,6 @@ public class PauseMenu : NetworkBehaviour
         if (pausePanel != null)
             pausePanel.SetActive(false);
 
-        // Resume time
-        Time.timeScale = 1f;
-        
         // Lock cursor for game play
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -92,8 +114,48 @@ public class PauseMenu : NetworkBehaviour
 
     public void OpenOptions()
     {
-        Debug.Log("Options button clicked - Options menu not implemented yet");
-        // TODO: Implement options menu
+        if (!isPaused) return;
+        if (pausePanel != null)
+            pausePanel.SetActive(false);
+        if (optionsPanel != null)
+            optionsPanel.SetActive(true);
+        // Default to General tab when opening Options
+        OpenGeneralTab();
+    }
+
+    public void CloseOptions()
+    {
+        if (!isPaused) return;
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
+        if (pausePanel != null)
+            pausePanel.SetActive(true);
+        // Hide all tabs when closing options
+        if (generalPanel != null) generalPanel.SetActive(false);
+        if (videoPanel != null) videoPanel.SetActive(false);
+        if (audioPanel != null) audioPanel.SetActive(false);
+    }
+
+    private void ShowOnly(GameObject target)
+    {
+        if (generalPanel != null) generalPanel.SetActive(generalPanel == target);
+        if (videoPanel != null) videoPanel.SetActive(videoPanel == target);
+        if (audioPanel != null) audioPanel.SetActive(audioPanel == target);
+    }
+
+    public void OpenGeneralTab()
+    {
+        ShowOnly(generalPanel);
+    }
+
+    public void OpenVideoTab()
+    {
+        ShowOnly(videoPanel);
+    }
+
+    public void OpenAudioTab()
+    {
+        ShowOnly(audioPanel);
     }
 
     public void ExitGame()
@@ -109,36 +171,26 @@ public class PauseMenu : NetworkBehaviour
 
     private void PausePlayerMovement()
     {
-        // Find and disable player movement scripts
-        PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
-        if (playerMovement != null)
-        {
-            playerMovement.enabled = false;
-        }
+        var localPlayerObj = NetworkManager.Singleton?.LocalClient?.PlayerObject;
+        if (localPlayerObj == null) return;
 
-        // Disable camera look
-        LookAndClickInteraction lookAndClick = FindObjectOfType<LookAndClickInteraction>();
-        if (lookAndClick != null)
-        {
-            lookAndClick.enabled = false;
-        }
+        var playerMovement = localPlayerObj.GetComponent<PlayerMovement>();
+        if (playerMovement != null) playerMovement.enabled = false;
+
+        var lookAndClick = localPlayerObj.GetComponentInChildren<LookAndClickInteraction>(true);
+        if (lookAndClick != null) lookAndClick.enabled = false;
     }
 
     private void ResumePlayerMovement()
     {
-        // Re-enable player movement scripts
-        PlayerMovement playerMovement = FindObjectOfType<PlayerMovement>();
-        if (playerMovement != null)
-        {
-            playerMovement.enabled = true;
-        }
+        var localPlayerObj = NetworkManager.Singleton?.LocalClient?.PlayerObject;
+        if (localPlayerObj == null) return;
 
-        // Re-enable camera look
-        LookAndClickInteraction lookAndClick = FindObjectOfType<LookAndClickInteraction>();
-        if (lookAndClick != null)
-        {
-            lookAndClick.enabled = true;
-        }
+        var playerMovement = localPlayerObj.GetComponent<PlayerMovement>();
+        if (playerMovement != null) playerMovement.enabled = true;
+
+        var lookAndClick = localPlayerObj.GetComponentInChildren<LookAndClickInteraction>(true);
+        if (lookAndClick != null) lookAndClick.enabled = true;
     }
 
     private void OnDestroy()
@@ -149,6 +201,14 @@ public class PauseMenu : NetworkBehaviour
         
         if (optionsButton != null)
             optionsButton.onClick.RemoveListener(OpenOptions);
+        if (optionsBackButton != null)
+            optionsBackButton.onClick.RemoveListener(CloseOptions);
+        if (generalButton != null)
+            generalButton.onClick.RemoveListener(OpenGeneralTab);
+        if (videoButton != null)
+            videoButton.onClick.RemoveListener(OpenVideoTab);
+        if (audioButton != null)
+            audioButton.onClick.RemoveListener(OpenAudioTab);
         
         if (exitButton != null)
             exitButton.onClick.RemoveListener(ExitGame);

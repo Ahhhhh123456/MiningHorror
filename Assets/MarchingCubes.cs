@@ -26,6 +26,9 @@ public class MarchingCubes : NetworkBehaviour
     public int chunkSizeZ;
     private Dictionary<Vector3Int, GameObject> chunks = new Dictionary<Vector3Int, GameObject>();
 
+    private float lastMineTime = 0f;
+    public float mineCooldown = 1f; 
+
     public GameObject caveParent;
     public NavMeshSurface surface; 
     [Header("Ore Settings")]
@@ -727,34 +730,40 @@ public class MarchingCubes : NetworkBehaviour
     }
     public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false)
     {
-        // If this is **pickaxe mining**, use the hold system
-        if (!ignoreHold)
+        // --- Explosion bypasses all rate limits ---
+        if (ignoreHold == false)
         {
+            // HOLD SYSTEM FIRST
             holdCount++;
-            Debug.Log(holdCount);
+            Debug.Log($"HoldCount: {holdCount}");
 
-            if (holdCount == 50)
+            if (holdCount >= 50)
             {
                 holdCount = 0;
-                Debug.Log("resetting holdcount");
             }
 
-            // Only mine if this is the "first" hold tick
+            // Only mine when holdCount hits 1
             if (holdCount != 1)
             {
-                Debug.Log("Hold Count not reached - skipping mining");
+                Debug.Log("Hold system: skipping mining");
                 return;
             }
 
-            Debug.Log("Hold Count reached - Mining Cave at " + worldPos);
+            // --- Now apply cooldown ---
+            if (Time.time - lastMineTime < mineCooldown)
+            {
+                Debug.Log("Cooldown active - skipping mining");
+                return;
+            }
+
+            lastMineTime = Time.time; // consume cooldown
         }
         else
         {
-            // If this is an explosion, we ALWAYS mine:
             Debug.Log("Explosion Mining Cave at " + worldPos);
         }
 
-        // --- Do the actual carving ---
+        // --- Perform carving ---
         int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
         int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
         int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
@@ -762,32 +771,27 @@ public class MarchingCubes : NetworkBehaviour
         int r = Mathf.CeilToInt(radius / resolution);
 
         for (int x = x0 - r; x <= x0 + r; x++)
-            for (int y = y0 - r; y <= y0 + r; y++)
-                for (int z = z0 - r; z <= z0 + r; z++)
-                {
-                    if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
+        for (int y = y0 - r; y <= y0 + r; y++)
+        for (int z = z0 - r; z <= z0 + r; z++)
+        {
+            if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
 
-                    Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
-                    if (Vector3.Distance(voxelCenter, worldPos) <= radius)
-                    {
-                        densityMap[x, y, z] -= depth;
-                        densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
-                    }
-                }
+            Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+            if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+            {
+                densityMap[x, y, z] -= depth;
+                densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
+            }
+        }
 
-        // Update affected chunks locally
         UpdateAffectedChunks(worldPos, radius);
 
         PlayMineEffectsClientRpc(worldPos);
 
-        // Rebuild navmesh
         if (surface != null)
-        {
             StartCoroutine(DelayedNavMeshRebuild());
-            //surface.UpdateNavMesh(surface.navMeshData);
-            Debug.Log("NavMesh updated after mining.");
-        }
     }
+
 
     [ClientRpc]
     private void PlayMineEffectsClientRpc(Vector3 position)

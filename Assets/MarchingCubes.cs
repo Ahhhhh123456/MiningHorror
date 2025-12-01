@@ -13,6 +13,13 @@ public class MarchingCubes : NetworkBehaviour
     public int caveHeight;
     public int caveDepth;
 
+    [Header("Floor Settings")]
+    [Tooltip("Grid Y index of the floor baseline (0 is bottom).")]
+    public int floorYGrid;           // which grid layer is the exact floor (0 usually)
+    
+    [Tooltip("How many grid layers above floorYGrid are forced/ blended solid for a smooth transition.")]
+    public int floorBlendThickness;  // blend thickness in grid cells
+
 
     [Header("Noise Settings")]
     public float noiseScale;
@@ -27,7 +34,7 @@ public class MarchingCubes : NetworkBehaviour
     private Dictionary<Vector3Int, GameObject> chunks = new Dictionary<Vector3Int, GameObject>();
 
     private float lastMineTime = 0f;
-    public float mineCooldown = 1f; 
+    public float mineCooldown = 1.25f; 
 
     public GameObject caveParent;
     public NavMeshSurface surface; 
@@ -284,6 +291,27 @@ public class MarchingCubes : NetworkBehaviour
                     cellVertexIndex[x, y, z] = -1;
 
         // --- same dual marching cubes logic, just limited to this chunk ---
+        // for (int x = 0; x < sizeX; x++)
+        //     for (int y = 0; y < sizeY; y++)
+        //         for (int z = 0; z < sizeZ; z++)
+        //         {
+        //             bool inside = false, outside = false;
+        //             for (int i = 0; i < 8; i++)
+        //             {
+        //                 int xi = startX + x + ((i & 1) != 0 ? 1 : 0);
+        //                 int yi = startY + y + ((i & 2) != 0 ? 1 : 0);
+        //                 int zi = startZ + z + ((i & 4) != 0 ? 1 : 0);
+        //                 float val = densityMap[xi, yi, zi];
+        //                 if (val > isoLevel) inside = true; else outside = true;
+        //             }
+
+        //             if (inside && outside)
+        //                 cellVertexIndex[x, y, z] = vertices.Count;
+        //             vertices.Add(ComputeDualVertex(startX + x, startY + y, startZ + z));
+                    
+                        
+        //         }
+
         for (int x = 0; x < sizeX; x++)
             for (int y = 0; y < sizeY; y++)
                 for (int z = 0; z < sizeZ; z++)
@@ -295,14 +323,25 @@ public class MarchingCubes : NetworkBehaviour
                         int yi = startY + y + ((i & 2) != 0 ? 1 : 0);
                         int zi = startZ + z + ((i & 4) != 0 ? 1 : 0);
                         float val = densityMap[xi, yi, zi];
+
+                        // --- EDGE WALL / FLOOR / CEILING ONLY ---
+                        int thickness = 1; // voxels thick
+                        if (xi < thickness || xi >= caveWidth - thickness ||
+                            zi < thickness || zi >= caveDepth - thickness ||
+                            yi < thickness || yi >= caveHeight - thickness)
+                        {
+                            val = Mathf.Max(val, 1f); // force solid
+                        }
+
+                        densityMap[xi, yi, zi] = val;
+
                         if (val > isoLevel) inside = true; else outside = true;
                     }
 
                     if (inside && outside)
                         cellVertexIndex[x, y, z] = vertices.Count;
+
                     vertices.Add(ComputeDualVertex(startX + x, startY + y, startZ + z));
-                    
-                        
                 }
 
         // Faces (XY, XZ, YZ) - reuse your existing AddFaceIfValid
@@ -520,10 +559,34 @@ public class MarchingCubes : NetworkBehaviour
             for (int y = 0; y <= caveHeight; y++)
                 for (int z = 0; z <= caveDepth; z++)
                 {
-                    float val = Perlin3D((x + offset) * noiseScale, (y + offset) * noiseScale, (z + offset) * noiseScale);
+                    // float val = Perlin3D((x + offset) * noiseScale, (y + offset) * noiseScale, (z + offset) * noiseScale);
+                    // densityMap[x, y, z] = val;
+                    float rawVal = Perlin3D((x + offset) * noiseScale, (y + offset) * noiseScale, (z + offset) * noiseScale);
+
+                    // enforce / blend floor so marching cubes will create a solid, flat floor at lower Y
+                    float val = rawVal;
+
+                    // clamp floor indices
+                    int floorTop = Mathf.Clamp(floorYGrid + floorBlendThickness, 0, caveHeight);
+
+                    // If below or equal exact floor, force solid (high density).
+                    if (y <= floorYGrid)
+                    {
+                        val = Mathf.Max(val, 1.0f); // fully solid
+                    }
+                    else if (y <= floorTop)
+                    {
+                        // Smooth blend from fully solid at floorYGrid to slightly above isoLevel at floorTop
+                        // t=0 at floorYGrid -> floorVal=1, t=1 at floorTop -> floorVal ~= isoLevel + epsilon
+                        float t = (float)(y - floorYGrid) / Mathf.Max(1, floorBlendThickness);
+                        float floorVal = Mathf.Lerp(1.0f, isoLevel + 0.01f, t); // small epsilon above iso so it remains solid-ish
+                        val = Mathf.Max(val, floorVal);
+                    }
+
                     densityMap[x, y, z] = val;
                     if (val < min) min = val;
                     if (val > max) max = val;
+
                 }
 
         Debug.Log($"Density map range: min={min:F3}, max={max:F3}, isoLevel={isoLevel}");
@@ -580,10 +643,23 @@ public class MarchingCubes : NetworkBehaviour
         if (weightSum <= 0f)
         {
             // fallback to center of cube in world-space
-            return new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+            Vector3 fallback = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+
+            // snap fallback to floor if it's at/below floor
+            float floorWorldY = floorYGrid * resolution;
+            if (fallback.y <= floorWorldY + resolution * 0.1f)
+                fallback.y = floorWorldY;
+            return fallback;
         }
 
-        return sum / weightSum;
+        Vector3 result = sum / weightSum;
+
+        // If computed vertex is very close to the floor, snap its Y to exact floor to get a perfectly flat plane
+        float floorWorldY2 = floorYGrid * resolution;
+        if (result.y <= floorWorldY2 + resolution * 0.1f)
+            result.y = floorWorldY2;
+
+        return result;
     }
 
     private void AddQuad(List<int> tris, int v0, int v1, int v2, int v3, List<Vector3> verts)
@@ -728,19 +804,79 @@ public class MarchingCubes : NetworkBehaviour
         if (IsServer) return;
         MineCave(worldPos, radius, depth, ignoreHold);
     }
+    // public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false)
+    // {
+    //     // --- Explosion bypasses all rate limits ---
+    //     if (ignoreHold == false)
+    //     {
+    //         // HOLD SYSTEM FIRST
+    //         holdCount++;
+    //         Debug.Log($"HoldCount: {holdCount}");
+
+    //         if (holdCount >= 50)
+    //         {
+    //             holdCount = 0;
+    //         }
+
+    //         // Only mine when holdCount hits 1
+    //         if (holdCount != 1)
+    //         {
+    //             Debug.Log("Hold system: skipping mining");
+    //             return;
+    //         }
+
+    //         // --- Now apply cooldown ---
+    //         if (Time.time - lastMineTime < mineCooldown)
+    //         {
+    //             Debug.Log("Cooldown active - skipping mining");
+    //             return;
+    //         }
+
+    //         lastMineTime = Time.time; // consume cooldown
+    //     }
+    //     else
+    //     {
+    //         Debug.Log("Explosion Mining Cave at " + worldPos);
+    //     }
+
+    //     // --- Perform carving ---
+    //     int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
+    //     int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
+    //     int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
+
+    //     int r = Mathf.CeilToInt(radius / resolution);
+
+    //     for (int x = x0 - r; x <= x0 + r; x++)
+    //     for (int y = y0 - r; y <= y0 + r; y++)
+    //     for (int z = z0 - r; z <= z0 + r; z++)
+    //     {
+    //         if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
+
+    //         Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+    //         if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+    //         {
+    //             densityMap[x, y, z] -= depth;
+    //             densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
+    //         }
+    //     }
+
+    //     UpdateAffectedChunks(worldPos, radius);
+
+    //     PlayMineEffectsClientRpc(worldPos);
+
+    //     if (surface != null)
+    //         StartCoroutine(DelayedNavMeshRebuild());
+    // }
     public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false)
     {
         // --- Explosion bypasses all rate limits ---
-        if (ignoreHold == false)
+        if (!ignoreHold)
         {
             // HOLD SYSTEM FIRST
             holdCount++;
             Debug.Log($"HoldCount: {holdCount}");
 
-            if (holdCount >= 50)
-            {
-                holdCount = 0;
-            }
+            if (holdCount >= 50) holdCount = 0;
 
             // Only mine when holdCount hits 1
             if (holdCount != 1)
@@ -770,27 +906,85 @@ public class MarchingCubes : NetworkBehaviour
 
         int r = Mathf.CeilToInt(radius / resolution);
 
+        // int maxFloorY = Mathf.Clamp(floorYGrid + floorBlendThickness, 0, caveHeight);
+
+        // for (int x = x0 - r; x <= x0 + r; x++)
+        //     for (int y = y0 - r; y <= y0 + r; y++)
+        //         for (int z = z0 - r; z <= z0 + r; z++)
+        //         {
+        //             if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) 
+        //                 continue;
+
+        //             Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+        //             if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+        //             {
+        //                 if (y <= maxFloorY)
+        //                 {
+        //                     // preserve a minimum density for the floor
+        //                     float minDensity = Mathf.Lerp(1.0f, isoLevel + 0.01f, (y - floorYGrid) / Mathf.Max(1, floorBlendThickness));
+        //                     densityMap[x, y, z] = Mathf.Max(densityMap[x, y, z] - depth, minDensity);
+        //                 }
+        //                 else
+        //                 {
+        //                     densityMap[x, y, z] -= depth;
+        //                 }
+
+        //                 densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
+        //             }
+        //         }
+
+        int maxFloorY = Mathf.Clamp(floorYGrid + floorBlendThickness, 0, caveHeight);
+        int minCeilingY = caveHeight - floorBlendThickness; // dynamic ceiling blend
+
+        int wallBlendThickness = 2; // number of voxels from edges
+
         for (int x = x0 - r; x <= x0 + r; x++)
-        for (int y = y0 - r; y <= y0 + r; y++)
-        for (int z = z0 - r; z <= z0 + r; z++)
-        {
-            if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
+            for (int y = y0 - r; y <= y0 + r; y++)
+                for (int z = z0 - r; z <= z0 + r; z++)
+                {
+                    if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) 
+                        continue;
 
-            Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
-            if (Vector3.Distance(voxelCenter, worldPos) <= radius)
-            {
-                densityMap[x, y, z] -= depth;
-                densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
+                    Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
+                    if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+                    {
+                        float newDensity = densityMap[x, y, z] - depth;
+
+                        // --- Floor blend ---
+                        if (y <= maxFloorY)
+                        {
+                            float minDensity = Mathf.Lerp(1.0f, isoLevel + 0.01f, (y - floorYGrid) / Mathf.Max(1, floorBlendThickness));
+                            newDensity = Mathf.Max(newDensity, minDensity);
+                        }
+
+                        // --- Ceiling blend ---
+                        if (y >= minCeilingY)
+                        {
+                            float minDensity = Mathf.Lerp(1.0f, isoLevel + 0.01f, (caveHeight - y) / Mathf.Max(1, floorBlendThickness));
+                            newDensity = Mathf.Max(newDensity, minDensity);
+                        }
+
+                        // --- Walls blend ---
+                        if (x < wallBlendThickness)
+                            newDensity = Mathf.Max(newDensity, 0.8f);
+                        if (x > caveWidth - wallBlendThickness)
+                            newDensity = Mathf.Max(newDensity, 0.8f);
+                        if (z < wallBlendThickness)
+                            newDensity = Mathf.Max(newDensity, 0.8f);
+                        if (z > caveDepth - wallBlendThickness)
+                            newDensity = Mathf.Max(newDensity, 0.8f);
+
+                        densityMap[x, y, z] = Mathf.Clamp(newDensity, 0f, 1f);
+                    }
+                }
+
+                UpdateAffectedChunks(worldPos, radius);
+
+                PlayMineEffectsClientRpc(worldPos);
+
+                if (surface != null)
+                    StartCoroutine(DelayedNavMeshRebuild());
             }
-        }
-
-        UpdateAffectedChunks(worldPos, radius);
-
-        PlayMineEffectsClientRpc(worldPos);
-
-        if (surface != null)
-            StartCoroutine(DelayedNavMeshRebuild());
-    }
 
 
     [ClientRpc]

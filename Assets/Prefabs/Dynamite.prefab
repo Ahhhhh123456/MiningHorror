@@ -263,7 +263,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   explosionRadius: 4
-  carveDepth: 2
+  carveDepth: 4
   explosionParticles: {fileID: 0}
   explosionSFX: {fileID: 0}
 --- !u!114 &-8216321601907619584

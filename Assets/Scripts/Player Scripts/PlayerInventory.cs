@@ -523,6 +523,12 @@ public class PlayerInventory : NetworkBehaviour
             rb.useGravity = false;
         }
 
+        Collider[] colliders = currentHeldItem.GetComponentsInChildren<Collider>();
+        foreach (var col in colliders)
+        {
+            col.enabled = false;
+        }
+
 
         if (itemName.Contains("Compass"))
         {

@@ -804,69 +804,7 @@ public class MarchingCubes : NetworkBehaviour
         if (IsServer) return;
         MineCave(worldPos, radius, depth, ignoreHold);
     }
-    // public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false)
-    // {
-    //     // --- Explosion bypasses all rate limits ---
-    //     if (ignoreHold == false)
-    //     {
-    //         // HOLD SYSTEM FIRST
-    //         holdCount++;
-    //         Debug.Log($"HoldCount: {holdCount}");
 
-    //         if (holdCount >= 50)
-    //         {
-    //             holdCount = 0;
-    //         }
-
-    //         // Only mine when holdCount hits 1
-    //         if (holdCount != 1)
-    //         {
-    //             Debug.Log("Hold system: skipping mining");
-    //             return;
-    //         }
-
-    //         // --- Now apply cooldown ---
-    //         if (Time.time - lastMineTime < mineCooldown)
-    //         {
-    //             Debug.Log("Cooldown active - skipping mining");
-    //             return;
-    //         }
-
-    //         lastMineTime = Time.time; // consume cooldown
-    //     }
-    //     else
-    //     {
-    //         Debug.Log("Explosion Mining Cave at " + worldPos);
-    //     }
-
-    //     // --- Perform carving ---
-    //     int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
-    //     int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
-    //     int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
-
-    //     int r = Mathf.CeilToInt(radius / resolution);
-
-    //     for (int x = x0 - r; x <= x0 + r; x++)
-    //     for (int y = y0 - r; y <= y0 + r; y++)
-    //     for (int z = z0 - r; z <= z0 + r; z++)
-    //     {
-    //         if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) continue;
-
-    //         Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
-    //         if (Vector3.Distance(voxelCenter, worldPos) <= radius)
-    //         {
-    //             densityMap[x, y, z] -= depth;
-    //             densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
-    //         }
-    //     }
-
-    //     UpdateAffectedChunks(worldPos, radius);
-
-    //     PlayMineEffectsClientRpc(worldPos);
-
-    //     if (surface != null)
-    //         StartCoroutine(DelayedNavMeshRebuild());
-    // }
     public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false)
     {
         // --- Explosion bypasses all rate limits ---
@@ -905,33 +843,6 @@ public class MarchingCubes : NetworkBehaviour
         int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
 
         int r = Mathf.CeilToInt(radius / resolution);
-
-        // int maxFloorY = Mathf.Clamp(floorYGrid + floorBlendThickness, 0, caveHeight);
-
-        // for (int x = x0 - r; x <= x0 + r; x++)
-        //     for (int y = y0 - r; y <= y0 + r; y++)
-        //         for (int z = z0 - r; z <= z0 + r; z++)
-        //         {
-        //             if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) 
-        //                 continue;
-
-        //             Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
-        //             if (Vector3.Distance(voxelCenter, worldPos) <= radius)
-        //             {
-        //                 if (y <= maxFloorY)
-        //                 {
-        //                     // preserve a minimum density for the floor
-        //                     float minDensity = Mathf.Lerp(1.0f, isoLevel + 0.01f, (y - floorYGrid) / Mathf.Max(1, floorBlendThickness));
-        //                     densityMap[x, y, z] = Mathf.Max(densityMap[x, y, z] - depth, minDensity);
-        //                 }
-        //                 else
-        //                 {
-        //                     densityMap[x, y, z] -= depth;
-        //                 }
-
-        //                 densityMap[x, y, z] = Mathf.Clamp(densityMap[x, y, z], 0f, 1f);
-        //             }
-        //         }
 
         int maxFloorY = Mathf.Clamp(floorYGrid + floorBlendThickness, 0, caveHeight);
         int minCeilingY = caveHeight - floorBlendThickness; // dynamic ceiling blend
@@ -984,7 +895,8 @@ public class MarchingCubes : NetworkBehaviour
 
                 if (surface != null)
                     StartCoroutine(DelayedNavMeshRebuild());
-            }
+    }
+    
 
 
     [ClientRpc]

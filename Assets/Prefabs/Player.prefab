@@ -382,7 +382,7 @@ Transform:
   m_GameObject: {fileID: 2529867275192676003}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.126, z: 0}
+  m_LocalPosition: {x: 0, y: 0.348, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -510,6 +510,11 @@ MonoBehaviour:
   mouseSensitivity: 450
   playerBody: {fileID: 1857678587941897687}
   head: {fileID: 873260670401626848}
+  cameraRadius: 0.3
+  cameraSmoothSpeed: 10
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &1351269781467790777
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -533,8 +538,8 @@ MonoBehaviour:
   slot4Action: {fileID: -2742271709846591488, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   dropAction: {fileID: 5844052175466972657, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   mineInterval: 0.005
-  mineRadius: 1.5
-  mineDepth: 1
+  mineRadius: 2.5
+  mineDepth: 2.5
   interactionDistance: 3
   interactableLayer:
     serializedVersion: 2
@@ -869,7 +874,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.4
+  m_Radius: 0.7
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0.001434207}
@@ -1575,7 +1580,7 @@ Transform:
   m_GameObject: {fileID: 3985166215517400919}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.04672718, y: 0.4500003, z: 0.12}
+  m_LocalPosition: {x: -0.04672718, y: 1.364, z: 0.12}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1964,7 +1969,7 @@ Transform:
   m_GameObject: {fileID: 6000716174985176510}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.61, y: -0.085, z: 1.065}
+  m_LocalPosition: {x: 0.61, y: -0.085, z: 1.242}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

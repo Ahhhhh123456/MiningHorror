@@ -36,8 +36,30 @@ public class First_Person_Camera : MonoBehaviour
 
         if (head == null)
             Debug.LogError("Head reference is missing!");
-    }
 
+        ApplyDarkCaveSettings();
+    }
+    private void ApplyDarkCaveSettings()
+    {
+        // Fog settings
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Exponential; // can also be Linear if you want
+        RenderSettings.fogColor = Color.black;
+        RenderSettings.fogDensity = 0.244f; // adjust for how dense you want it
+
+        // Camera settings
+        Camera cam = GetComponent<Camera>();
+        if (cam != null)
+        {
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = Color.black;
+            cam.farClipPlane = 60f; // same as your render distance
+        }
+        else
+        {
+            Debug.LogWarning("First_Person_Camera: No Camera component found on this object.");
+        }
+    }
     // void LateUpdate()
     // {
     //     if (playerBody == null || playerRb == null || head == null)

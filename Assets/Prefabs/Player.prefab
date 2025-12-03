@@ -382,7 +382,7 @@ Transform:
   m_GameObject: {fileID: 2529867275192676003}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.348, z: 0}
+  m_LocalPosition: {x: -0.04672718, y: 0.15, z: -0.368}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -424,7 +424,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 60
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -510,11 +510,11 @@ MonoBehaviour:
   mouseSensitivity: 450
   playerBody: {fileID: 1857678587941897687}
   head: {fileID: 873260670401626848}
-  cameraRadius: 0.3
+  cameraRadius: 0.7
   cameraSmoothSpeed: 10
   collisionMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
 --- !u!114 &1351269781467790777
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -775,7 +775,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1, z: 0}
-  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
+  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 873260670401626848}
@@ -1580,7 +1580,7 @@ Transform:
   m_GameObject: {fileID: 3985166215517400919}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.04672718, y: 1.364, z: 0.12}
+  m_LocalPosition: {x: -0.04672718, y: 1.429, z: 0.613}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

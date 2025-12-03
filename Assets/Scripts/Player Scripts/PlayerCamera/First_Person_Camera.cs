@@ -10,7 +10,7 @@ public class First_Person_Camera : MonoBehaviour
     public Transform head;        // "Head" GameObject that holds the camera
 
     [Header("Camera Collision")]
-    public float cameraRadius = 0.3f;       // radius of the virtual camera collider
+    public float cameraRadius;       // radius of the virtual camera collider
     public float cameraSmoothSpeed = 10f;   // smoothing
     public LayerMask collisionMask;         // layers to collide with (walls, terrain)
 

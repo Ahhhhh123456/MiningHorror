@@ -540,7 +540,7 @@ MonoBehaviour:
   mineInterval: 0.005
   mineRadius: 2.5
   mineDepth: 2.5
-  interactionDistance: 3
+  interactionDistance: 10
   interactableLayer:
     serializedVersion: 2
     m_Bits: 128

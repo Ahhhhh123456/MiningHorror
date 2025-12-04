@@ -7,6 +7,7 @@ public class ItemType : MonoBehaviour
     public Dictionary<string, ItemData> itemDatabase = new Dictionary<string, ItemData>()
     {
         {"Pickaxe", new ItemData(5f, ItemCategory.Tool)},
+        {"Shovel", new ItemData(4f, ItemCategory.Tool)},
         {"DrillBody", new ItemData(10f, ItemCategory.Part)},
         {"DrillHead", new ItemData(10f, ItemCategory.Part)},
         {"Wheel", new ItemData(8.5f, ItemCategory.Part)},
@@ -14,6 +15,7 @@ public class ItemType : MonoBehaviour
         {"Dynamite", new ItemData(2f, ItemCategory.Misc)},
         {"Compass", new ItemData(0.01f, ItemCategory.Misc)}
     };
+    
 }
 
 [System.Serializable]

@@ -1102,7 +1102,9 @@ MonoBehaviour:
   ItemText: {fileID: 4469209778203334317}
   holdPosition: {fileID: 4371809906300329274}
   pickaxePosition: {fileID: 425613153254977570}
+  holdTool: 0
   holdPickaxe: 0
+  holdShovel: 0
   IsHoldingCompass: 0
   currentHeldItem: {fileID: 0}
   playerWeight: 0
@@ -1137,6 +1139,10 @@ MonoBehaviour:
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Compass
     prefab: {fileID: 5127088424060007351, guid: a1b516d462511c24f99555ea8316593a, type: 3}
+    holdRotation: {x: 0, y: 90, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
+  - itemName: Shovel
+    prefab: {fileID: 3983485373818652762, guid: c6e7569c84e36d74cbfbccbfa2f16698, type: 3}
     holdRotation: {x: 0, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &5579227905233273499

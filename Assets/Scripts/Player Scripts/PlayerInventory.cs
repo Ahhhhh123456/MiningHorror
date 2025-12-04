@@ -54,10 +54,15 @@ public class PlayerInventory : NetworkBehaviour
     public Transform holdPosition;
     public Transform pickaxePosition;
 
+    public bool holdTool = false;
+
     public bool holdPickaxe = false;
+
+    public bool holdShovel = false;
 
     public bool IsHoldingCompass = false;
     public GameObject currentHeldItem;
+    
     private Dictionary<string, GameObject> prefabLookup;
 
     public float playerWeight = 0f;
@@ -69,6 +74,8 @@ public class PlayerInventory : NetworkBehaviour
 
     public Canvas inventoryCanvas;
     public ItemType itemType;
+
+    private ItemData currentHeldItemData;
 
     [Header("Prefab Assignments")]
     public List<ItemPrefabEntry> prefabEntries; // drag prefabs in Inspector
@@ -301,8 +308,12 @@ public class PlayerInventory : NetworkBehaviour
             return;
         }
 
+
+
         // Debug which references are valid
         Debug.Log($"mineType={mineType != null}, itemType={itemType != null}, playerMovement={playerMovement != null}");
+
+        
 
         // ---- Ore Inventory ----
         for (int i = 0; i < NetworkOres.Count; i++)
@@ -339,6 +350,8 @@ public class PlayerInventory : NetworkBehaviour
         // ---- General Items ----
         for (int i = 0; i < NetworkItems.Count; i++)
         {
+
+            
             if (NetworkItems[i].ToString().Equals(itemName, StringComparison.OrdinalIgnoreCase))
             {
                 NetworkItems.RemoveAt(i);
@@ -349,7 +362,9 @@ public class PlayerInventory : NetworkBehaviour
                     playerWeight -= itemWeight;
                     if (playerMovement != null)
                         playerMovement.UpdateMoveSpeed();
+                    holdTool = false;
                     holdPickaxe = false;
+                    holdShovel = false;
                     IsHoldingCompass = false;
                     Debug.Log($"[Inventory] Dropped '{itemName}' (Weight {itemWeight}). Total weight: {playerWeight}");
 
@@ -453,68 +468,189 @@ public class PlayerInventory : NetworkBehaviour
 
 
     // Update visuals for this player
+    // [ClientRpc]
+    // public void UpdateHeldItemClientRpc(int index)
+    // {
+
+    //     // Destroy current held item if it exists
+    //     if (currentHeldItem != null)
+    //     {
+    //         Destroy(currentHeldItem);
+    //         currentHeldItem = null;
+    //     }
+
+    //     // If invalid index, clear held item and reset flags
+    //     if (index < 0 || index >= NetworkItems.Count)
+    //     {
+    //         holdTool = false;
+    //         holdPickaxe = false;
+    //         holdShovel = false;
+    //         IsHoldingCompass = false;
+    //         Debug.Log("No item held.");
+    //         return;
+    //     }
+
+    //     string itemName = NetworkItems[index].ToString();
+
+    //     if (itemType == null)
+    //     {
+    //         itemType = FindObjectOfType<ItemType>();
+    //     }
+
+    //     if (!itemType.itemDatabase.TryGetValue(itemName, out currentHeldItemData))
+    //     {
+    //         Debug.LogWarning($"Item {itemName} not found in database!");
+    //         return;
+    //     }
+            
+        
+    //     if (!prefabLookup.TryGetValue(itemName, out GameObject prefab))
+    //     {
+    //         holdTool = false;
+    //         holdPickaxe = false;
+    //         holdShovel = false;
+    //         Debug.LogWarning($"Prefab not found for {itemName}");
+    //         return;
+    //     }
+
+    //     ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
+
+    //     // Determine hold position (tool vs default)
+    //     Transform targetHoldPosition = holdPosition;
+    //     if (itemType.itemDatabase.ContainsKey(itemName) &&
+    //         itemType.itemDatabase[itemName].category == ItemCategory.Tool)
+    //     {
+    //         targetHoldPosition = pickaxePosition;
+    //         holdTool = true;
+    //         holdPickaxe = false;
+    //         holdShovel = false;
+    //         if (itemName.Contains("Pickaxe"))
+    //         {
+    //             holdPickaxe = true;
+    //             Debug.Log("Holding pickaxe for mining.");
+    //         }
+    //         if (itemName.Contains("Shovel"))
+    //         {
+    //             holdShovel = true;
+    //             Debug.Log("Holding shovel for mining.");
+    //         }
+    //         Debug.Log("Holding tool for mining.");
+    //     }
+    //     else
+    //     {
+    //         holdTool = false;
+    //         holdPickaxe = false;
+    //         holdShovel = false;
+    //         Debug.Log($"Not holding tool. Holding {itemName}");
+    //     }
+
+    //     if (itemName.Contains("Compass"))
+    //     {
+    //         IsHoldingCompass = true;
+    //         Debug.Log("Holding compass.");
+
+    //     }
+    //     else
+    //     {
+    //         IsHoldingCompass = false;
+    //     }
+
+
+    //     // Instantiate the held item for all clients
+    //     currentHeldItem = Instantiate(prefab, targetHoldPosition);
+    //     currentHeldItem.name = prefab.name;
+    //     currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
+    //     currentHeldItem.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
+
+    //     Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
+    //     if (rb != null)
+    //     {
+    //         rb.isKinematic = true;
+    //         rb.useGravity = false;
+    //     }
+
+    //     Collider[] colliders = currentHeldItem.GetComponentsInChildren<Collider>();
+    //     foreach (var col in colliders)
+    //     {
+    //         col.enabled = false;
+    //     }
+
+
+    //     if (itemName.Contains("Compass"))
+    //     {
+    //         TrackBoxes trackBoxes = GetComponent<TrackBoxes>();
+    //         if (trackBoxes != null)
+    //         {
+    //             trackBoxes.OnCompassEquipped(currentHeldItem.transform);
+    //         }
+    //     }
+
+    // }
+
+
     [ClientRpc]
     public void UpdateHeldItemClientRpc(int index)
     {
-
-        // Destroy current held item if it exists
+        // Destroy previous held item
         if (currentHeldItem != null)
         {
             Destroy(currentHeldItem);
             currentHeldItem = null;
         }
 
-        // If invalid index, clear held item and reset flags
+        // Invalid index
         if (index < 0 || index >= NetworkItems.Count)
         {
-            holdPickaxe = false;
+            holdTool = holdPickaxe = holdShovel = IsHoldingCompass = false;
+            currentHeldItemData = null;
             Debug.Log("No item held.");
             return;
         }
 
         string itemName = NetworkItems[index].ToString();
 
+        // Get the data for this item
+        if (!itemType.itemDatabase.TryGetValue(itemName, out currentHeldItemData))
+        {
+            Debug.LogWarning($"Item {itemName} not found in database!");
+            return;
+        }
+
+        // Get prefab
         if (!prefabLookup.TryGetValue(itemName, out GameObject prefab))
         {
-            holdPickaxe = false;
+            holdTool = holdPickaxe = holdShovel = false;
             Debug.LogWarning($"Prefab not found for {itemName}");
             return;
         }
 
         ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
 
-        // Determine hold position (tool vs default)
+        // Tool handling
         Transform targetHoldPosition = holdPosition;
-        if (itemType.itemDatabase.ContainsKey(itemName) &&
-            itemType.itemDatabase[itemName].category == ItemCategory.Tool)
+        holdTool = holdPickaxe = holdShovel = false;
+
+        if (currentHeldItemData.category == ItemCategory.Tool)
         {
             targetHoldPosition = pickaxePosition;
-            holdPickaxe = true;
-            Debug.Log("Holding pickaxe for mining.");
-        }
-        else
-        {
-            holdPickaxe = false;
-            Debug.Log($"Not holding pickaxe. Holding {itemName}");
+            holdTool = true;
+            if (itemName.Contains("Pickaxe")) holdPickaxe = true;
+            if (itemName.Contains("Shovel")) holdShovel = true;
+            Debug.Log($"Holding tool: {itemName}");
         }
 
-        if (itemName.Contains("Compass"))
-        {
-            IsHoldingCompass = true;
-            Debug.Log("Holding compass.");
+        // Compass handling
+        IsHoldingCompass = itemName.Contains("Compass");
 
-        }
-        else
-        {
-            IsHoldingCompass = false;
-        }
-
-
-        // Instantiate the held item for all clients
+        // Instantiate prefab
         currentHeldItem = Instantiate(prefab, targetHoldPosition);
         currentHeldItem.name = prefab.name;
         currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
         currentHeldItem.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
+
+
+        itemType = FindObjectOfType<ItemType>();
+
 
         Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
         if (rb != null)
@@ -523,23 +659,17 @@ public class PlayerInventory : NetworkBehaviour
             rb.useGravity = false;
         }
 
-        Collider[] colliders = currentHeldItem.GetComponentsInChildren<Collider>();
-        foreach (var col in colliders)
-        {
+        foreach (var col in currentHeldItem.GetComponentsInChildren<Collider>())
             col.enabled = false;
-        }
 
-
-        if (itemName.Contains("Compass"))
+        // Compass callback
+        if (IsHoldingCompass)
         {
             TrackBoxes trackBoxes = GetComponent<TrackBoxes>();
-            if (trackBoxes != null)
-            {
-                trackBoxes.OnCompassEquipped(currentHeldItem.transform);
-            }
+            trackBoxes?.OnCompassEquipped(currentHeldItem.transform);
         }
-
     }
+
     
 
 

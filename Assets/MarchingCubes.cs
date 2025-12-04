@@ -61,60 +61,57 @@ public class MarchingCubes : NetworkBehaviour
         OnCaveFinished?.Invoke();
     }
 
-    // public override void OnNetworkSpawn()
-    // {
-    //     base.OnNetworkSpawn();
-    //     if (IsServer)
-    //     {
-    //         noiseScale = Random.Range(0.05f, 0.3f);
-    //         isoLevel = Random.Range(0.3f, 0.6f);
-    //         resolution = Random.Range(0.5f, 2f);
 
-    //         CreateCave(); // spawn chunks here, not Start()
-    //         CaveFinished();  // 🔥 Fire event here instead
-    //     }
-    //     else if (IsClient)
-    //     {
-    //         // Clients also generate locally so they can see geometry
-    //         Debug.Log("Client generating cave mesh locally.");
-    //         StartCoroutine(WaitForServerAndGenerate());
-    //     }
-    // }
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
         if (IsServer)
         {
-            // Randomize procedural parameters on the server
-            // noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
-            // isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
+            noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
+            isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
 
-            Debug.Log("Noise scale set to: " + noiseScale);
-            Debug.Log("Iso level set to: " + isoLevel);
+            // Listen for clients joining
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        }
+    }
 
-            // Generate cave
-            CreateCave();
+    private void OnClientConnected(ulong clientId)
+    {
+        Debug.Log($"Client {clientId} connected!");
 
-            // Fire event
-            CaveFinished();
+        if (NetworkManager.Singleton.IsServer)
+        {
+            // send ONLY to this client
+            ClientRpcParams rpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new ulong[] { clientId }
+                }
+            };
 
-            // Send parameters to clients
-            SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
+            SendCaveParametersClientRpc(noiseScale, isoLevel, resolution, rpcParams);
         }
     }
 
     [ClientRpc]
-    private void SendCaveParametersClientRpc(float noiseScale, float isoLevel, float resolution)
+    private void SendCaveParametersClientRpc(
+        float noiseScale,
+        float isoLevel,
+        float resolution,
+        ClientRpcParams rpcParams = default)
     {
-        // Clients set the same values before generating
         this.noiseScale = noiseScale;
         this.isoLevel = isoLevel;
         this.resolution = resolution;
 
-        // Generate the same cave mesh locally
+        ulong myClientId = NetworkManager.Singleton.LocalClientId;
+        Debug.Log($"Client {myClientId} received cave parameters: noiseScale={noiseScale}, isoLevel={isoLevel}, resolution={resolution}");
+
         StartCoroutine(WaitForServerAndGenerate());
     }
+
 
     private IEnumerator WaitForServerAndGenerate()
     {

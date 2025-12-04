@@ -16,6 +16,8 @@ public class PlayerMovement : NetworkBehaviour
     public Rigidbody rb;
     public float verticalVelocity = 0f;
 
+    private float explosionLockTime = 0f;
+
     private Camera playerCamera;
     private AudioListener audioListener;
     private PlayerInventory inventory;
@@ -212,6 +214,12 @@ public class PlayerMovement : NetworkBehaviour
 
     public void HandleMovement()
     {
+        if (explosionLockTime > 0f)
+        {
+            explosionLockTime -= Time.fixedDeltaTime;
+            return; // Skip normal movement while being blasted
+        }
+
         LadderClimb();
 
         CapsuleCollider groundChecker = GetComponent<CapsuleCollider>();
@@ -355,6 +363,13 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 v = rb.linearVelocity;
         v.y = 0f;
         rb.linearVelocity = v;
+    }
+
+    public void ApplyExplosionForce(Vector3 force)
+    {
+        if (!IsServer) return;  // Server controls physics in Netcode
+        rb.AddForce(force, ForceMode.Impulse);
+        explosionLockTime = 1f; 
     }
 
 

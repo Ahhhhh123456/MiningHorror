@@ -253,6 +253,7 @@ public class LookAndClickInteraction : NetworkBehaviour
             if (explodeScript != null)
             {
                 Debug.Log("Found Explode script on dropped item.");
+                AudioManager.instance.PlaySFXClip("fuse", transform);
                 StartCoroutine(DoThingAfterSeconds(explodeScript, 3f));
                     
             }

@@ -1942,6 +1942,12 @@ MonoBehaviour:
   - clip: {fileID: 8300000, guid: e6c57aca996648f49bba484a4da99fa6, type: 3}
     volume: 0.5
     pitch: 1
+  - clip: {fileID: 8300000, guid: f9be7fc74d4d6e743a08161710d2d9ed, type: 3}
+    volume: 0.5
+    pitch: 1
+  - clip: {fileID: 8300000, guid: 8cd90482933606a469e876aac0f0e610, type: 3}
+    volume: 0.5
+    pitch: 1
 --- !u!4 &1636150060
 Transform:
   m_ObjectHideFlags: 0

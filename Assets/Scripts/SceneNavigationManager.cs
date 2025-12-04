@@ -9,8 +9,10 @@ public class SceneNavigationManager : MonoBehaviour
     {
         // Load the scene
         SceneManager.LoadScene(sceneName);
+    }
 
-        // Find the SteamLobbyManager in the scene
+    public void MakeLobby()
+    {
         SteamLobbyManager lobbyManager = FindObjectOfType<SteamLobbyManager>();
         if (lobbyManager != null)
         {

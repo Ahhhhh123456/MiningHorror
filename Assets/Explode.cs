@@ -54,7 +54,7 @@ public class Explode : NetworkBehaviour
                 falloff = Mathf.Pow(falloff, 0.5f);   // stronger close to center
                 falloff = Mathf.Max(falloff, 0.35f);  // guarantee minimum push
 
-                pm.ApplyExplosionForce(dir * knockbackForce * falloff);
+                pm.ApplyExplosionForceClientRpc(dir * knockbackForce * falloff);
             }
         }
 

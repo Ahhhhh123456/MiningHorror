@@ -373,5 +373,12 @@ public class PlayerMovement : NetworkBehaviour
     }
 
 
+    [ClientRpc]
+    public void ApplyExplosionForceClientRpc(Vector3 force)
+    {
+        rb.AddForce(force, ForceMode.VelocityChange);
+        explosionLockTime = 1f; 
+    }
+
     
 }

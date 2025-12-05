@@ -199,6 +199,15 @@ public class MarchingCubes : NetworkBehaviour
             {
                 StartCoroutine(monsterSpawner.SpawnMonstersOnSurface());
             }
+
+
+            SceneSpawnPoint spawnPoint = GetComponent<SceneSpawnPoint>();
+            if (spawnPoint != null && IsServer)
+            {
+                StartCoroutine(spawnPoint.RandomSpawnLocation((pos) => {
+                    Debug.Log($"Spawn point generated at {pos}");
+                }));
+            }
         }
                 
     }

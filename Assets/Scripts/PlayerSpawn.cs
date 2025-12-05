@@ -1,27 +1,52 @@
 using UnityEngine;
 using Unity.Netcode;
-using UnityEngine.SceneManagement;
-using System.Collections.Generic;
 using System.Collections;
+
 public class PlayerSpawn : NetworkBehaviour
 {
+    public GameObject playerObject;
+
     private void OnEnable()
     {
-        MarchingCubes.OnCaveFinished += TriggerSpawn;
+        MarchingCubes.OnCaveFinished += OnCaveFinished;
+        SceneSpawnPoint.OnSpawnPointReady += OnSpawnPointReady;
     }
 
     private void OnDisable()
     {
-        MarchingCubes.OnCaveFinished -= TriggerSpawn;
+        MarchingCubes.OnCaveFinished -= OnCaveFinished;
+        SceneSpawnPoint.OnSpawnPointReady -= OnSpawnPointReady;
+    }
+
+    private void OnCaveFinished()
+    {
+        if (!IsOwner) return;
+        // Optionally, start any logic that should run after cave generation
+    }
+
+    private void OnSpawnPointReady(Vector3 pos)
+    {
+        if (!IsOwner) return;
+
+        Debug.Log($"Spawn point ready at {pos}");
+        playerObject = this.gameObject;
+
+        // Automatically teleport player once the spawn point is ready
+        TriggerSpawn();
     }
 
     private void TriggerSpawn()
     {
-        if (!IsOwner) return;  // Only the local player requests teleport
+        if (!IsOwner) return;
 
-        Debug.Log("Triggering player spawn...");
-        Vector3 pos = SceneSpawnPoint.Instance.spawnLocation.position;
-        Quaternion rot = SceneSpawnPoint.Instance.spawnLocation.rotation;
+        if (SceneSpawnPoint.Instance == null || SceneSpawnPoint.Instance.latestSpawnPoint == null)
+        {
+            Debug.LogWarning("Spawn point not ready yet!");
+            return;
+        }
+
+        Vector3 pos = SceneSpawnPoint.Instance.latestSpawnPoint.position;
+        Quaternion rot = SceneSpawnPoint.Instance.latestSpawnPoint.rotation;
 
         MovePlayerServerRpc(pos, rot);
     }
@@ -29,10 +54,7 @@ public class PlayerSpawn : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void MovePlayerServerRpc(Vector3 pos, Quaternion rot)
     {
-        // Teleport server-side
         transform.SetPositionAndRotation(pos, rot);
-
-        // Tell all clients
         MovePlayerClientRpc(pos, rot);
     }
 
@@ -52,10 +74,11 @@ public class PlayerSpawn : NetworkBehaviour
     {
         if (!IsOwner) return;
 
+        // Keep the J key functionality
         if (Input.GetKeyDown(KeyCode.J))
         {
+            Debug.Log("J key pressed - teleporting to spawn point.");
             TriggerSpawn();
         }
     }
 }
-

@@ -1119,6 +1119,10 @@ MonoBehaviour:
     prefab: {fileID: 3983485373818652762, guid: c6e7569c84e36d74cbfbccbfa2f16698, type: 3}
     holdRotation: {x: 0, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
+  - itemName: JumpPad
+    prefab: {fileID: 1884950559434735710, guid: cd29d31a8ab07c6498cd96196b101e41, type: 3}
+    holdRotation: {x: 0, y: 90, z: 0}
+    holdPositionOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &5579227905233273499
 MonoBehaviour:
   m_ObjectHideFlags: 0

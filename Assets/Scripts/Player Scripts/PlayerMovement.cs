@@ -365,19 +365,19 @@ public class PlayerMovement : NetworkBehaviour
         rb.linearVelocity = v;
     }
 
-    public void ApplyExplosionForce(Vector3 force)
-    {
-        if (!IsServer) return;  // Server controls physics in Netcode
-        rb.AddForce(force, ForceMode.Impulse);
-        explosionLockTime = 1f; 
-    }
+    // public void ApplyExplosionForce(Vector3 force)
+    // {
+    //     if (!IsServer) return;  // Server controls physics in Netcode
+    //     rb.AddForce(force, ForceMode.Impulse);
+    //     explosionLockTime = 0.5f; 
+    // }
 
 
     [ClientRpc]
     public void ApplyExplosionForceClientRpc(Vector3 force)
     {
         rb.AddForce(force, ForceMode.VelocityChange);
-        explosionLockTime = 1f; 
+        explosionLockTime = 0.5f; 
     }
 
     

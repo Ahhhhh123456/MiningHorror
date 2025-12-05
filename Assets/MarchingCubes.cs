@@ -873,10 +873,14 @@ public class MarchingCubes : NetworkBehaviour
             Debug.Log("Explosion Mining Cave at " + worldPos);
         }
 
+        // --- SHIFT MINING UPWARD SO PLAYER DOESN'T FALL ---
+        float raiseAmount = radius * 0.75f;  // adjust if needed
+        Vector3 adjustedPos = worldPos + Vector3.up * raiseAmount;
+
         // --- Perform carving ---
-        int x0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.x / resolution), 0, caveWidth);
-        int y0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.y / resolution), 0, caveHeight);
-        int z0 = Mathf.Clamp(Mathf.FloorToInt(worldPos.z / resolution), 0, caveDepth);
+        int x0 = Mathf.Clamp(Mathf.FloorToInt(adjustedPos.x / resolution), 0, caveWidth);
+        int y0 = Mathf.Clamp(Mathf.FloorToInt(adjustedPos.y / resolution), 0, caveHeight);
+        int z0 = Mathf.Clamp(Mathf.FloorToInt(adjustedPos.z / resolution), 0, caveDepth);
 
         int r = Mathf.CeilToInt(radius / resolution);
 
@@ -889,25 +893,39 @@ public class MarchingCubes : NetworkBehaviour
             for (int y = y0 - r; y <= y0 + r; y++)
                 for (int z = z0 - r; z <= z0 + r; z++)
                 {
-                    if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth) 
+                    if (x < 0 || x > caveWidth || y < 0 || y > caveHeight || z < 0 || z > caveDepth)
                         continue;
 
-                    Vector3 voxelCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
-                    if (Vector3.Distance(voxelCenter, worldPos) <= radius)
+                    Vector3 voxelCenter = new Vector3(
+                        x + 0.5f,
+                        y + 0.5f,
+                        z + 0.5f
+                    ) * resolution;
+
+                    // --- USE ADJUSTED POSITION FOR RADIUS CHECK ---
+                    if (Vector3.Distance(voxelCenter, adjustedPos) <= radius)
                     {
                         float newDensity = densityMap[x, y, z] - depth;
 
                         // --- Floor blend ---
                         if (y <= maxFloorY)
                         {
-                            float minDensity = Mathf.Lerp(1.0f, isoLevel + 0.01f, (y - floorYGrid) / Mathf.Max(1, floorBlendThickness));
+                            float minDensity = Mathf.Lerp(
+                                1.0f,
+                                isoLevel + 0.01f,
+                                (y - floorYGrid) / Mathf.Max(1, floorBlendThickness)
+                            );
                             newDensity = Mathf.Max(newDensity, minDensity);
                         }
 
                         // --- Ceiling blend ---
                         if (y >= minCeilingY)
                         {
-                            float minDensity = Mathf.Lerp(1.0f, isoLevel + 0.01f, (caveHeight - y) / Mathf.Max(1, floorBlendThickness));
+                            float minDensity = Mathf.Lerp(
+                                1.0f,
+                                isoLevel + 0.01f,
+                                (caveHeight - y) / Mathf.Max(1, floorBlendThickness)
+                            );
                             newDensity = Mathf.Max(newDensity, minDensity);
                         }
 
@@ -925,13 +943,17 @@ public class MarchingCubes : NetworkBehaviour
                     }
                 }
 
-                UpdateAffectedChunks(worldPos, radius);
+        // These still use the original worldPos for visual effects & chunk updates
+        UpdateAffectedChunks(worldPos, radius);
 
-                PlayMineEffectsClientRpc(worldPos);
+        PlayMineEffectsClientRpc(worldPos);
 
-                if (surface != null)
-                    StartCoroutine(DelayedNavMeshRebuild());
+        if (surface != null)
+            StartCoroutine(DelayedNavMeshRebuild());
     }
+
+
+    
     
 
 

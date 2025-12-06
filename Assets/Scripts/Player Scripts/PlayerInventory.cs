@@ -44,7 +44,13 @@ public class PlayerInventory : NetworkBehaviour
     // Dictionary: key = item name, value = count
     [Header("Inventory UI (Ores)")]
     public TextMeshProUGUI OreText;
-    public TextMeshProUGUI ItemText;
+    // public TextMeshProUGUI ItemText;
+
+    [Header("Inventory UI (Hotbar)")]
+    public List<UnityEngine.UI.Image> hotbarSlotImages; // Put the slot images here
+    public Sprite emptySlotSprite; // optional sprite to show when the slot is empty
+
+    public Color filledSlotColor = Color.green;
 
     // public Dictionary<string, int> InventoryOreCount = new Dictionary<string, int>();
 
@@ -68,7 +74,7 @@ public class PlayerInventory : NetworkBehaviour
     public float playerWeight = 0f;
     public int currentSlotIndex = -1; // track currently held slot
 
-    public int maxSlots = 2;
+    public int hotbarSize = 4; // can be set in inspector
     private MineType mineType;
     private PlayerMovement playerMovement;
 
@@ -93,7 +99,7 @@ public class PlayerInventory : NetworkBehaviour
     {
         mineType = FindObjectOfType<MineType>();
         playerMovement = GetComponent<PlayerMovement>();
-        itemType = FindObjectOfType<ItemType>();
+        // itemType = FindObjectOfType<ItemType>();
     }
 
     //-------- Functions to reload references on scene change -------------- //
@@ -115,7 +121,7 @@ public class PlayerInventory : NetworkBehaviour
         mineType = FindObjectOfType<MineType>();
         itemType = FindObjectOfType<ItemType>();
         playerMovement = GetComponent<PlayerMovement>();
-        
+
         Debug.Log($"[PlayerInventory] Reinitialized references: mineType={mineType}, itemType={itemType}, playerMovement={playerMovement}");
         ResetInventoryServerRpc();
     }
@@ -138,7 +144,7 @@ public class PlayerInventory : NetworkBehaviour
         ClearHeldItemClientRpc();
     }
 
-    private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode, 
+    private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode,
                             List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (!IsClient) return; // Only reinitialize for this client
@@ -156,6 +162,8 @@ public class PlayerInventory : NetworkBehaviour
         {
             prefabLookup[entry.itemName] = entry.prefab;
         }
+
+        itemType = FindObjectOfType<ItemType>();
     }
     public override void OnNetworkSpawn()
     {
@@ -164,11 +172,21 @@ public class PlayerInventory : NetworkBehaviour
 
         // Subscribe to changes so UI updates automatically
         NetworkOres.OnListChanged += OnOresChanged;
-        NetworkItems.OnListChanged += OnItemsChanged;
+        NetworkItems.OnListChanged += OnHotbarSlotsChanged;
+
+        // SERVER: Initialize the hotbar slots
+        if (IsServer)
+        {
+            NetworkItems.Clear();
+            for (int i = 0; i < hotbarSize; i++)
+            {
+                NetworkItems.Add(new FixedString32Bytes("")); // Add an "empty" slot
+            }
+        }
 
         // Initialize UI immediately
         UpdateOreUIText();
-        UpdateItemUIText();
+        UpdateHotbarUIText();
     }
 
 
@@ -187,14 +205,14 @@ public class PlayerInventory : NetworkBehaviour
         UpdateOreUIText();
     }
 
-    private void OnItemsChanged(NetworkListEvent<FixedString32Bytes> changeEvent)
+    private void OnHotbarSlotsChanged(NetworkListEvent<FixedString32Bytes> changeEvent)
     {
-        UpdateItemUIText();
+        UpdateHotbarUIText();
     }
 
 
-    // ✅ Add item (server-only)
-    public void AddItemServer(string itemName, OreData oreData = null)
+    // Add item (server-only)
+    public bool AddItemServer(string itemName, OreData oreData = null)
     {
 
         // Add ores
@@ -224,17 +242,42 @@ public class PlayerInventory : NetworkBehaviour
             }
 
             playerWeight += oreData.weight;
+
+            return true;
         }
 
         // Add items
         if (itemType.itemDatabase.ContainsKey(itemName))
         {
-            NetworkItems.Add(new FixedString32Bytes(itemName));
-            playerWeight += itemType.itemDatabase[itemName].weight;
+            // Find the first empty slot
+            bool slotFound = false;
+            for (int i = 0; i < NetworkItems.Count; i++) // NetworkItems.Count is now hotbarSize
+            {
+                if (NetworkItems[i].ToString() == "")
+                {
+                    // finds empty slot and fills
+                    NetworkItems[i] = new FixedString32Bytes(itemName);
+                    playerWeight += itemType.itemDatabase[itemName].weight;
+                    slotFound = true;
+                    Debug.Log($"Added {itemName} to slot {i}.");
+                    break;
+                }
+            }
+
+            if (!slotFound)
+            {
+                Debug.Log("Hotbar is full!");
+                return false;
+                // can also add separate backpack list here
+            }
+
+            return true;
         }
         // LogAllPlayerInventories();
         // Debug.Log($"Added {itemName} to inventory. Total weight: {playerWeight}");
         // UI updates are automatic via OnListChanged on the client
+
+        return false;
     }
 
 
@@ -270,7 +313,8 @@ public class PlayerInventory : NetworkBehaviour
         {
             if (NetworkItems[i].ToString() == itemName)
             {
-                NetworkItems.RemoveAt(i);
+                // ✅ CORRECT FIX: Empty the slot, do not shrink the list
+                NetworkItems[i] = new FixedString32Bytes("");
 
                 if (itemType.itemDatabase.ContainsKey(itemName))
                     playerWeight -= itemType.itemDatabase[itemName].weight;
@@ -282,6 +326,63 @@ public class PlayerInventory : NetworkBehaviour
         //LogAllPlayerInventories();
     }
 
+    // ✅ This is your NEW drop function.
+    // Call this from your input script (e.g., when 'G' key is pressed)
+    public void RequestDropSelectedItem()
+    {
+        if (!IsOwner) return;
+
+        // Check if we are holding a valid item
+        if (currentSlotIndex >= 0 && currentSlotIndex < NetworkItems.Count)
+        {
+            if (NetworkItems[currentSlotIndex].ToString() != "")
+            {
+                // We are holding something. Tell the server to drop it.
+                DropItemFromSlotServerRpc(currentSlotIndex);
+            }
+        }
+    }
+
+    [ServerRpc]
+    public void DropItemFromSlotServerRpc(int slotIndex)
+    {
+        // 1. Get the item name from the slot
+        string itemName = NetworkItems[slotIndex].ToString();
+        if (string.IsNullOrEmpty(itemName)) return; // Slot is already empty
+
+        // 2. Clear the slot (THIS IS THE FIX! We don't RemoveAt, we just empty it)
+        NetworkItems[slotIndex] = new FixedString32Bytes("");
+
+        // 3. Adjust weight
+        if (itemType.itemDatabase.ContainsKey(itemName))
+        {
+            float itemWeight = itemType.itemDatabase[itemName].weight;
+            playerWeight -= itemWeight;
+            if (playerMovement != null)
+                playerMovement.UpdateMoveSpeed(); // Tell player movement to update
+        }
+
+        Debug.Log($"Dropped {itemName} from slot {slotIndex}");
+
+        // 4. (Optional) Spawn the item prefab in the world
+        // You can use your CreateItemInstance method here to drop it in front of the player
+        GameObject prefabToDrop = GetPrefabForItem(itemName);
+        if (prefabToDrop != null)
+        {
+            // Calculate a spawn position in front of the player
+            Vector3 spawnPos = transform.position + transform.forward * 1.5f + Vector3.up * 0.5f;
+
+            // Instantiate the item's NetworkObject
+            NetworkObject droppedItemNetworkObject = Instantiate(prefabToDrop, spawnPos, transform.rotation).GetComponent<NetworkObject>();
+
+            // Set its name correctly so it can be picked up again
+            droppedItemNetworkObject.name = prefabToDrop.name;
+
+            // Spawn the item on the network
+            droppedItemNetworkObject.Spawn();
+        }
+    }
+
 
     [ClientRpc]
     public void UpdateOreUIClientRpc(ClientRpcParams clientRpcParams = default)
@@ -290,9 +391,9 @@ public class PlayerInventory : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void UpdateItemUIClientRpc(ClientRpcParams clientRpcParams = default)
+    private void UpdateHotbarUIClientRpc(ClientRpcParams clientRpcParams = default)
     {
-        UpdateItemUIText();
+        UpdateHotbarUIText();
     }
 
 
@@ -354,7 +455,7 @@ public class PlayerInventory : NetworkBehaviour
             
             if (NetworkItems[i].ToString().Equals(itemName, StringComparison.OrdinalIgnoreCase))
             {
-                NetworkItems.RemoveAt(i);
+                NetworkItems[i] = new FixedString32Bytes("");
 
                 if (itemType != null && itemType.itemDatabase != null && itemType.itemDatabase.ContainsKey(itemName))
                 {
@@ -374,7 +475,7 @@ public class PlayerInventory : NetworkBehaviour
                     Debug.LogWarning($"[Inventory] itemType or itemDatabase missing for '{itemName}'. Weight not adjusted.");
                 }
 
-                UpdateItemUIText();
+                UpdateHotbarUIText();
                 break; // Stop after removing one matching item
             }
         }
@@ -412,7 +513,7 @@ public class PlayerInventory : NetworkBehaviour
         };
 
         UpdateOreUIClientRpc(clientRpcParams);
-        UpdateItemUIClientRpc(clientRpcParams);
+        UpdateHotbarUIClientRpc(clientRpcParams);
     }
 
     private void UpdateOreUIText()
@@ -432,21 +533,44 @@ public class PlayerInventory : NetworkBehaviour
         OreText.text = sb.ToString();
     }
 
-    private void UpdateItemUIText()
+    private void UpdateHotbarUIText()
     {
-        if (ItemText == null) return;
+        if (hotbarSlotImages == null) return;
 
-        if (NetworkItems.Count == 0)
+        for (int i = 0; i < hotbarSize; i++)
         {
-            ItemText.text = "No items";
-            return;
+            // Make sure we have enough UI slots assigned
+            if (i >= hotbarSlotImages.Count) break;
+
+            // Get the item name from the slot
+            string itemName = "";
+            if (i < NetworkItems.Count) // Safety check
+            {
+                itemName = NetworkItems[i].ToString();
+            }
+
+            if (string.IsNullOrEmpty(itemName))
+            {
+                // Slot is EMPTY
+                hotbarSlotImages[i].sprite = emptySlotSprite; // Use empty sprite
+                hotbarSlotImages[i].enabled = (emptySlotSprite != null); // Hide if no empty sprite
+                hotbarSlotImages[i].color = Color.white;
+            }
+            else
+            {
+                // Slot is FULL
+                // This is where you'll set the item's icon!
+                // We will add this 'icon' field in the next step.
+                // Sprite itemIcon = itemType.itemDatabase[itemName].icon; 
+                // hotbarSlotImages[i].sprite = itemIcon;
+
+                // --- Temporary (until we add icons) ---
+                hotbarSlotImages[i].enabled = true;
+                hotbarSlotImages[i].sprite = null; // Or a default sprite
+                hotbarSlotImages[i].color = filledSlotColor;
+
+            }
         }
-
-        var slots = new List<string>();
-        for (int i = 0; i < NetworkItems.Count; i++)
-            slots.Add($"{i + 1}: {NetworkItems[i].ToString()}");
-
-        ItemText.text = string.Join(" | ", slots);
     }
 
 
@@ -495,6 +619,14 @@ public class PlayerInventory : NetworkBehaviour
         }
 
         // Get prefab
+        // NEW CHECK: If the slot is empty, just clear the held item
+        if (string.IsNullOrEmpty(itemName))
+        {
+            holdPickaxe = false;
+            Debug.Log("Selected slot is empty.");
+            return; // The 'Destroy' at the top (line 396) already cleared the item
+        }
+
         if (!prefabLookup.TryGetValue(itemName, out GameObject prefab))
         {
             holdTool = holdPickaxe = holdShovel = false;

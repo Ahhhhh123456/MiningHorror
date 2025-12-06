@@ -282,6 +282,8 @@ public class LookAndClickInteraction : NetworkBehaviour
             Destroy(playerInventory.currentHeldItem);
             playerInventory.currentHeldItem = null;
         }
+        // Remove from networked inventory (this will also spawn the dropped item)
+        playerInventory.DropItemFromSlotServerRpc(slotIndex);
     }
 
 

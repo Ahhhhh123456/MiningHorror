@@ -227,60 +227,8 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         string itemName = playerInventory.NetworkItems[slotIndex].ToString();
 
-        playerInventory.RemoveFromInventory(itemName);
-
-        GameObject droppedItem = playerInventory.CreateItemInstance(itemName, playerInventory.holdPosition);
-        if (droppedItem == null) return;
-
-        droppedItem.transform.SetParent(null);
-
-
-        Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
-        if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();
-        rb.isKinematic = false;
-        rb.useGravity = true;
-
-
-        rb.AddForce(playerInventory.holdPosition.forward * 2f, ForceMode.Impulse);
-
-
-        if (droppedItem.TryGetComponent<NetworkObject>(out NetworkObject netObj))
-            netObj.Spawn();
-
-        if (itemName == "Dynamite")
-        {
-            Explode explodeScript = droppedItem.GetComponent<Explode>();
-            if (explodeScript != null)
-            {
-                Debug.Log("Found Explode script on dropped item.");
-                StartCoroutine(DoThingAfterSeconds(explodeScript, 3f));
-                    
-            }
-            else
-            {
-                Debug.LogWarning("Dropped Dynamite has no Explode script!");
-            }
-        }
-    }
-
-    IEnumerator DoThingAfterSeconds(Explode explodeScript, float seconds)
-    {
-        yield return new WaitForSeconds(seconds);
-        Debug.Log("3 seconds have passed!");
-        explodeScript.ExplosionServerRpc();
-    }
-
-
-
-
-    [ClientRpc]
-    private void ClearHeldItemClientRpc(ClientRpcParams clientRpcParams = default)
-    {
-        if (playerInventory.currentHeldItem != null)
-        {
-            Destroy(playerInventory.currentHeldItem);
-            playerInventory.currentHeldItem = null;
-        }
+        // Remove from networked inventory (this will also spawn the dropped item)
+        playerInventory.DropItemFromSlotServerRpc(slotIndex);
     }
 
 

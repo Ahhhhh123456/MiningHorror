@@ -275,7 +275,7 @@ public class LookAndClickInteraction : NetworkBehaviour
 
 
     [ClientRpc]
-    private void ClearHeldItemClientRpc(ClientRpcParams clientRpcParams = default)
+    private void ClearHeldItemClientRpc(int slotIndex, ClientRpcParams clientRpcParams = default)
     {
         if (playerInventory.currentHeldItem != null)
         {

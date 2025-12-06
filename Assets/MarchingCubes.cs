@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections;
 using Unity.AI.Navigation;
 using System;
+using UnityEngine.SceneManagement;
 
 public class MarchingCubes : NetworkBehaviour
 {
@@ -62,19 +63,53 @@ public class MarchingCubes : NetworkBehaviour
     }
 
 
+    // public override void OnNetworkSpawn()
+    // {
+    //     base.OnNetworkSpawn();
+
+    //     if (IsServer)
+    //     {
+    //         noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
+    //         isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
+
+    //         // Listen for clients joining
+    //         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+    //     }
+    // }
+
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
         if (IsServer)
         {
-            noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
-            isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
-
-            // Listen for clients joining
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            NetworkManager.SceneManager.OnLoadComplete += OnNetworkSceneLoaded;
         }
     }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsServer)
+        {
+            NetworkManager.SceneManager.OnLoadComplete -= OnNetworkSceneLoaded;
+        }
+    }
+
+    private void OnNetworkSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
+    {
+        Debug.Log($"[Netcode] Scene loaded for client {clientId}: {sceneName}");
+
+        // Only run logic once the SERVER finishes loading the Cave scene
+        if (IsServer)
+        {
+            noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
+            isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
+            Debug.Log("Cave scene finished loading — initializing marching cubes.");
+            SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
+        }
+    }
+
 
     private void OnClientConnected(ulong clientId)
     {

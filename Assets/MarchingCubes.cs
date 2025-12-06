@@ -107,7 +107,20 @@ public class MarchingCubes : NetworkBehaviour
             isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
             Debug.Log("Cave scene finished loading — initializing marching cubes.");
             SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
+
+            StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
+            {
+                // Tell all clients the spawn position via PlayerSpawn
+                foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+                {
+                    PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
+                    if (ps != null)
+                        ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
+                }
+            }));
         }
+
+        
     }
 
 
@@ -237,6 +250,7 @@ public class MarchingCubes : NetworkBehaviour
 
 
             SceneSpawnPoint spawnPoint = GetComponent<SceneSpawnPoint>();
+            Debug.Log("Checking for SceneSpawnPoint component." + (spawnPoint != null ? " Found." : " Not found."));
             if (spawnPoint != null && IsServer)
             {
                 StartCoroutine(spawnPoint.RandomSpawnLocation((pos) => {
@@ -249,7 +263,7 @@ public class MarchingCubes : NetworkBehaviour
     
     private IEnumerator SpawnOresBatched()
     {
-        int batchSize = 25;
+        int batchSize = 10;
         List<Vector3> spawnPositions = new List<Vector3>();
 
         float surfaceChance = oreChance * 0.06f;

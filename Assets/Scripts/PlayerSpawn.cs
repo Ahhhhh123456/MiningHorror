@@ -1,84 +1,72 @@
 using UnityEngine;
 using Unity.Netcode;
-using System.Collections;
 
 public class PlayerSpawn : NetworkBehaviour
 {
-    public GameObject playerObject;
+    // The server sets this spawn position, clients automatically receive updates
+    public NetworkVariable<Vector3> spawnPosition = new NetworkVariable<Vector3>(
+        writePerm: NetworkVariableWritePermission.Server);
 
     private void OnEnable()
     {
-        MarchingCubes.OnCaveFinished += OnCaveFinished;
-        SceneSpawnPoint.OnSpawnPointReady += OnSpawnPointReady;
+        // Subscribe to value changes
+        spawnPosition.OnValueChanged += OnSpawnPositionChanged;
     }
 
     private void OnDisable()
     {
-        MarchingCubes.OnCaveFinished -= OnCaveFinished;
-        SceneSpawnPoint.OnSpawnPointReady -= OnSpawnPointReady;
+        spawnPosition.OnValueChanged -= OnSpawnPositionChanged;
     }
 
-    private void OnCaveFinished()
+    /// <summary>
+    /// This is called on all clients (including owner) when the server sets the spawn position
+    /// </summary>
+    private void OnSpawnPositionChanged(Vector3 oldPos, Vector3 newPos)
     {
-        if (!IsOwner) return;
-        // Optionally, start any logic that should run after cave generation
+        transform.position = newPos;
+        transform.rotation = Quaternion.identity; // Or desired rotation
+        Debug.Log($"Player moved to spawn position {newPos}");
     }
 
-    private void OnSpawnPointReady(Vector3 pos)
-    {
-        if (!IsOwner) return;
-
-        Debug.Log($"Spawn point ready at {pos}");
-        playerObject = this.gameObject;
-
-        // Automatically teleport player once the spawn point is ready
-        TriggerSpawn();
-    }
-
-    private void TriggerSpawn()
-    {
-        if (!IsOwner) return;
-
-        if (SceneSpawnPoint.Instance == null || SceneSpawnPoint.Instance.latestSpawnPoint == null)
-        {
-            Debug.LogWarning("Spawn point not ready yet!");
-            return;
-        }
-
-        Vector3 pos = SceneSpawnPoint.Instance.latestSpawnPoint.position;
-        Quaternion rot = SceneSpawnPoint.Instance.latestSpawnPoint.rotation;
-
-        MovePlayerServerRpc(pos, rot);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void MovePlayerServerRpc(Vector3 pos, Quaternion rot)
-    {
-        transform.SetPositionAndRotation(pos, rot);
-        MovePlayerClientRpc(pos, rot);
-    }
-
-    [ClientRpc]
-    private void MovePlayerClientRpc(Vector3 pos, Quaternion rot)
-    {
-        StartCoroutine(DelayedMove(pos, rot));
-    }
-
-    private IEnumerator DelayedMove(Vector3 pos, Quaternion rot)
-    {
-        yield return new WaitForSeconds(0.1f);
-        transform.SetPositionAndRotation(pos, rot);
-    }
-
+    /// <summary>
+    /// Called by J key or other triggers to request moving to spawn
+    /// </summary>
     private void Update()
     {
-        if (!IsOwner) return;
 
-        // Keep the J key functionality
         if (Input.GetKeyDown(KeyCode.J))
         {
-            Debug.Log("J key pressed - teleporting to spawn point.");
-            TriggerSpawn();
+            // Request server to move this player to spawn
+            MoveToSpawnServerRpc();
+        }
+    }
+
+    /// <summary>
+    /// Ask the server to move this client’s player
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    private void MoveToSpawnServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        NetworkObject playerObj = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;
+
+        if (playerObj != null)
+        {
+            playerObj.transform.position = spawnPosition.Value;
+            playerObj.transform.rotation = Quaternion.identity;
+            Debug.Log($"[Server] Moved player {clientId} to spawn {spawnPosition.Value}");
+        }
+    }
+
+    /// <summary>
+    /// Server should call this when the spawn point is ready
+    /// </summary>
+    public void SetSpawnPosition(Vector3 pos)
+    {
+        if (IsServer)
+        {
+            spawnPosition.Value = pos;
+            Debug.Log($"[Server] Spawn position set to {pos}");
         }
     }
 }

@@ -64,22 +64,28 @@ public class SceneSpawnPoint : NetworkBehaviour
 
         Vector3 spawnPos = floorPositions[Random.Range(0, floorPositions.Count)];
 
-        // Instantiate the prefab
         if (spawnPointPrefab != null)
         {
             GameObject obj = Instantiate(spawnPointPrefab, spawnPos, Quaternion.identity);
-            obj.name = "PlayerSpawnPoint";
+            obj.name = "SpawnPoint";
             latestSpawnPoint = obj.transform;
 
-            // Invoke the event
+            NetworkObject netObj = obj.GetComponent<NetworkObject>();
+            if (netObj != null && IsServer)
+            {
+                netObj.Spawn(); // Spawn on all clients
+
+                // Notify all players of the spawn position
+                foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+                {
+                    PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
+                    if (ps != null)
+                        ps.SetSpawnPosition(spawnPos); // <-- this updates the NetworkVariable
+                }
+            }
+
             OnSpawnPointReady?.Invoke(spawnPos);
             Debug.Log($"Spawn point instantiated at {spawnPos}");
         }
-        else
-        {
-            Debug.LogWarning("SpawnPointPrefab is not assigned!");
-        }
-
-        callback?.Invoke(spawnPos);
     }
 }

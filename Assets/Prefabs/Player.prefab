@@ -2665,6 +2665,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  spawnPosition:
+    m_InternalValue: {x: 0, y: 0, z: 0}
 --- !u!114 &-1728222716589372832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2742,9 +2744,6 @@ MonoBehaviour:
   generalPanel: {fileID: 605693005549880430}
   videoPanel: {fileID: 4868742666562906603}
   audioPanel: {fileID: 2154192120201148406}
-  cameraLookBehaviour: {fileID: 5237642999132564622}
-  extraDisableOnPause: []
-  lookAction: {fileID: -5630151704836100654, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   pauseKey: 27
 --- !u!1 &3382507352548371615
 GameObject:

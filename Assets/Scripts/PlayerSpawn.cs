@@ -18,9 +18,7 @@ public class PlayerSpawn : NetworkBehaviour
         spawnPosition.OnValueChanged -= OnSpawnPositionChanged;
     }
 
-    /// <summary>
-    /// This is called on all clients (including owner) when the server sets the spawn position
-    /// </summary>
+
     private void OnSpawnPositionChanged(Vector3 oldPos, Vector3 newPos)
     {
         transform.position = newPos;
@@ -28,11 +26,10 @@ public class PlayerSpawn : NetworkBehaviour
         Debug.Log($"Player moved to spawn position {newPos}");
     }
 
-    /// <summary>
-    /// Called by J key or other triggers to request moving to spawn
-    /// </summary>
+
     private void Update()
     {
+        if (!IsOwner) return;
 
         if (Input.GetKeyDown(KeyCode.J))
         {
@@ -41,9 +38,6 @@ public class PlayerSpawn : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// Ask the server to move this client’s player
-    /// </summary>
     [ServerRpc(RequireOwnership = false)]
     private void MoveToSpawnServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -52,15 +46,26 @@ public class PlayerSpawn : NetworkBehaviour
 
         if (playerObj != null)
         {
-            playerObj.transform.position = spawnPosition.Value;
-            playerObj.transform.rotation = Quaternion.identity;
-            Debug.Log($"[Server] Moved player {clientId} to spawn {spawnPosition.Value}");
+            //playerObj.transform.position = spawnPosition.Value;
+            //playerObj.transform.rotation = Quaternion.identity;
+            MoveSpawnClientRpc(spawnPosition.Value);
+
+    
         }
     }
 
-    /// <summary>
-    /// Server should call this when the spawn point is ready
-    /// </summary>
+    [ClientRpc]
+
+    private void MoveSpawnClientRpc(Vector3 pos, ClientRpcParams rpcParams = default)
+    {
+        if (IsOwner)
+        {
+            transform.position = pos;
+            transform.rotation = Quaternion.identity;
+        }
+    }
+
+
     public void SetSpawnPosition(Vector3 pos)
     {
         if (IsServer)

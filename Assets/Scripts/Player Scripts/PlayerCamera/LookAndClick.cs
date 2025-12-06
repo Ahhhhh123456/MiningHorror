@@ -227,6 +227,61 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         string itemName = playerInventory.NetworkItems[slotIndex].ToString();
 
+        playerInventory.RemoveFromInventory(itemName);
+
+        GameObject droppedItem = playerInventory.CreateItemInstance(itemName, playerInventory.holdPosition);
+        if (droppedItem == null) return;
+
+        droppedItem.transform.SetParent(null);
+
+
+        Rigidbody rb = droppedItem.GetComponent<Rigidbody>();
+        if (rb == null) rb = droppedItem.AddComponent<Rigidbody>();
+        rb.isKinematic = false;
+        rb.useGravity = true;
+
+
+        rb.AddForce(playerInventory.holdPosition.forward * 2f, ForceMode.Impulse);
+
+
+        if (droppedItem.TryGetComponent<NetworkObject>(out NetworkObject netObj))
+            netObj.Spawn();
+
+        if (itemName == "Dynamite")
+        {
+            Explode explodeScript = droppedItem.GetComponent<Explode>();
+            if (explodeScript != null)
+            {
+                Debug.Log("Found Explode script on dropped item.");
+                AudioManager.instance.PlaySFXClip("fuse", transform);
+                StartCoroutine(DoThingAfterSeconds(explodeScript, 3f));
+                    
+            }
+            else
+            {
+                Debug.LogWarning("Dropped Dynamite has no Explode script!");
+            }
+        }
+    }
+
+    IEnumerator DoThingAfterSeconds(Explode explodeScript, float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        Debug.Log("3 seconds have passed!");
+        explodeScript.ExplosionServerRpc();
+    }
+
+
+
+
+    [ClientRpc]
+    private void ClearHeldItemClientRpc(int slotIndex, ClientRpcParams clientRpcParams = default)
+    {
+        if (playerInventory.currentHeldItem != null)
+        {
+            Destroy(playerInventory.currentHeldItem);
+            playerInventory.currentHeldItem = null;
+        }
         // Remove from networked inventory (this will also spawn the dropped item)
         playerInventory.DropItemFromSlotServerRpc(slotIndex);
     }
@@ -260,9 +315,10 @@ public class LookAndClickInteraction : NetworkBehaviour
         // Draw the direction in the scene view
         Debug.DrawRay(transform.position, direction * 5f, Color.green);
     }
+
     private void Mining()
     {
-        if (!playerInventory.holdPickaxe) return;
+        if (!playerInventory.holdTool) return;
 
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
         RaycastHit[] hits = Physics.RaycastAll(ray, interactRange);
@@ -280,7 +336,6 @@ public class LookAndClickInteraction : NetworkBehaviour
         }
 
         if (!clickAction.action.IsPressed()) return;
-
         if (hits.Length == 0) return;
 
         // STEP 1 — PICK PRIORITIZED TARGET
@@ -298,36 +353,46 @@ public class LookAndClickInteraction : NetworkBehaviour
             }
             else if (obj.CompareTag("Dropped"))
             {
-                // Ignore dropped items entirely
                 continue;
             }
             else if (h.collider.TryGetComponent(out MineType mt))
             {
-                // Catch possible ore
-                // only choose the *closest* ore if multiple
-                if (oreHit == null || h.distance < oreHit.Value.distance)
-                    oreHit = h;
+                // Only pickaxe can mine ores
+                if (playerInventory.holdPickaxe)
+                {
+                    if (oreHit == null || h.distance < oreHit.Value.distance)
+                        oreHit = h;
+                }
             }
         }
 
         // STEP 2 — PERFORM ACTIONS BASED ON PRIORITY
+
+        // Cave mining
         if (caveHit.HasValue)
         {
             var helper = caveHit.Value.collider.GetComponent<MeshysHelper>();
             if (helper != null)
             {
                 mineTimer += Time.deltaTime;
+
                 if (mineTimer >= mineInterval)
                 {
+                    // Adjust radius and depth for shovel
+                    float radius = playerInventory.holdShovel ? mineRadius * 1.75f : mineRadius;
+                    float depth = playerInventory.holdShovel ? mineDepth * 1.0f : mineDepth;
+
                     helper.caveGenerator.MineCaveServerRpc(
-                        caveHit.Value.point, mineRadius, mineDepth, false);
+                        caveHit.Value.point, radius, depth, false);
+
                     mineTimer -= mineInterval;
                 }
             }
             return;
         }
 
-        if (oreHit.HasValue)
+        // Ore mining (pickaxe only)
+        if (oreHit.HasValue && playerInventory.holdPickaxe)
         {
             var hit = oreHit.Value;
             var mineTypeScript = hit.collider.GetComponent<MineType>();
@@ -345,6 +410,8 @@ public class LookAndClickInteraction : NetworkBehaviour
 
         // If we get here, nothing valid to mine
     }
+
+
 
 
 }

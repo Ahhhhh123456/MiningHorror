@@ -98,6 +98,8 @@ public class MonsterSpawn : NetworkBehaviour
             NavMeshHit hit;
             if (NavMesh.SamplePosition(pos, out hit, 1f, NavMesh.AllAreas))
             {
+                if (!IsServer) yield break;
+                
                 GameObject obj = Instantiate(monsterPrefab, hit.position, Quaternion.identity);
                 obj.GetComponent<NetworkObject>().Spawn();
             }

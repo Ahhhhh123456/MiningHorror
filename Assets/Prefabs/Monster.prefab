@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: -7180941461660291946}
   - component: {fileID: -1283193890664373486}
   - component: {fileID: -6590620268157734237}
+  - component: {fileID: 6558383172202955290}
   m_Layer: 0
   m_Name: Monster
   m_TagString: Untagged
@@ -133,12 +134,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  moveSpeed: 1
+  moveSpeed: 1.5
   chaseRange: 8
-  stopRange: 10
-  turnSpeed: 2
-  roamRadius: 20
-  roamWaitTime: 20
+  stopRange: 0
+  turnSpeed: 0.1
+  roamRadius: 8
+  roamWaitTime: 50
+  attackRange: 1.8
+  attackDamage: 5
+  attackCooldown: 5
 --- !u!114 &1423340175446991468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -151,6 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abe2183a605f2de46a4d875139138b3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 0}
 --- !u!54 &5691255859879234517
 Rigidbody:
@@ -283,6 +288,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &6558383172202955290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6181904206696759465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  TransitionStateInfoList: []
+  m_Animator: {fileID: 0}
 --- !u!1001 &4066513731535850877
 PrefabInstance:
   m_ObjectHideFlags: 0

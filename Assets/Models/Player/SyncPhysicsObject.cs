@@ -1,4 +1,4 @@
-using JetBrains.Rider.Unity.Editor;
+//using JetBrains.Rider.Unity.Editor;
 using UnityEngine;
 using Unity.Netcode;
 public class SyncPhysicsObject : MonoBehaviour

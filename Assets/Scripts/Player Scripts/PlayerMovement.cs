@@ -16,6 +16,8 @@ public class PlayerMovement : NetworkBehaviour
     public Rigidbody rb;
     public float verticalVelocity = 0f;
 
+    private float explosionLockTime = 0f;
+
     private Camera playerCamera;
     private AudioListener audioListener;
     private PlayerInventory inventory;
@@ -42,10 +44,10 @@ public class PlayerMovement : NetworkBehaviour
 
     public NetworkVariable<bool> isRagdollActive = new NetworkVariable<bool>(false);
 
-    [Header("Fall Damage Settings")]
-    public float fallDamageThreshold = -10f; // Minimum downward velocity to start taking damage
-    public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
-    private float previousVerticalVelocity = 0f; // Track previous frame's velocity
+    // [Header("Fall Damage Settings")]
+    // public float fallDamageThreshold = -10f; // Minimum downward velocity to start taking damage
+    // public float fallDamageMultiplier = 2f;  // Damage per unit of velocity beyond threshold
+    // private float previousVerticalVelocity = 0f; // Track previous frame's velocity
 
     [Header("Ladder Climbing Settings")]
     public float ladderDetectionRadius; // How close the player needs to be to grab the ladder
@@ -59,9 +61,19 @@ public class PlayerMovement : NetworkBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+
+        // if (!IsOwner)
+        // {
+        //     rb.isKinematic = true;   // ⭐ Disable physics on remote clients
+        //     rb.interpolation = RigidbodyInterpolation.Interpolate;
+        //     return;
+        // }
+        
         rb.freezeRotation = true;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.solverIterations = 12;          // default 6
+        rb.solverVelocityIterations = 12;  // default 1
 
         inventory = GetComponent<PlayerInventory>();
         stamina = GetComponent<PlayerStamina>();
@@ -84,7 +96,7 @@ public class PlayerMovement : NetworkBehaviour
 
 
     }
-    
+     
 
     void Awake()
     {
@@ -180,9 +192,9 @@ public class PlayerMovement : NetworkBehaviour
 
     void FixedUpdate()
     {
-        HandleMovement();
-
         if (!IsOwner) return;
+
+        HandleMovement();
 
         // Optional: Update ragdoll limbs after everything
         for (int i = 0; i < syncPhysicsObjects.Length; i++)
@@ -202,6 +214,12 @@ public class PlayerMovement : NetworkBehaviour
 
     public void HandleMovement()
     {
+        if (explosionLockTime > 0f)
+        {
+            explosionLockTime -= Time.fixedDeltaTime;
+            return; // Skip normal movement while being blasted
+        }
+
         LadderClimb();
 
         CapsuleCollider groundChecker = GetComponent<CapsuleCollider>();
@@ -217,10 +235,10 @@ public class PlayerMovement : NetworkBehaviour
         bool justLanded = !wasGrounded && isGrounded;
 
         // Apply fall damage if just landed
-        if (justLanded && verticalVelocity < fallDamageThreshold)
-        {
-            FallDamage(verticalVelocity);
-        }
+        // if (justLanded && verticalVelocity < fallDamageThreshold)
+        // {
+        //     FallDamage(verticalVelocity);
+        // }
 
         if (isGrounded && verticalVelocity < 0f)
         {
@@ -300,17 +318,17 @@ public class PlayerMovement : NetworkBehaviour
 
 
 
-    private void FallDamage(float impactVelocity)
-    {
-        float damage = Mathf.Abs(impactVelocity) * fallDamageMultiplier;
-        Debug.Log("Fall damage taken: " + damage);
+    // private void FallDamage(float impactVelocity)
+    // {
+    //     float damage = Mathf.Abs(impactVelocity) * fallDamageMultiplier;
+    //     Debug.Log("Fall damage taken: " + damage);
 
-        PlayerHealth health = GetComponent<PlayerHealth>();
-        if (health != null)
-        {
-            health.TakeDamageServerRpc(damage);
-        }
-    }
+    //     PlayerHealth health = GetComponent<PlayerHealth>();
+    //     if (health != null)
+    //     {
+    //         health.TakeDamageServerRpc(damage);
+    //     }
+    // }
 
     private void LadderClimb()
     {
@@ -347,6 +365,20 @@ public class PlayerMovement : NetworkBehaviour
         rb.linearVelocity = v;
     }
 
+    // public void ApplyExplosionForce(Vector3 force)
+    // {
+    //     if (!IsServer) return;  // Server controls physics in Netcode
+    //     rb.AddForce(force, ForceMode.Impulse);
+    //     explosionLockTime = 0.5f; 
+    // }
+
+
+    [ClientRpc]
+    public void ApplyExplosionForceClientRpc(Vector3 force)
+    {
+        rb.AddForce(force, ForceMode.VelocityChange);
+        explosionLockTime = 0.5f; 
+    }
 
     
 }

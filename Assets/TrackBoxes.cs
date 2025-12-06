@@ -11,6 +11,9 @@ public class TrackBoxes : NetworkBehaviour
     private Vector3 closestTargetPosition;
     private float timer;
 
+    public Transform compassArrow;     // the L CompassArrow
+    public float smoothRotate;   // smoothing speed
+
     [ServerRpc(RequireOwnership = false)]
     public void RequestClosestTargetServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -50,15 +53,48 @@ public class TrackBoxes : NetworkBehaviour
         }
     }
 
+    public void OnCompassEquipped(Transform compassRoot)
+    {
+        compassArrow = compassRoot.Find("CompassArrow");
+
+        if (compassArrow == null)
+            Debug.LogWarning("Compass arrow or tip not found!");
+    }
+
+    // [ClientRpc]
+    // private void SendClosestTargetClientRpc(Vector3 targetPos, string targetName, ClientRpcParams rpcParams = default)
+    // {
+    //     closestTargetPosition = targetPos;
+
+    //     Vector3 direction = (closestTargetPosition - transform.position).normalized;
+
+    //     // Log the direction for debugging
+    //     Debug.Log($"Direction to closest target: {direction}");
+
+    // }
+
     [ClientRpc]
     private void SendClosestTargetClientRpc(Vector3 targetPos, string targetName, ClientRpcParams rpcParams = default)
     {
         closestTargetPosition = targetPos;
 
-        Vector3 direction = (closestTargetPosition - transform.position).normalized;
+        Vector3 direction = (closestTargetPosition - compassArrow.position);
+        direction.y = 0f; // Keep arrow level
 
-        // Log the direction for debugging
-        Debug.Log($"Direction to closest target: {direction}");
+        if (direction != Vector3.zero)
+        {
+            // Rotate in the opposite direction by flipping forward
+            Quaternion targetRot = Quaternion.LookRotation(-direction); // <-- negate direction
 
+            // Rotate arrow base
+            if (compassArrow != null)
+                compassArrow.rotation = Quaternion.Lerp(
+                    compassArrow.rotation,
+                    targetRot,
+                    Time.deltaTime * smoothRotate);
+
+
+        }
     }
+
 }

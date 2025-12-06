@@ -1,25 +1,34 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.AI; // <--- IMPORTANT
+using System.Collections;
 
 public class MonsterFollow : NetworkBehaviour
 {
     [Header("Movement Settings")]
-    public float moveSpeed = 3f;
-    public float chaseRange = 10f;
-    public float stopRange = 2f;
-    public float turnSpeed = 20f;
+    public float moveSpeed;
+    public float chaseRange;
+    public float stopRange;
+    public float turnSpeed;
 
     [Header("Roaming Settings")]
-    public float roamRadius = 5f;
-    public float roamWaitTime = 2f;
+    public float roamRadius;
+    public float roamWaitTime;
 
     private Transform targetPlayer;
     private NavMeshAgent agent;
     private Vector3 spawnPosition;
     private float roamTimer;
 
-    private warden1Animator monsterAnim;
+    private bool isTraversingOffMeshLink = false;
+
+
+    [Header("Attack Settings")]
+    public float attackRange;
+    public float attackDamage;
+    public float attackCooldown;
+    private float nextAttackTime;
+    private Warden1Animator monsterAnim;
 
     private void Awake()
     {
@@ -27,7 +36,7 @@ public class MonsterFollow : NetworkBehaviour
         agent.speed = moveSpeed;
         spawnPosition = transform.position;
 
-        monsterAnim = GetComponent<warden1Animator>();
+        monsterAnim = GetComponent<Warden1Animator>();
     }
 
     private void Start()
@@ -63,13 +72,22 @@ public class MonsterFollow : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsServer) return; 
+        if (!IsServer) return;
 
-        targetPlayer = GetClosestPlayer(); 
-
+        targetPlayer = GetClosestPlayer();
         if (targetPlayer != null)
         {
             float distance = Vector3.Distance(transform.position, targetPlayer.position);
+
+            // Attack if close enough
+            if (distance <= attackRange)
+            {
+                TryAttackPlayer(targetPlayer);
+                agent.ResetPath(); // stop moving while attacking
+                return;
+            }
+
+            // Chase if in chase range
             if (distance < chaseRange)
             {
                 ChasePlayer();
@@ -78,6 +96,7 @@ public class MonsterFollow : NetworkBehaviour
         }
 
         Roam();
+        HandleOffMeshLinks();
 
         if (agent.velocity.magnitude < 0.1f)
         {
@@ -129,5 +148,67 @@ public class MonsterFollow : NetworkBehaviour
 
             monsterAnim?.SetWalk();
         }
+    }
+
+    private void TryAttackPlayer(Transform player)
+    {
+        // Cooldown
+        if (Time.time < nextAttackTime) return;
+        nextAttackTime = Time.time + attackCooldown;
+
+        // Get PlayerHealth component
+        PlayerHealth health = player.GetComponent<PlayerHealth>();
+        if (health != null)
+        {
+            health.TakeDamageServerRpc(attackDamage);
+        }
+
+        Debug.Log($"Monster attacked player {player.name} for {attackDamage} damage.");
+    }
+
+    private IEnumerator TraverseLink(NavMeshAgent agent)
+    {
+        OffMeshLinkData data = agent.currentOffMeshLinkData;
+
+        Vector3 startPos = agent.transform.position;
+        Vector3 endPos = data.endPos;
+
+        Debug.Log($"Monster started jumping from {startPos} to {endPos}");
+
+        float duration = 0.5f;  // Adjust for monster jump speed
+        float t = 0f;
+
+        // Height of the jump arc
+        float jumpHeight = 1.5f;
+
+        agent.updatePosition = false; // manual movement
+        agent.updateRotation = false;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / duration;
+
+            // Jump arc using a parabola
+            float height = 4 * jumpHeight * (t - t * t);
+
+            agent.transform.position = Vector3.Lerp(startPos, endPos, t) + Vector3.up * height;
+
+            yield return null;
+        }
+
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+
+        agent.CompleteOffMeshLink();
+        isTraversingOffMeshLink = false;
+    }
+
+    private void HandleOffMeshLinks()
+    {
+        if (!agent.isOnOffMeshLink || isTraversingOffMeshLink)
+            return;
+
+        isTraversingOffMeshLink = true;
+        StartCoroutine(TraverseLink(agent));
     }
 }

@@ -18,9 +18,11 @@ public class SteamLobbyManager : MonoBehaviour
     {
 
         DontDestroyOnLoad(gameObject);
-        lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
-        gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
-        lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+        // lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
+        // gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
+        // lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+
+        
     }
     void Start()
     {
@@ -28,9 +30,10 @@ public class SteamLobbyManager : MonoBehaviour
         steamTransport = NetworkManager.Singleton.GetComponent<SteamNetworkingSocketsTransport>();
 
         // Hook up Steamworks callbacks
-        // lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
-        // gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
-        // lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+        lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
+        gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
+        lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+
 
         // Optional: NGO connection debug logging
         NetworkManager.Singleton.OnClientConnectedCallback += (id) =>
@@ -54,22 +57,29 @@ public class SteamLobbyManager : MonoBehaviour
         }
     }
 
-    void Update()
+    public void MakeLobby()
     {
-        // Press H to create a Steam lobby (host)
-        if (Input.GetKeyDown(KeyCode.H))
-        {
-            if (!NetworkManager.Singleton.IsListening)
-            {
-                Debug.Log("Creating Steam Lobby...");
-                SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, 4); // Max 4 players
-            }
-            else
-            {
-                Debug.LogWarning("NetworkManager is already running!");
-            }
-        }
+        Debug.Log("Creating Steam Lobby...");
+        SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, 4); // Max 4 players
     }
+
+    // Used for debugging
+    // void Update()
+    // {
+    //     // Press H to create a Steam lobby (host)
+    //     if (Input.GetKeyDown(KeyCode.H))
+    //     {
+    //         if (!NetworkManager.Singleton.IsListening)
+    //         {
+    //             Debug.Log("Creating Steam Lobby...");
+    //             SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, 4); // Max 4 players
+    //         }
+    //         else
+    //         {
+    //             Debug.LogWarning("NetworkManager is already running!");
+    //         }
+    //     }
+    // }
 
     // Called when host successfully creates a lobby
     private void OnLobbyCreated(LobbyCreated_t callback)

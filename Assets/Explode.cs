@@ -4,10 +4,12 @@ using System.Collections;
 
 public class Explode : NetworkBehaviour
 {
-    public float explosionRadius = 5f;
-    public float carveDepth = 1.2f; // how strong it carves the cave
+    public float explosionRadius;
+    public float carveDepth; // how strong it carves the cave
     public ParticleSystem explosionParticles;
-    public AudioClip explosionSFX;
+
+    public float knockbackForce = 3000f;
+
 
     public void Explosion()
     {
@@ -38,7 +40,25 @@ public class Explode : NetworkBehaviour
                 ore.oreData.durability = 1; // skip mining, instantly break
                 ore.MiningOre(Vector3.zero, Vector3.zero); // break now
             }
+
+            // Player check
+            PlayerMovement pm = hit.GetComponent<PlayerMovement>();
+            if (pm != null)
+            {
+                Vector3 dir = (pm.transform.position - pos).normalized;
+                dir.y += 1.3f;
+                dir.Normalize();
+
+                float dist = Vector3.Distance(pm.transform.position, pos);
+                float falloff = 1f - (dist / explosionRadius);
+                falloff = Mathf.Pow(falloff, 0.5f);   // stronger close to center
+                falloff = Mathf.Max(falloff, 0.35f);  // guarantee minimum push
+
+                pm.ApplyExplosionForceClientRpc(dir * knockbackForce * falloff);
+            }
         }
+
+        
 
         // 2) Carve into cave mesh
         var caveGenerator = FindObjectOfType<MarchingCubes>();
@@ -70,9 +90,6 @@ public class Explode : NetworkBehaviour
             Destroy(fx.gameObject, fx.main.duration + fx.main.startLifetime.constantMax);
         }
 
-        if (explosionSFX != null)
-        {
-            AudioManager.instance.PlaySFXClip(explosionSFX.name, transform);
-        }
+        AudioManager.instance.PlaySFXClip("eplosion sfx", transform);
     }
 }

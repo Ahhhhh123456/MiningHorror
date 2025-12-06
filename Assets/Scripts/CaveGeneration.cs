@@ -28,21 +28,21 @@ public class CaveGeneration : NetworkBehaviour
         CreateCave();
     }
 
-public override void OnNetworkSpawn()
-{
-    base.OnNetworkSpawn();
-
-    if (IsServer)
+    public override void OnNetworkSpawn()
     {
-        NetworkManager.Singleton.OnClientConnectedCallback += (clientId) =>
-        {
-            if (clientId == NetworkManager.Singleton.LocalClientId) return; // skip host
+        base.OnNetworkSpawn();
 
-            Debug.Log("Host: Client connected, generating cave...");
-            StartCoroutine(SpawnOresBatched()); // generate NetworkObjects for ores safely
-        };
+        if (IsServer)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback += (clientId) =>
+            {
+                if (clientId == NetworkManager.Singleton.LocalClientId) return; // skip host
+
+                Debug.Log("Host: Client connected, generating cave...");
+                StartCoroutine(SpawnOresBatched()); // generate NetworkObjects for ores safely
+            };
+        }
     }
-}
 
 
 

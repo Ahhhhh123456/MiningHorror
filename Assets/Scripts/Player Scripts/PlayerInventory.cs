@@ -60,10 +60,15 @@ public class PlayerInventory : NetworkBehaviour
     public Transform holdPosition;
     public Transform pickaxePosition;
 
+    public bool holdTool = false;
+
     public bool holdPickaxe = false;
+
+    public bool holdShovel = false;
 
     public bool IsHoldingCompass = false;
     public GameObject currentHeldItem;
+    
     private Dictionary<string, GameObject> prefabLookup;
 
     public float playerWeight = 0f;
@@ -75,6 +80,8 @@ public class PlayerInventory : NetworkBehaviour
 
     public Canvas inventoryCanvas;
     public ItemType itemType;
+
+    private ItemData currentHeldItemData;
 
     [Header("Prefab Assignments")]
     public List<ItemPrefabEntry> prefabEntries; // drag prefabs in Inspector
@@ -116,12 +123,31 @@ public class PlayerInventory : NetworkBehaviour
         playerMovement = GetComponent<PlayerMovement>();
 
         Debug.Log($"[PlayerInventory] Reinitialized references: mineType={mineType}, itemType={itemType}, playerMovement={playerMovement}");
+        ResetInventoryServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ResetInventoryServerRpc()
+    {
+        ResetInventory(); // safe, runs on server
+        Debug.Log("[PlayerInventory] Inventory reset on scene load.");
+    }
+
+    public void ResetInventory()
+    {
+        NetworkOres.Clear();
+        NetworkItems.Clear();
+        playerWeight = 0;
+
+        // Clear held item
+        currentSlotIndex = -1;
+        ClearHeldItemClientRpc();
     }
 
     private void OnSceneLoaded(string sceneName, LoadSceneMode loadSceneMode,
                             List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        if (!IsOwner) return; // Only reinitialize for this client
+        if (!IsClient) return; // Only reinitialize for this client
 
         // Re-fetch scene-specific references
         ReinitializeSceneReferences();
@@ -383,8 +409,12 @@ public class PlayerInventory : NetworkBehaviour
             return;
         }
 
+
+
         // Debug which references are valid
         Debug.Log($"mineType={mineType != null}, itemType={itemType != null}, playerMovement={playerMovement != null}");
+
+        
 
         // ---- Ore Inventory ----
         for (int i = 0; i < NetworkOres.Count; i++)
@@ -421,6 +451,8 @@ public class PlayerInventory : NetworkBehaviour
         // ---- General Items ----
         for (int i = 0; i < NetworkItems.Count; i++)
         {
+
+            
             if (NetworkItems[i].ToString().Equals(itemName, StringComparison.OrdinalIgnoreCase))
             {
                 NetworkItems[i] = new FixedString32Bytes("");
@@ -431,8 +463,12 @@ public class PlayerInventory : NetworkBehaviour
                     playerWeight -= itemWeight;
                     if (playerMovement != null)
                         playerMovement.UpdateMoveSpeed();
-
+                    holdTool = false;
+                    holdPickaxe = false;
+                    holdShovel = false;
+                    IsHoldingCompass = false;
                     Debug.Log($"[Inventory] Dropped '{itemName}' (Weight {itemWeight}). Total weight: {playerWeight}");
+
                 }
                 else
                 {
@@ -554,29 +590,35 @@ public class PlayerInventory : NetworkBehaviour
         UpdateHeldItemClientRpc(index);
     }
 
-
-    // Update visuals for this player
     [ClientRpc]
     public void UpdateHeldItemClientRpc(int index)
     {
-
-        // Destroy current held item if it exists
+        // Destroy previous held item
         if (currentHeldItem != null)
         {
             Destroy(currentHeldItem);
             currentHeldItem = null;
         }
 
-        // If invalid index, clear held item and reset flags
+        // Invalid index
         if (index < 0 || index >= NetworkItems.Count)
         {
-            holdPickaxe = false;
+            holdTool = holdPickaxe = holdShovel = IsHoldingCompass = false;
+            currentHeldItemData = null;
             Debug.Log("No item held.");
             return;
         }
 
         string itemName = NetworkItems[index].ToString();
 
+        // Get the data for this item
+        if (!itemType.itemDatabase.TryGetValue(itemName, out currentHeldItemData))
+        {
+            Debug.LogWarning($"Item {itemName} not found in database!");
+            return;
+        }
+
+        // Get prefab
         // NEW CHECK: If the slot is empty, just clear the held item
         if (string.IsNullOrEmpty(itemName))
         {
@@ -587,44 +629,38 @@ public class PlayerInventory : NetworkBehaviour
 
         if (!prefabLookup.TryGetValue(itemName, out GameObject prefab))
         {
-            holdPickaxe = false;
+            holdTool = holdPickaxe = holdShovel = false;
             Debug.LogWarning($"Prefab not found for {itemName}");
             return;
         }
 
         ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
 
-        // Determine hold position (tool vs default)
+        // Tool handling
         Transform targetHoldPosition = holdPosition;
-        if (itemType.itemDatabase.ContainsKey(itemName) &&
-            itemType.itemDatabase[itemName].category == ItemCategory.Tool)
+        holdTool = holdPickaxe = holdShovel = false;
+
+        if (currentHeldItemData.category == ItemCategory.Tool)
         {
             targetHoldPosition = pickaxePosition;
-            holdPickaxe = true;
-            Debug.Log("Holding pickaxe for mining.");
-        }
-        else
-        {
-            holdPickaxe = false;
-            Debug.Log($"Not holding pickaxe. Holding {itemName}");
+            holdTool = true;
+            if (itemName.Contains("Pickaxe")) holdPickaxe = true;
+            if (itemName.Contains("Shovel")) holdShovel = true;
+            Debug.Log($"Holding tool: {itemName}");
         }
 
-        if (itemName.Contains("Compass"))
-        {
-            IsHoldingCompass = true;
-            Debug.Log("Holding compass.");
-        }
-        else
-        {
-            IsHoldingCompass = false;
-        }
+        // Compass handling
+        IsHoldingCompass = itemName.Contains("Compass");
 
-
-        // Instantiate the held item for all clients
+        // Instantiate prefab
         currentHeldItem = Instantiate(prefab, targetHoldPosition);
         currentHeldItem.name = prefab.name;
         currentHeldItem.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
         currentHeldItem.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
+
+
+        itemType = FindObjectOfType<ItemType>();
+
 
         Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();
         if (rb != null)
@@ -632,7 +668,18 @@ public class PlayerInventory : NetworkBehaviour
             rb.isKinematic = true;
             rb.useGravity = false;
         }
+
+        foreach (var col in currentHeldItem.GetComponentsInChildren<Collider>())
+            col.enabled = false;
+
+        // Compass callback
+        if (IsHoldingCompass)
+        {
+            TrackBoxes trackBoxes = GetComponent<TrackBoxes>();
+            trackBoxes?.OnCompassEquipped(currentHeldItem.transform);
+        }
     }
+
     
 
 
@@ -676,6 +723,11 @@ public class PlayerInventory : NetworkBehaviour
         // Instantiate just like UpdateHeldItemClientRpc
         GameObject itemInstance = Instantiate(prefab, targetHoldPosition);
         itemInstance.name = prefab.name;
+        if (itemInstance.name.Contains("Dynamite"))
+        {
+            Debug.Log("Created dynamite instance.");
+            itemInstance.tag = "Untagged";
+        }
         itemInstance.transform.localPosition = entry != null ? entry.holdPositionOffset : Vector3.zero;
         itemInstance.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
         Debug.Log($"Found rotation for {itemName}: {itemInstance.transform.localRotation.eulerAngles}");

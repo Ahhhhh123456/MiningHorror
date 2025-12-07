@@ -1603,7 +1603,7 @@ GameObject:
   - component: {fileID: 1287954924}
   - component: {fileID: 1287954923}
   - component: {fileID: 1287954922}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Plane (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1694,7 +1694,7 @@ Transform:
   m_GameObject: {fileID: 1287954921}
   serializedVersion: 2
   m_LocalRotation: {x: -1, y: 0, z: 0, w: 0}
-  m_LocalPosition: {x: 49.3, y: 62.1, z: 48.6}
+  m_LocalPosition: {x: 49.3, y: 60.64, z: 48.6}
   m_LocalScale: {x: 26.308577, y: 1, z: 27.050467}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2768,7 +2768,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  teleportPosition: {x: 0, y: 0, z: 0}
+  fallbackTeleportPosition: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

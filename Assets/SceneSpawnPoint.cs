@@ -14,7 +14,6 @@ public class SceneSpawnPoint : NetworkBehaviour
 
     public Transform latestSpawnPoint { get; private set; }
 
-    // Event to notify when the spawn point is ready
     public static event System.Action<Vector3> OnSpawnPointReady;
 
     private void Awake()
@@ -33,7 +32,8 @@ public class SceneSpawnPoint : NetworkBehaviour
             yield break;
         }
 
-        List<Vector3> floorPositions = new List<Vector3>();
+        List<Vector3> validSurfacePoints = new List<Vector3>();
+
         int width = caveGenerator.caveWidth;
         int height = caveGenerator.caveHeight;
         int depth = caveGenerator.caveDepth;
@@ -47,22 +47,37 @@ public class SceneSpawnPoint : NetworkBehaviour
             {
                 for (int z = 1; z < depth - 1; z++)
                 {
+                    // Same walkable check
                     if (density[x, y, z] <= iso) continue;
                     if (density[x, y + 1, z] > iso) continue;
                     if (density[x, y + 2, z] > iso) continue;
 
-                    floorPositions.Add(new Vector3(x + 0.5f, y + 1.05f, z + 0.5f) * res);
+                    // Approx rough position
+                    Vector3 approx = new Vector3(
+                        x + 0.5f,
+                        y + 3f,          // start ray above expected floor
+                        z + 0.5f
+                    ) * res;
+
+                    // Raycast down to the REAL mesh
+                    if (Physics.Raycast(approx, Vector3.down, out RaycastHit hit, 10f))
+                    {
+                        if (Vector3.Angle(hit.normal, Vector3.up) < 35f) // slope check
+                        {
+                            validSurfacePoints.Add(hit.point + Vector3.up * 0.1f);
+                        }
+                    }
                 }
             }
         }
 
-        if (floorPositions.Count == 0)
+        if (validSurfacePoints.Count == 0)
         {
-            Debug.LogWarning("No walkable positions found!");
+            Debug.LogWarning("No valid raycast-grounded spawn positions found!");
             yield break;
         }
 
-        Vector3 spawnPos = floorPositions[Random.Range(0, floorPositions.Count)];
+        Vector3 spawnPos = validSurfacePoints[Random.Range(0, validSurfacePoints.Count)];
 
         if (spawnPointPrefab != null)
         {
@@ -73,19 +88,18 @@ public class SceneSpawnPoint : NetworkBehaviour
             NetworkObject netObj = obj.GetComponent<NetworkObject>();
             if (netObj != null && IsServer)
             {
-                netObj.Spawn(); // Spawn on all clients
+                netObj.Spawn();
 
-                // Notify all players of the spawn position
                 foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
                 {
                     PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
                     if (ps != null)
-                        ps.SetSpawnPosition(spawnPos); // <-- this updates the NetworkVariable
+                        ps.SetSpawnPosition(spawnPos);
                 }
             }
 
             OnSpawnPointReady?.Invoke(spawnPos);
-            Debug.Log($"Spawn point instantiated at {spawnPos}");
+            Debug.Log($"Spawn point placed at {spawnPos}");
         }
     }
 }

@@ -2744,7 +2744,7 @@ MonoBehaviour:
   generalPanel: {fileID: 605693005549880430}
   videoPanel: {fileID: 4868742666562906603}
   audioPanel: {fileID: 2154192120201148406}
-  pauseKey: 27
+  pauseKey: 282
 --- !u!1 &3382507352548371615
 GameObject:
   m_ObjectHideFlags: 0

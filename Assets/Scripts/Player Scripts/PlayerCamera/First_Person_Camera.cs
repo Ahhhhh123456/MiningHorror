@@ -46,7 +46,7 @@ public class First_Person_Camera : MonoBehaviour
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Exponential; // can also be Linear if you want
         RenderSettings.fogColor = Color.black;
-        RenderSettings.fogDensity = 0.3f; // adjust for how dense you want it
+        RenderSettings.fogDensity = 0.25f; // adjust for how dense you want it
 
         // Camera settings
         Camera cam = GetComponent<Camera>();

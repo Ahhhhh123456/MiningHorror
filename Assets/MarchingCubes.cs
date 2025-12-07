@@ -63,65 +63,65 @@ public class MarchingCubes : NetworkBehaviour
     }
 
 
-    // public override void OnNetworkSpawn()
-    // {
-    //     base.OnNetworkSpawn();
-
-    //     if (IsServer)
-    //     {
-    //         noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
-    //         isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
-
-    //         // Listen for clients joining
-    //         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-    //     }
-    // }
-
-
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
         if (IsServer)
         {
-            NetworkManager.SceneManager.OnLoadComplete += OnNetworkSceneLoaded;
-        }
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        if (IsServer)
-        {
-            NetworkManager.SceneManager.OnLoadComplete -= OnNetworkSceneLoaded;
-        }
-    }
-
-    private void OnNetworkSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
-    {
-        Debug.Log($"[Netcode] Scene loaded for client {clientId}: {sceneName}");
-
-        // Only run logic once the SERVER finishes loading the Cave scene
-        if (IsServer)
-        {
             noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
             isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
-            Debug.Log("Cave scene finished loading — initializing marching cubes.");
-            SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
 
-            StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
-            {
-                // Tell all clients the spawn position via PlayerSpawn
-                foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
-                {
-                    PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
-                    if (ps != null)
-                        ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
-                }
-            }));
+            // Listen for clients joining
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
         }
+    }
+
+
+    // public override void OnNetworkSpawn()
+    // {
+    //     base.OnNetworkSpawn();
+
+    //     if (IsServer)
+    //     {
+    //         NetworkManager.SceneManager.OnLoadComplete += OnNetworkSceneLoaded;
+    //     }
+    // }
+
+    // public override void OnNetworkDespawn()
+    // {
+    //     if (IsServer)
+    //     {
+    //         NetworkManager.SceneManager.OnLoadComplete -= OnNetworkSceneLoaded;
+    //     }
+    // }
+
+    // private void OnNetworkSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
+    // {
+    //     Debug.Log($"[Netcode] Scene loaded for client {clientId}: {sceneName}");
+
+    //     // Only run logic once the SERVER finishes loading the Cave scene
+    //     if (IsServer)
+    //     {
+    //         noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
+    //         isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
+    //         Debug.Log("Cave scene finished loading — initializing marching cubes.");
+    //         SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
+
+    //         StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
+    //         {
+    //             // Tell all clients the spawn position via PlayerSpawn
+    //             foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+    //             {
+    //                 PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
+    //                 if (ps != null)
+    //                     ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
+    //             }
+    //         }));
+    //     }
 
         
-    }
+    // }
 
 
     private void OnClientConnected(ulong clientId)

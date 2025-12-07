@@ -3,40 +3,27 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode; 
 using Unity.AI.Navigation;
+
 public class BoxSpawner : NetworkBehaviour
 {
     [Header("Prefabs")]
     public GameObject box1;
     public GameObject box2;
-    public GameObject box3And4; // shared prefab for box3 and box4
+    public GameObject box3And4;
 
     public DrillBoxData bodyData;
-
     public DrillBoxData headData;
-
     public DrillBoxData wheelData;
 
     private MarchingCubes caveGenerator;
 
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
-
-        // Called In CreateCave (MarchingCubes.cs)
-        //StartCoroutine(SpawnBoxesOnSurface());
-        
-    }
-
     void Awake()
     {
-        // Get the MarchingCubes component on the same object
         caveGenerator = GetComponent<MarchingCubes>();
         if (caveGenerator == null)
-        {
-            Debug.LogError("MarchingCubes component not found on this GameObject!");
-            return;
-        }
+            Debug.LogError("MarchingCubes component missing!");
     }
+
     public IEnumerator SpawnBoxesOnSurface()
     {
         if (caveGenerator.densityMap == null)
@@ -46,7 +33,7 @@ public class BoxSpawner : NetworkBehaviour
         }
 
         GameObject[] boxes = new GameObject[] { box1, box2, box3And4, box3And4 };
-        List<Vector3> floorPositions = new List<Vector3>();
+        List<Vector3> surfacePoints = new List<Vector3>();
 
         int width = caveGenerator.caveWidth;
         int height = caveGenerator.caveHeight;
@@ -56,94 +43,73 @@ public class BoxSpawner : NetworkBehaviour
 
         float[,,] density = caveGenerator.densityMap;
 
-        // --- Scan only for walkable floor ---
         for (int x = 1; x < width - 1; x++)
         {
-            for (int y = 1; y < height - 3; y++)   // leave space for headroom
+            for (int y = 1; y < height - 3; y++)
             {
                 for (int z = 1; z < depth - 1; z++)
                 {
-                    if (!IsWalkableFloor(density, x, y, z, iso))
-                        continue;
+                    if (density[x, y, z] <= iso) continue;
+                    if (density[x, y + 1, z] > iso) continue;
+                    if (density[x, y + 2, z] > iso) continue;
 
-                    // The box should sit ON the floor, not inside it
-                    Vector3 pos = new Vector3(
-                        x + 0.5f, 
-                        y + 1.05f,    // slightly above floor
+                    Vector3 approx = new Vector3(
+                        x + 0.5f,
+                        y + 3f,
                         z + 0.5f
                     ) * res;
 
-                    floorPositions.Add(pos);
+                    if (Physics.Raycast(approx, Vector3.down, out RaycastHit hit, 10f))
+                    {
+                        if (Vector3.Angle(hit.normal, Vector3.up) < 35f)
+                        {
+                            surfacePoints.Add(hit.point + Vector3.up * 0.1f);
+                        }
+                    }
                 }
             }
         }
 
-        if (floorPositions.Count < boxes.Length)
+        if (surfacePoints.Count < boxes.Length)
         {
-            Debug.LogWarning("[BoxGen] Not enough walkable floor positions.");
+            Debug.LogWarning("Not enough valid floor positions for boxes.");
             yield break;
         }
 
-        // Shuffle positions
-        for (int i = 0; i < floorPositions.Count; i++)
+        // Shuffle
+        for (int i = 0; i < surfacePoints.Count; i++)
         {
-            int rand = Random.Range(i, floorPositions.Count);
-            (floorPositions[i], floorPositions[rand]) = (floorPositions[rand], floorPositions[i]);
+            int rand = Random.Range(i, surfacePoints.Count);
+            (surfacePoints[i], surfacePoints[rand]) = (surfacePoints[rand], surfacePoints[i]);
         }
 
         // Spawn boxes
         for (int i = 0; i < boxes.Length; i++)
         {
-            Vector3 spawnPos = floorPositions[i];
+            Vector3 spawnPos = surfacePoints[i];
             GameObject prefab = boxes[i];
 
             NetworkObject boxInstance = Instantiate(prefab, spawnPos, Quaternion.identity)
                                         .GetComponent<NetworkObject>();
 
-            // NavMesh ignore
             NavMeshModifier mod = boxInstance.GetComponent<NavMeshModifier>();
-            if (mod == null) 
+            if (mod == null)
                 mod = boxInstance.gameObject.AddComponent<NavMeshModifier>();
             mod.ignoreFromBuild = true;
 
             boxInstance.Spawn();
 
-            // Initialize properties
             NetworkedBoxData netData = boxInstance.GetComponent<NetworkedBoxData>();
-            if (prefab == box1)
-                netData.InitializeFromDrillBoxData(bodyData);
-            else if (prefab == box2)
-                netData.InitializeFromDrillBoxData(headData);
-            else
-                netData.InitializeFromDrillBoxData(wheelData);
+
+            if (prefab == box1) netData.InitializeFromDrillBoxData(bodyData);
+            else if (prefab == box2) netData.InitializeFromDrillBoxData(headData);
+            else netData.InitializeFromDrillBoxData(wheelData);
 
             boxInstance.name = prefab.name;
 
             yield return null;
         }
 
-        Debug.Log("[BoxGen] Finished spawning boxes on walkable cave floor.");
+        Debug.Log("Boxes spawned using raycast-grounded placement.");
     }
-
-
-
-    private bool IsWalkableFloor(float[,,] density, int x, int y, int z, float iso)
-    {
-        // Must be solid at this voxel = floor
-        if (density[x, y, z] <= iso)
-            return false;
-
-        // Must be air above = standable
-        if (density[x, y + 1, z] > iso)
-            return false;
-
-        // Head clearance (optional but recommended)
-        if (density[x, y + 2, z] > iso)
-            return false;
-
-        return true;
-    }
-
-
-
 }

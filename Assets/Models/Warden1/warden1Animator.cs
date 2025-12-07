@@ -9,7 +9,7 @@ public class Warden1Animator : NetworkBehaviour
     public Animator animator;                  // The runtime-created Animator (child)
     private NetworkAnimator networkAnimator;   // NetworkAnimator to sync animation
 
-    public enum Warden1State { IDLE, WALK }
+    public enum Warden1State { IDLE, WALK, ATTACK }
     private Warden1State currentState;
 
     private Warden1State CurrentState
@@ -24,7 +24,8 @@ public class Warden1Animator : NetworkBehaviour
             if (IsServer)
             {
                 animator.SetBool("isWalking", currentState == Warden1State.WALK);
-                // NetworkAnimator automatically syncs this parameter to clients
+                animator.SetBool("isAttacking", currentState == Warden1State.ATTACK);
+                // NetworkAnimator automatically syncs these parameters to clients
             }
         }
     }
@@ -59,6 +60,7 @@ public class Warden1Animator : NetworkBehaviour
         if (!IsServer) return;
         CurrentState = Warden1State.IDLE;
         animator.SetBool("isWalking", false); // server sets this, NetworkAnimator syncs
+        animator.SetBool("isAttacking", false); // Ensure attacking is false when idle
     }
 
     public void SetWalk()
@@ -66,6 +68,15 @@ public class Warden1Animator : NetworkBehaviour
         if (!IsServer) return;
         CurrentState = Warden1State.WALK;
         animator.SetBool("isWalking", true); // server sets this, NetworkAnimator syncs
+        animator.SetBool("isAttacking", false); // Ensure attacking is false when walking
+    }
+
+    public void SetAttack()
+    {
+        if (!IsServer) return;
+        CurrentState = Warden1State.ATTACK;
+        animator.SetBool("isWalking", false); // Ensure walking is false when attacking
+        animator.SetBool("isAttacking", true); // server sets this, NetworkAnimator syncs
     }
 
     #endregion

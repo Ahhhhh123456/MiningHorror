@@ -30,6 +30,18 @@ public class MonsterFollow : NetworkBehaviour
     private float nextAttackTime;
     private Warden1Animator monsterAnim;
 
+    [Header("Summoning Settings")]
+    public GameObject monsterPrefab;      // Assign your Monster prefab (NetworkObject)
+    public float summonDelay = 5f;        // Time monster must be aggro'd before summoning
+    public int minSummons = 1;            // Minimum monsters to summon
+    public int maxSummons = 3;            // Maximum monsters to summon
+    public float summonRadius = 3f;       // Distance from this monster to spawn
+
+    public float summonCooldown = 30f;    // Prevents spamming summons
+
+    private float aggroTimer = 0f;        // Tracks how long chasing
+    private static float globalNextSummonTime = 0f;
+
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -91,7 +103,31 @@ public class MonsterFollow : NetworkBehaviour
             if (distance < chaseRange)
             {
                 ChasePlayer();
+
+                // Increment aggro timer while chasing
+                aggroTimer += Time.deltaTime;
+
+                // Try to summon reinforcements
+                if (aggroTimer >= summonDelay && Time.time >= globalNextSummonTime)
+                {
+                    globalNextSummonTime = Time.time + summonCooldown; // Update global cooldown
+                    aggroTimer = 0f;
+
+                    int count = Random.Range(minSummons, maxSummons + 1);
+                    for (int i = 0; i < count; i++)
+                    {
+                        SpawnReinforcement();
+                    }
+
+                    Debug.Log($"Global summon triggered by {name}, next available in {summonCooldown} seconds.");
+                }
+
                 return;
+            }
+            else
+            {
+                // Reset aggro timer if no target
+                aggroTimer = 0f;
             }
         }
 
@@ -152,11 +188,21 @@ public class MonsterFollow : NetworkBehaviour
 
     private void TryAttackPlayer(Transform player)
     {
-        // Cooldown
+        // Cooldown check
         if (Time.time < nextAttackTime) return;
         nextAttackTime = Time.time + attackCooldown;
 
-        // Get PlayerHealth component
+        // Start attack animation
+        monsterAnim?.SetAttack();
+
+        // Apply damage after animation delay
+        StartCoroutine(DealDamageAfterDelay(player, 1.0f)); // 2 = attack animation wind-up
+    }
+
+    private IEnumerator DealDamageAfterDelay(Transform player, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
         PlayerHealth health = player.GetComponent<PlayerHealth>();
         if (health != null)
         {
@@ -210,5 +256,31 @@ public class MonsterFollow : NetworkBehaviour
 
         isTraversingOffMeshLink = true;
         StartCoroutine(TraverseLink(agent));
+    }
+
+
+    private void SpawnReinforcement()
+    {
+        if (!IsServer) return; // Only the server spawns monsters
+
+        Vector3 offset = Random.insideUnitSphere * summonRadius;
+        offset.y = 0f; // Keep on the same plane
+
+        Vector3 spawnPos = transform.position + offset;
+
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(spawnPos, out hit, 1.5f, NavMesh.AllAreas))
+        {
+            GameObject monster = Instantiate(monsterPrefab, hit.position, Quaternion.identity);
+            NetworkObject netObj = monster.GetComponent<NetworkObject>();
+            if (netObj != null)
+            {
+                netObj.Spawn();
+            }
+            else
+            {
+                Debug.LogError("Monster prefab missing NetworkObject component!");
+            }
+        }
     }
 }

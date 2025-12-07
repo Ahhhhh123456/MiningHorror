@@ -143,6 +143,12 @@ MonoBehaviour:
   attackRange: 1.8
   attackDamage: 5
   attackCooldown: 5
+  monsterPrefab: {fileID: 6181904206696759465}
+  summonDelay: 5
+  minSummons: 1
+  maxSummons: 3
+  summonRadius: 3
+  summonCooldown: 20
 --- !u!114 &1423340175446991468
 MonoBehaviour:
   m_ObjectHideFlags: 0

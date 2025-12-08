@@ -13,7 +13,8 @@ public class ItemType : MonoBehaviour
         {"Ladder", new ItemData(5f, ItemCategory.Misc)},
         {"Dynamite", new ItemData(2f, ItemCategory.Misc)},
         {"Compass", new ItemData(0.01f, ItemCategory.Misc)},
-        {"JumpPad", new ItemData(3f, ItemCategory.Misc)}
+        {"JumpPad", new ItemData(3f, ItemCategory.Misc)},
+        {"Torch", new ItemData(1f, ItemCategory.Tool)}
     };
     
 }

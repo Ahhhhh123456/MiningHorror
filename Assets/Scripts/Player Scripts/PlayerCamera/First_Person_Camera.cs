@@ -46,7 +46,7 @@ public class First_Person_Camera : MonoBehaviour
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Exponential; // can also be Linear if you want
         RenderSettings.fogColor = Color.black;
-        RenderSettings.fogDensity = 0.25f; // adjust for how dense you want it
+        RenderSettings.fogDensity = 0.4f; // adjust for how dense you want it
 
         // Camera settings
         Camera cam = GetComponent<Camera>();
@@ -61,23 +61,7 @@ public class First_Person_Camera : MonoBehaviour
             Debug.LogWarning("First_Person_Camera: No Camera component found on this object.");
         }
     }
-    // void LateUpdate()
-    // {
-    //     if (playerBody == null || playerRb == null || head == null)
-    //         return;
 
-    //     float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-    //     float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
-
-    //     // Vertical look (pitch) on the Head
-    //     xRotation -= mouseY;
-    //     xRotation = Mathf.Clamp(xRotation, -85f, 85f);
-    //     head.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
-
-    //     // Horizontal look (yaw) on the Rigidbody
-    //     Quaternion deltaRotation = Quaternion.Euler(0f, mouseX, 0f);
-    //     playerRb.MoveRotation(playerRb.rotation * deltaRotation);
-    // }
     void LateUpdate()
     {
         if (playerBody == null || playerRb == null || head == null)

@@ -593,6 +593,10 @@ public class PlayerInventory : NetworkBehaviour
     [ClientRpc]
     public void UpdateHeldItemClientRpc(int index)
     {
+        // Tool handling
+        Transform targetHoldPosition = holdPosition;
+        holdTool = holdPickaxe = holdShovel = false;
+
         // Destroy previous held item
         if (currentHeldItem != null)
         {
@@ -611,6 +615,23 @@ public class PlayerInventory : NetworkBehaviour
 
         string itemName = NetworkItems[index].ToString();
 
+        if (string.IsNullOrEmpty(itemName))
+        {
+            holdTool = holdPickaxe = holdShovel = false;
+            IsHoldingCompass = false;
+            currentHeldItemData = null;
+
+            // Apply fog correctly for empty slot
+            if (IsOwner)
+            {
+                ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
+                fog.ApplyDarkFog();
+            }
+
+            Debug.Log("Selected slot is empty.");
+            return;
+        }
+
         // Get the data for this item
         if (!itemType.itemDatabase.TryGetValue(itemName, out currentHeldItemData))
         {
@@ -618,14 +639,7 @@ public class PlayerInventory : NetworkBehaviour
             return;
         }
 
-        // Get prefab
-        // NEW CHECK: If the slot is empty, just clear the held item
-        if (string.IsNullOrEmpty(itemName))
-        {
-            holdPickaxe = false;
-            Debug.Log("Selected slot is empty.");
-            return; // The 'Destroy' at the top (line 396) already cleared the item
-        }
+
 
         if (!prefabLookup.TryGetValue(itemName, out GameObject prefab))
         {
@@ -636,16 +650,20 @@ public class PlayerInventory : NetworkBehaviour
 
         ItemPrefabEntry entry = prefabEntries.Find(e => e.itemName == itemName);
 
-        // Tool handling
-        Transform targetHoldPosition = holdPosition;
-        holdTool = holdPickaxe = holdShovel = false;
-
         if (currentHeldItemData.category == ItemCategory.Tool)
         {
             targetHoldPosition = pickaxePosition;
             holdTool = true;
             if (itemName.Contains("Pickaxe")) holdPickaxe = true;
             if (itemName.Contains("Shovel")) holdShovel = true;
+            if (itemName.Contains("Torch"))
+            {
+                if (IsOwner)
+                {
+                    ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
+                    fog.ApplyTorchFog();
+                }
+            }
             Debug.Log($"Holding tool: {itemName}");
         }
 
@@ -659,7 +677,7 @@ public class PlayerInventory : NetworkBehaviour
         currentHeldItem.transform.localRotation = entry != null ? Quaternion.Euler(entry.holdRotation) : Quaternion.identity;
 
 
-        itemType = FindObjectOfType<ItemType>();
+        //itemType = FindObjectOfType<ItemType>();
 
 
         Rigidbody rb = currentHeldItem.GetComponent<Rigidbody>();

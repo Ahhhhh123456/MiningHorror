@@ -6,7 +6,7 @@ public class TeleportPlayer : NetworkBehaviour
     // fallback position in case the player's PlayerSpawn isn't present or has no value
     [SerializeField] private Vector3 fallbackTeleportPosition = Vector3.zero;
 
-    private void OnCollision(Collision collision)
+    private void OnCollisionEnter(Collision collision)
     {
         if (!IsServer) return; // Only server handles teleport logic
 

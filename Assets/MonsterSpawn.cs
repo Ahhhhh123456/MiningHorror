@@ -102,6 +102,8 @@ public class MonsterSpawn : NetworkBehaviour
                 
                 GameObject obj = Instantiate(monsterPrefab, hit.position, Quaternion.identity);
                 obj.GetComponent<NetworkObject>().Spawn();
+
+                SpawnTracker.Instance.Register(obj.GetComponent<NetworkObject>());
             }
             else
             {

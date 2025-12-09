@@ -89,6 +89,7 @@ public class SceneSpawnPoint : NetworkBehaviour
             if (netObj != null && IsServer)
             {
                 netObj.Spawn();
+                SpawnTracker.Instance.Register(netObj);
 
                 foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
                 {

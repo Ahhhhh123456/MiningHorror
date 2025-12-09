@@ -98,6 +98,7 @@ public class BoxSpawner : NetworkBehaviour
             mod.ignoreFromBuild = true;
 
             boxInstance.Spawn();
+            SpawnTracker.Instance.Register(boxInstance);
 
             NetworkedBoxData netData = boxInstance.GetComponent<NetworkedBoxData>();
 

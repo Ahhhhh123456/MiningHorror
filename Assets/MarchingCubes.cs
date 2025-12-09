@@ -324,16 +324,9 @@ public class MarchingCubes : NetworkBehaviour
                 Vector3 spawnPos = spawnPositions[index];
                 GameObject chosenOre = orePrefabs[UnityEngine.Random.Range(0, orePrefabs.Length)];
 
-                // NetworkObject oreInstance = Instantiate(chosenOre, spawnPos, Quaternion.identity)
-                //                             .GetComponent<NetworkObject>();
-
-                // oreInstance.Spawn();
-                // oreInstance.name = chosenOre.name;
-                // OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
                 NetworkObject oreInstance = Instantiate(chosenOre, spawnPos, Quaternion.identity)
-                                .GetComponent<NetworkObject>();
+                    .GetComponent<NetworkObject>();
 
-                // --- Make sure NavMesh ignores this ore ---
                 NavMeshModifier modifier = oreInstance.GetComponent<NavMeshModifier>();
                 if (modifier == null)
                 {
@@ -341,8 +334,9 @@ public class MarchingCubes : NetworkBehaviour
                 }
                 modifier.ignoreFromBuild = true;
 
-                // --- Now spawn it ---
                 oreInstance.Spawn();
+                SpawnTracker.Instance.Register(oreInstance);
+
                 oreInstance.name = chosenOre.name;
                 OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
             }

@@ -62,66 +62,66 @@ public class MarchingCubes : NetworkBehaviour
         OnCaveFinished?.Invoke();
     }
 
-
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
-
-        if (IsServer)
-        {
-            noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
-            isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
-
-            // Listen for clients joining
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        }
-    }
-
-
+    // For Local Testing Only
     // public override void OnNetworkSpawn()
     // {
     //     base.OnNetworkSpawn();
 
     //     if (IsServer)
     //     {
-    //         NetworkManager.SceneManager.OnLoadComplete += OnNetworkSceneLoaded;
-    //     }
-    // }
-
-    // public override void OnNetworkDespawn()
-    // {
-    //     if (IsServer)
-    //     {
-    //         NetworkManager.SceneManager.OnLoadComplete -= OnNetworkSceneLoaded;
-    //     }
-    // }
-
-    // private void OnNetworkSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
-    // {
-    //     Debug.Log($"[Netcode] Scene loaded for client {clientId}: {sceneName}");
-
-    //     // Only run logic once the SERVER finishes loading the Cave scene
-    //     if (IsServer)
-    //     {
     //         noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
     //         isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
-    //         Debug.Log("Cave scene finished loading — initializing marching cubes.");
-    //         SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
 
-    //         StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
-    //         {
-    //             // Tell all clients the spawn position via PlayerSpawn
-    //             foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
-    //             {
-    //                 PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
-    //                 if (ps != null)
-    //                     ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
-    //             }
-    //         }));
+    //         // Listen for clients joining
+    //         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
     //     }
+    // }
+
+    // Non-testing version:
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (IsServer)
+        {
+            NetworkManager.SceneManager.OnLoadComplete += OnNetworkSceneLoaded;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsServer)
+        {
+            NetworkManager.SceneManager.OnLoadComplete -= OnNetworkSceneLoaded;
+        }
+    }
+
+    private void OnNetworkSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
+    {
+        Debug.Log($"[Netcode] Scene loaded for client {clientId}: {sceneName}");
+
+        // Only run logic once the SERVER finishes loading the Cave scene
+        if (IsServer)
+        {
+            noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
+            isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
+            Debug.Log("Cave scene finished loading — initializing marching cubes.");
+            SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
+
+            StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
+            {
+                // Tell all clients the spawn position via PlayerSpawn
+                foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+                {
+                    PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
+                    if (ps != null)
+                        ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
+                }
+            }));
+        }
 
         
-    // }
+    }
 
 
     private void OnClientConnected(ulong clientId)
@@ -932,7 +932,7 @@ public class MarchingCubes : NetworkBehaviour
         }
 
         // --- SHIFT MINING UPWARD SO PLAYER DOESN'T FALL ---
-        float raiseAmount = radius * 0.75f;  // adjust if needed
+        float raiseAmount = radius * 5f;  // adjust if needed
         Vector3 adjustedPos = worldPos + Vector3.up * raiseAmount;
 
         // --- Perform carving ---

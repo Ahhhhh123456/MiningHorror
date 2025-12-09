@@ -8,7 +8,7 @@ public class Explode : NetworkBehaviour
     public float carveDepth; // how strong it carves the cave
     public ParticleSystem explosionParticles;
 
-    public float knockbackForce = 3000f;
+    public float knockbackForce = 2f;
 
 
     public void Explosion()

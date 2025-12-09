@@ -664,7 +664,17 @@ public class PlayerInventory : NetworkBehaviour
                     fog.ApplyTorchFog();
                 }
             }
+
             Debug.Log($"Holding tool: {itemName}");
+        }
+        else
+        {
+            if (IsOwner)
+            {
+                ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
+                fog.ApplyDarkFog();
+                Debug.Log($"Holding Non-tool: {itemName}");
+            }
         }
 
         // Compass handling

@@ -22,6 +22,7 @@ public class First_Person_Camera : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("First_Person_Camera: Starting up!");
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 

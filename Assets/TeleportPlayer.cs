@@ -6,7 +6,7 @@ public class TeleportPlayer : NetworkBehaviour
     // fallback position in case the player's PlayerSpawn isn't present or has no value
     [SerializeField] private Vector3 fallbackTeleportPosition = Vector3.zero;
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollision(Collision collision)
     {
         if (!IsServer) return; // Only server handles teleport logic
 
@@ -47,9 +47,35 @@ public class TeleportPlayer : NetworkBehaviour
 
         // Teleport on SERVER (server authoritative)
         Debug.Log($"Teleporting player {clientId} to {targetPos}");
+
         playerObj.transform.position = targetPos;
         playerObj.transform.rotation = Quaternion.identity;
 
+        TeleportClientRpc(clientId, targetPos);
+
         // If you rely on NetworkTransform, the transform will synchronize to clients.
+    }
+
+
+    [ClientRpc]
+    private void TeleportClientRpc(ulong clientId, Vector3 targetPos)
+    {
+        if (NetworkManager.Singleton.LocalClientId != clientId)
+            return; // Only teleport the correct client
+
+        var playerObj = NetworkManager.Singleton.LocalClient.PlayerObject;
+        if (playerObj == null) return;
+
+        playerObj.transform.position = targetPos;
+        playerObj.transform.rotation = Quaternion.identity;
+
+        Debug.Log($"[Client] Teleported local player {clientId} to {targetPos}");
+
+        // Reset velocity if using Rigidbody
+        if (playerObj.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
     }
 }

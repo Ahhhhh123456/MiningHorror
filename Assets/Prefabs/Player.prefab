@@ -1847,6 +1847,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fa46cb48156f964aa0319cad0f48428, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &2628879956248375727
 GameObject:
   m_ObjectHideFlags: 0

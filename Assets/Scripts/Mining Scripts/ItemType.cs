@@ -7,9 +7,10 @@ public class ItemType : MonoBehaviour
     {
         {"Pickaxe", new ItemData(5f, ItemCategory.Tool)},
         {"Shovel", new ItemData(4f, ItemCategory.Tool)},
-        {"DrillBody", new ItemData(10f, ItemCategory.Part)},
-        {"DrillHead", new ItemData(10f, ItemCategory.Part)},
-        {"Wheel", new ItemData(8.5f, ItemCategory.Part)},
+        {"DrillBattery", new ItemData(8f, ItemCategory.Part)},
+        {"DrillBooster", new ItemData(15f, ItemCategory.Part)},
+        {"DrillPipe", new ItemData(4f, ItemCategory.Part)},
+        {"DrillPoint", new ItemData(15f, ItemCategory.Part)},
         {"Ladder", new ItemData(5f, ItemCategory.Misc)},
         {"Dynamite", new ItemData(2f, ItemCategory.Misc)},
         {"Compass", new ItemData(0.01f, ItemCategory.Misc)},

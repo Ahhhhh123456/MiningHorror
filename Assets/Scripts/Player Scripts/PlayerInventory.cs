@@ -129,7 +129,18 @@ public class PlayerInventory : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void ResetInventoryServerRpc()
     {
-        ResetInventory(); // safe, runs on server
+        //ResetInventory(); // safe, runs on server
+        NetworkOres.Clear();
+        NetworkItems.Clear();
+
+        // MUST REBUILD HOTBAR
+        for (int i = 0; i < hotbarSize; i++)
+            NetworkItems.Add(new FixedString32Bytes(""));
+
+        playerWeight = 0;
+        currentSlotIndex = -1;
+
+        ClearHeldItemClientRpc();
         Debug.Log("[PlayerInventory] Inventory reset on scene load.");
     }
 
@@ -660,8 +671,8 @@ public class PlayerInventory : NetworkBehaviour
             {
                 if (IsOwner)
                 {
-                    ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
-                    fog.ApplyTorchFog();
+                    // ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
+                    // fog.ApplyTorchFog();
                 }
             }
 
@@ -671,9 +682,9 @@ public class PlayerInventory : NetworkBehaviour
         {
             if (IsOwner)
             {
-                ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
-                fog.ApplyDarkFog();
-                Debug.Log($"Holding Non-tool: {itemName}");
+                // ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
+                // fog.ApplyDarkFog();
+                // Debug.Log($"Holding Non-tool: {itemName}");
             }
         }
 

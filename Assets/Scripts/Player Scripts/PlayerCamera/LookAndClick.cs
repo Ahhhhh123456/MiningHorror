@@ -318,7 +318,7 @@ public class LookAndClickInteraction : NetworkBehaviour
 
     private void Mining()
     {
-        if (!playerInventory.holdPickaxe || !playerInventory.holdShovel) return;
+        if (!playerInventory.holdPickaxe && !playerInventory.holdShovel) return;
 
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
         RaycastHit[] hits = Physics.RaycastAll(ray, interactRange);

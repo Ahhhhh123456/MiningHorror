@@ -6,12 +6,13 @@ public class TeleportPlayer : NetworkBehaviour
     // fallback position in case the player's PlayerSpawn isn't present or has no value
     [SerializeField] private Vector3 fallbackTeleportPosition = Vector3.zero;
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionStay(Collision collision)
     {
         if (!IsServer) return; // Only server handles teleport logic
 
         if (collision.gameObject.CompareTag("Player"))
         {
+            Debug.Log($"[Server] Collision with player detected: {collision.gameObject.name}");
             NetworkObject netObj = collision.gameObject.GetComponent<NetworkObject>();
             if (netObj != null)
             {

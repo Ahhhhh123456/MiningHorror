@@ -880,20 +880,19 @@ public class MarchingCubes : NetworkBehaviour
 
 
     [ServerRpc(RequireOwnership = false)]
-    public void MineCaveServerRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold)
+    public void MineCaveServerRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold, float raiseAmount)
     {
-        MineCave(worldPos, radius, depth, ignoreHold);
-        MineCaveClientRpc(worldPos, radius, depth, ignoreHold);
-    }
-    
-    [ClientRpc]
-    private void MineCaveClientRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold)
-    {
-        if (IsServer) return;
-        MineCave(worldPos, radius, depth, ignoreHold);
+        MineCave(worldPos, radius, depth, ignoreHold, raiseAmount);
+        MineCaveClientRpc(worldPos, radius, depth, ignoreHold, raiseAmount);
     }
 
-    public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false)
+    [ClientRpc]
+    private void MineCaveClientRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold, float raiseAmount)
+    {
+        MineCave(worldPos, radius, depth, ignoreHold, raiseAmount);
+    }
+
+    public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false, float raiseAmount = 0f)
     {
         // --- Explosion bypasses all rate limits ---
         if (!ignoreHold)
@@ -926,7 +925,7 @@ public class MarchingCubes : NetworkBehaviour
         }
 
         // --- SHIFT MINING UPWARD SO PLAYER DOESN'T FALL ---
-        float raiseAmount = radius * 5f;  // adjust if needed
+        //float raiseAmount = radius * 1.25f;  // adjust if needed
         Vector3 adjustedPos = worldPos + Vector3.up * raiseAmount;
 
         // --- Perform carving ---

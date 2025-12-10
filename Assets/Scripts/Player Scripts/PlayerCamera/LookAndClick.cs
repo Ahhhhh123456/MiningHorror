@@ -383,7 +383,7 @@ public class LookAndClickInteraction : NetworkBehaviour
                     float depth = playerInventory.holdShovel ? mineDepth * 1.0f : mineDepth;
 
                     helper.caveGenerator.MineCaveServerRpc(
-                        caveHit.Value.point, radius, depth, false);
+                        caveHit.Value.point, radius, depth, false, 1.25f);
 
                     mineTimer -= mineInterval;
                 }

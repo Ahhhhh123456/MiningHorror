@@ -124,9 +124,7 @@ public class BoxBreak : NetworkBehaviour
 
                 // Get the NetworkObject prefab from BoxData
                 NetworkObject prefab = boxData.dropPrefab;
-                Debug.Log("Box drop prefab: " + prefab);
                 string prefabName = boxData.dropPrefab.name;
-                Debug.Log("Box drop prefab name: " + prefabName);
                 if (prefab == null)
                 {
                     Debug.LogWarning("Box drop prefab is null!");
@@ -136,7 +134,9 @@ public class BoxBreak : NetworkBehaviour
                 // Spawn position and rotation
                 Transform dropTransform = this.transform;
                 Vector3 spawnPos = dropTransform.position;
+                Debug.Log("Spawn Position: " + spawnPos.ToString());
                 Quaternion spawnRot = dropTransform.rotation;
+                Debug.Log("Spawn Rotation: " + spawnRot.ToString());
 
                 // Instantiate the network prefab
                 NetworkObject droppedNetObj = Instantiate(prefab, spawnPos, spawnRot);

@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1918b79854ecb2d41ad9e13896ed7b55, type: 3}
-  m_Name: DrillWheel
+  m_Name: DrillBooster
   m_EditorClassIdentifier: 
-  drillPartName: DrillWheel
+  drillPartName: DrillBooster
   coalCount: 0
   ironCount: 0
   goldCount: 0
-  dropPrefab: {fileID: 3641898658165121449, guid: f5af144e1327772488ab10a0a951d094, type: 3}
+  dropPrefab: {fileID: 5660777095197426735, guid: 1e5e30face2739b4bad6e2aec21c9b6e, type: 3}

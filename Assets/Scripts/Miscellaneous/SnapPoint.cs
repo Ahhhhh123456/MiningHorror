@@ -34,15 +34,12 @@ public class SnapPoint : NetworkBehaviour
                     transform.position
                 );
 
-                Debug.Log("Held Item World Position: " + playerInventory.currentHeldItem.transform.position);
-                Debug.Log("SnapPoint Position: " + transform.position);
                 // Player is close enough to snap
                 if (distance <= snapRadius)
                 {
                     if (isSnapping) return; // We are already processing a snap, stop.
 
                     // Check if the held item matches the snap point's tag
-                    Debug.Log($"Player is holding: {playerInventory.currentHeldItem.name}, SnapPoint tag: {gameObject.tag}");
                     if (playerInventory.currentHeldItem.name == gameObject.tag.ToString())
                     {
                         isSnapping = true; // Set the cooldown
@@ -93,10 +90,57 @@ public class SnapPoint : NetworkBehaviour
         }
     }
 
+    // [ServerRpc(RequireOwnership = false)]
+    // private void SnapItemServerRpc(ServerRpcParams rpcParams = default)
+    // {
+
+    //     if (!IsServer) return;
+
+    //     if (isOccupied.Value)
+    //     {
+    //         Debug.Log("SnapPoint is already occupied.");
+    //         return;
+    //     }
+    //     isOccupied.Value = true;
+    //     ulong senderClientId = rpcParams.Receive.SenderClientId;
+    //     if (NetworkManager.Singleton.ConnectedClients.TryGetValue(senderClientId, out var client))
+    //     {
+    //         Transform snapTransform = this.transform;
+    //         Vector3 snapPos = snapTransform.position;
+    //         Quaternion snapRot = snapTransform.rotation;
+
+    //         NetworkObject snapObj = Instantiate(itemPrefab, snapPos, snapRot);
+    //         snapObj.name = itemPrefab.name;
+    //         snapObj.Spawn();
+    //         SetTagClientRpc(snapObj.NetworkObjectId, "Untagged");
+    //         var snappedItemScript = snapObj.GetComponent<SnappedItem>();
+    //         if (snappedItemScript != null)
+    //         {
+    //             snappedItemScript.snapPoint = this;
+    //         }
+    //         Rigidbody rb = snapObj.GetComponent<Rigidbody>();
+    //         if (rb == null)
+    //         {
+    //             rb = snapObj.gameObject.AddComponent<Rigidbody>();
+    //             Debug.LogWarning("Rigidbody was missing on snapped item, added one.");
+    //         }
+    //         rb.isKinematic = true;
+    //         rb.useGravity = false;
+    //         Debug.Log($"Item {snapObj.name} snapped into place (server).");
+
+    //         OnSnapChanged?.Invoke();
+
+    //         // SnapManager snapManager = GetComponentInParent<SnapManager>();
+    //         // if (snapManager != null)
+    //         // {
+    //         //     snapManager.CheckAllSnapped();
+    //         // }
+    //     }
+    // }
+
     [ServerRpc(RequireOwnership = false)]
     private void SnapItemServerRpc(ServerRpcParams rpcParams = default)
     {
-
         if (!IsServer) return;
 
         if (isOccupied.Value)
@@ -104,36 +148,47 @@ public class SnapPoint : NetworkBehaviour
             Debug.Log("SnapPoint is already occupied.");
             return;
         }
+
         isOccupied.Value = true;
-        ulong senderClientId = rpcParams.Receive.SenderClientId;
-        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(senderClientId, out var client))
+
+        // Determine spawn position & rotation
+        Vector3 snapPos = transform.position;
+        Quaternion snapRot = transform.rotation;
+
+        // Instantiate the item prefab
+        NetworkObject snapObj = Instantiate(itemPrefab, snapPos, snapRot);
+
+        snapObj.name = itemPrefab.name;
+
+        // Spawn first
+        snapObj.Spawn();
+
+        // Now it's safe to parent
+        snapObj.transform.SetParent(transform);
+        snapObj.transform.localPosition = Vector3.zero;
+        snapObj.transform.localRotation = Quaternion.identity;
+
+        // Make it non-interactable for clients
+        SetTagClientRpc(snapObj.NetworkObjectId, "Untagged");
+
+        // Assign SnapPoint reference
+        if (snapObj.TryGetComponent<SnappedItem>(out var snappedItemScript))
         {
-            Transform snapTransform = this.transform;
-            Vector3 snapPos = snapTransform.position;
-            Quaternion snapRot = snapTransform.rotation;
-
-            NetworkObject snapObj = Instantiate(itemPrefab, snapPos, snapRot);
-            snapObj.name = itemPrefab.name;
-            snapObj.Spawn();
-            SetTagClientRpc(snapObj.NetworkObjectId, "Untagged");
-            var snappedItemScript = snapObj.GetComponent<SnappedItem>();
-            if (snappedItemScript != null)
-            {
-                snappedItemScript.snapPoint = this;
-            }
-            Rigidbody rb = snapObj.GetComponent<Rigidbody>();
-            if (rb == null)
-            {
-                rb = snapObj.gameObject.AddComponent<Rigidbody>();
-                Debug.LogWarning("Rigidbody was missing on snapped item, added one.");
-            }
-            rb.isKinematic = true;
-            rb.useGravity = false;
-            Debug.Log($"Item {snapObj.name} snapped into place (server).");
-
-            OnSnapChanged?.Invoke();
+            snappedItemScript.snapPoint = this;
         }
+
+        // Ensure rigidbody is kinematic
+        Rigidbody rb = snapObj.GetComponent<Rigidbody>();
+        if (rb == null) rb = snapObj.gameObject.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
+
+        Debug.Log($"Item {snapObj.name} snapped into place (server).");
+
+        // Notify SnapManager
+        OnSnapChanged?.Invoke();
     }
+
 
     private void OnDrawGizmosSelected()
     {

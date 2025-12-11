@@ -15,18 +15,23 @@ public class SnapManager : NetworkBehaviour
         {
             sp.OnSnapChanged += CheckAllSnapped;
         }
+
+        Debug.Log(snapPoints.Length + " snap points found in SnapManager.");
     }
 
-    private void CheckAllSnapped()
+    public void CheckAllSnapped()
     {
-        if (!IsServer) return; // Only server manages replacement
 
         foreach (var sp in snapPoints)
         {
             if (!sp.isOccupied.Value)
+            {
+                Debug.Log("Snap point not occupied: " + sp.gameObject.name);
                 return; // Not all snapped yet
+            }
         }
 
+        Debug.Log("All snap points occupied. Replacing with complete prefab.");
         // All snapped, replace prefab
         ReplaceWithComplete();
     }

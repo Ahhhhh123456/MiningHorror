@@ -16,6 +16,8 @@ public class SnapPoint : NetworkBehaviour
 
     private Vector3 scale;
 
+    public event System.Action OnSnapChanged;
+
     void Update()
     {
         var localClientId = NetworkManager.Singleton.LocalClientId;
@@ -128,6 +130,8 @@ public class SnapPoint : NetworkBehaviour
             rb.isKinematic = true;
             rb.useGravity = false;
             Debug.Log($"Item {snapObj.name} snapped into place (server).");
+
+            OnSnapChanged?.Invoke();
         }
     }
 

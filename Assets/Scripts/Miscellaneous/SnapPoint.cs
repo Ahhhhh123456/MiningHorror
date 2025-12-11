@@ -23,6 +23,7 @@ public class SnapPoint : NetworkBehaviour
         {
             var playerInventory = client.PlayerObject.GetComponent<PlayerInventory>();
             
+
             // Check if player is holding an item
             if (playerInventory != null && playerInventory.currentHeldItem != null)
             {
@@ -31,12 +32,15 @@ public class SnapPoint : NetworkBehaviour
                     transform.position
                 );
 
+                Debug.Log("Held Item World Position: " + playerInventory.currentHeldItem.transform.position);
+                Debug.Log("SnapPoint Position: " + transform.position);
                 // Player is close enough to snap
                 if (distance <= snapRadius)
                 {
                     if (isSnapping) return; // We are already processing a snap, stop.
 
                     // Check if the held item matches the snap point's tag
+                    Debug.Log($"Player is holding: {playerInventory.currentHeldItem.name}, SnapPoint tag: {gameObject.tag}");
                     if (playerInventory.currentHeldItem.name == gameObject.tag.ToString())
                     {
                         isSnapping = true; // Set the cooldown

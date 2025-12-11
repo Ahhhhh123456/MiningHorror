@@ -6,7 +6,6 @@ using System.Collections;
 public class LookAndClickInteraction : NetworkBehaviour
 {
     public Camera playerCamera;                // assign your FPS camera in Inspector
-    public float interactRange;           // how far you can look and interact
     public InputActionReference clickAction;   // assign your "Click" action
 
     public InputActionReference eButtonAction;   // assign your "E button" action
@@ -36,7 +35,7 @@ public class LookAndClickInteraction : NetworkBehaviour
 
     [Header("Holding Settings")]
 
-    [SerializeField] private float interactionDistance;
+    [SerializeField] public float interactionDistance;
     [SerializeField] private LayerMask interactableLayer;
     
     private PlayerInventory playerInventory;
@@ -321,7 +320,7 @@ public class LookAndClickInteraction : NetworkBehaviour
         if (!playerInventory.holdPickaxe && !playerInventory.holdShovel) return;
 
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-        RaycastHit[] hits = Physics.RaycastAll(ray, interactRange);
+        RaycastHit[] hits = Physics.RaycastAll(ray, interactionDistance);
 
         // Stop mining when releasing click
         if (clickAction.action.WasReleasedThisFrame())

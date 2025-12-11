@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DrillBattery
   m_EditorClassIdentifier: 
   drillPartName: DrillBatery
-  coalCount: 1
+  coalCount: 0
   ironCount: 0
   goldCount: 0
-  dropPrefab: {fileID: 0}
+  dropPrefab: {fileID: 106433679245163816, guid: 3fac1e22c64fc1f40be0b70d23059ff1, type: 3}

@@ -15,6 +15,7 @@ public class ItemType : MonoBehaviour
         {"Dynamite", new ItemData(2f, ItemCategory.Misc)},
         {"Compass", new ItemData(0.01f, ItemCategory.Misc)},
         {"JumpPad", new ItemData(3f, ItemCategory.Misc)},
+        {"DrillBody", new ItemData(20f, ItemCategory.Part)}, // <-- Testing purposes
         {"Torch", new ItemData(1f, ItemCategory.Tool)}
     };
     

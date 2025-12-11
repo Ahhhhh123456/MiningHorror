@@ -124,7 +124,9 @@ public class BoxBreak : NetworkBehaviour
 
                 // Get the NetworkObject prefab from BoxData
                 NetworkObject prefab = boxData.dropPrefab;
+                Debug.Log("Box drop prefab: " + prefab);
                 string prefabName = boxData.dropPrefab.name;
+                Debug.Log("Box drop prefab name: " + prefabName);
                 if (prefab == null)
                 {
                     Debug.LogWarning("Box drop prefab is null!");

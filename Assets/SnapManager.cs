@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using Unity.Collections;
 using System.Collections.Generic;
 
 public class SnapManager : NetworkBehaviour
@@ -9,9 +10,9 @@ public class SnapManager : NetworkBehaviour
 
     private SnapPoint[] snapPoints;
 
-    public List<GameObject> snappedPieces = new List<GameObject>();
-
-    public List<GameObject> blueprintPieces = new List<GameObject>();
+    // Use NetworkList of NetworkObjectReference for networked syncing
+    public NetworkList<NetworkObjectReference> snappedPieces = new NetworkList<NetworkObjectReference>();
+    public NetworkList<NetworkObjectReference> blueprintPieces = new NetworkList<NetworkObjectReference>();
 
     void Awake()
     {
@@ -26,6 +27,7 @@ public class SnapManager : NetworkBehaviour
 
     public void CheckAllSnapped()
     {
+        if (!IsServer) return; // Only server replaces the drill
 
         foreach (var sp in snapPoints)
         {
@@ -37,67 +39,69 @@ public class SnapManager : NetworkBehaviour
         }
 
         Debug.Log("All snap points occupied. Replacing with complete prefab.");
-        // All snapped, replace prefab
         ReplaceWithComplete();
     }
 
-    public void RegisterSnappedPiece(GameObject snappedObj, GameObject blueprintObj)
+    // Register snapped pieces and blueprint objects
+    public void RegisterSnappedPiece(NetworkObject snappedObj, NetworkObject blueprintObj)
     {
+        if (snappedObj != null)
+        {
+            var netRef = new NetworkObjectReference(snappedObj);
+            if (!snappedPieces.Contains(netRef))
+                snappedPieces.Add(netRef);
+        }
 
-        if (snappedObj != null && !snappedPieces.Contains(snappedObj))
-            snappedPieces.Add(snappedObj);
-
-        if (blueprintObj != null && !blueprintPieces.Contains(blueprintObj))
-            blueprintPieces.Add(blueprintObj);
-
-        Debug.Log("Registered snapped piece: " + snappedObj.name);
-        Debug.Log("Registered blueprint piece: " + blueprintObj.name);
+        if (blueprintObj != null)
+        {
+            var netRef = new NetworkObjectReference(blueprintObj);
+            if (!blueprintPieces.Contains(netRef))
+                blueprintPieces.Add(netRef);
+        }
     }
 
     private void ReplaceWithComplete()
     {
-        // Only server should do this
         if (!IsServer) return;
 
         Vector3 position = transform.position;
         Quaternion rotation = transform.rotation;
 
-        // Destroy all snapped blueprint pieces
-        foreach (GameObject piece in snappedPieces)
+        // Despawn all snapped pieces
+        foreach (var netRef in snappedPieces)
         {
-            if (piece == null) continue;
-
-            NetworkObject pieceNetObj = piece.GetComponent<NetworkObject>();
-            if (pieceNetObj != null && pieceNetObj.IsSpawned)
+            if (netRef.TryGet(out NetworkObject netObj))
             {
-                Debug.Log("Despawning snapped piece: " + piece.name);
-                pieceNetObj.Despawn();
-            }
-            else
-            {
-                Destroy(piece);
+                if (netObj.IsSpawned)
+                {
+                    Debug.Log("Despawning snapped piece: " + netObj.name);
+                    netObj.Despawn();
+                }
             }
         }
         snappedPieces.Clear();
 
-        foreach (GameObject blueprint in blueprintPieces)
+        // Despawn all blueprint pieces
+        foreach (var netRef in blueprintPieces)
         {
-            if (blueprint == null) continue;
-
-            Debug.Log("Destroying blueprint piece: " + blueprint.name);
-            Destroy(blueprint);
+            if (netRef.TryGet(out NetworkObject netObj))
+            {
+                if (netObj.IsSpawned)
+                {
+                    Debug.Log("Despawning blueprint piece: " + netObj.name);
+                    netObj.Despawn();
+                }
+            }
         }
         blueprintPieces.Clear();
 
-
         // Spawn the complete prefab
         GameObject newDrill = Instantiate(completePrefab, position, rotation);
-        NetworkObject netObj = newDrill.GetComponent<NetworkObject>();
-        netObj.Spawn();
+        NetworkObject newNetObj = newDrill.GetComponent<NetworkObject>();
+        newNetObj.Spawn();
 
-        // Destroy this broken drill
+        // Despawn the broken drill
         NetworkObject oldNetObj = GetComponent<NetworkObject>();
         oldNetObj.Despawn();
     }
-
 }

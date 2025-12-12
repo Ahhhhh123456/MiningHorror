@@ -8,7 +8,7 @@ public class SnapPoint : NetworkBehaviour
 
     private NetworkObject snappedItem;
 
-    public GameObject blueprintPiece;
+    public NetworkObject blueprintPiece;
     private bool isSnapping = false;
 
     public NetworkVariable<bool> isOccupied = new NetworkVariable<bool>(false);
@@ -126,7 +126,7 @@ public class SnapPoint : NetworkBehaviour
         SnapManager snapManager = GetComponentInParent<SnapManager>();
         if (snapManager != null)
         {
-            snapManager.RegisterSnappedPiece(snapObj.gameObject, blueprintPiece);
+            snapManager.RegisterSnappedPiece(snapObj, blueprintPiece.GetComponent<NetworkObject>() );
         }
 
         // Make it non-interactable for clients

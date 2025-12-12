@@ -197,7 +197,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   snapRadius: 0.5
-  blueprintPiece: {fileID: 5600393335619317130}
+  blueprintPiece: {fileID: 7916322123969308351}
   isOccupied:
     m_InternalValue: 0
   itemPrefab: {fileID: 8459502574277364190, guid: da8d9c1e5b5fef047b6816850cbdab59, type: 3}

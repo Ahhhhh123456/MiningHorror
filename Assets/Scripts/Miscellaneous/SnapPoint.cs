@@ -7,6 +7,8 @@ public class SnapPoint : NetworkBehaviour
     public float snapRadius = 0.5f;
 
     private NetworkObject snappedItem;
+
+    public GameObject blueprintPiece;
     private bool isSnapping = false;
 
     public NetworkVariable<bool> isOccupied = new NetworkVariable<bool>(false);
@@ -90,54 +92,6 @@ public class SnapPoint : NetworkBehaviour
         }
     }
 
-    // [ServerRpc(RequireOwnership = false)]
-    // private void SnapItemServerRpc(ServerRpcParams rpcParams = default)
-    // {
-
-    //     if (!IsServer) return;
-
-    //     if (isOccupied.Value)
-    //     {
-    //         Debug.Log("SnapPoint is already occupied.");
-    //         return;
-    //     }
-    //     isOccupied.Value = true;
-    //     ulong senderClientId = rpcParams.Receive.SenderClientId;
-    //     if (NetworkManager.Singleton.ConnectedClients.TryGetValue(senderClientId, out var client))
-    //     {
-    //         Transform snapTransform = this.transform;
-    //         Vector3 snapPos = snapTransform.position;
-    //         Quaternion snapRot = snapTransform.rotation;
-
-    //         NetworkObject snapObj = Instantiate(itemPrefab, snapPos, snapRot);
-    //         snapObj.name = itemPrefab.name;
-    //         snapObj.Spawn();
-    //         SetTagClientRpc(snapObj.NetworkObjectId, "Untagged");
-    //         var snappedItemScript = snapObj.GetComponent<SnappedItem>();
-    //         if (snappedItemScript != null)
-    //         {
-    //             snappedItemScript.snapPoint = this;
-    //         }
-    //         Rigidbody rb = snapObj.GetComponent<Rigidbody>();
-    //         if (rb == null)
-    //         {
-    //             rb = snapObj.gameObject.AddComponent<Rigidbody>();
-    //             Debug.LogWarning("Rigidbody was missing on snapped item, added one.");
-    //         }
-    //         rb.isKinematic = true;
-    //         rb.useGravity = false;
-    //         Debug.Log($"Item {snapObj.name} snapped into place (server).");
-
-    //         OnSnapChanged?.Invoke();
-
-    //         // SnapManager snapManager = GetComponentInParent<SnapManager>();
-    //         // if (snapManager != null)
-    //         // {
-    //         //     snapManager.CheckAllSnapped();
-    //         // }
-    //     }
-    // }
-
     [ServerRpc(RequireOwnership = false)]
     private void SnapItemServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -167,6 +121,13 @@ public class SnapPoint : NetworkBehaviour
         snapObj.transform.SetParent(transform);
         snapObj.transform.localPosition = Vector3.zero;
         snapObj.transform.localRotation = Quaternion.identity;
+
+        // 🔥 Register with SnapManager immediately after occupation
+        SnapManager snapManager = GetComponentInParent<SnapManager>();
+        if (snapManager != null)
+        {
+            snapManager.RegisterSnappedPiece(snapObj.gameObject, blueprintPiece);
+        }
 
         // Make it non-interactable for clients
         SetTagClientRpc(snapObj.NetworkObjectId, "Untagged");

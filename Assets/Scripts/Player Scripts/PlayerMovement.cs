@@ -139,7 +139,7 @@ public class PlayerMovement : NetworkBehaviour
         {
             if (stamina.currentStamina.Value <= 0f)
             {
-                Debug.Log("Not enough stamina to sprint.");
+                //Debug.Log("Not enough stamina to sprint.");
                 StopSprinting(new InputAction.CallbackContext());
             }
             // 🔹 Test loading bar fill while sprinting
@@ -310,7 +310,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private void StopSprinting(InputAction.CallbackContext context)
     {
-        Debug.Log("Stopping sprinting speed: " + (moveSpeed / sprintMultiplier));
+        //Debug.Log("Stopping sprinting speed: " + (moveSpeed / sprintMultiplier));
         // moveSpeed /= sprintMultiplier;
         isSprinting = false;
         UpdateMoveSpeed();

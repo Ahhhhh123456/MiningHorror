@@ -74,7 +74,7 @@ public class SnapManager : NetworkBehaviour
             {
                 if (netObj.IsSpawned)
                 {
-                    Debug.Log("Despawning snapped piece: " + netObj.name);
+                    //Debug.Log("Despawning snapped piece: " + netObj.name);
                     netObj.Despawn();
                 }
             }
@@ -88,9 +88,10 @@ public class SnapManager : NetworkBehaviour
             {
                 if (netObj.IsSpawned)
                 {
-                    Debug.Log("Despawning blueprint piece: " + netObj.name);
+                    //Debug.Log("Despawning blueprint piece: " + netObj.name);
                     netObj.Despawn();
                 }
+
             }
         }
         blueprintPieces.Clear();

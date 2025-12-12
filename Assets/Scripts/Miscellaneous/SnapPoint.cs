@@ -36,6 +36,8 @@ public class SnapPoint : NetworkBehaviour
                     transform.position
                 );
 
+                Debug.Log($"Player {localClientId} holding {playerInventory.currentHeldItem.name}");
+
                 // Player is close enough to snap
                 if (distance <= snapRadius)
                 {
@@ -45,10 +47,10 @@ public class SnapPoint : NetworkBehaviour
                     if (playerInventory.currentHeldItem.name == gameObject.tag.ToString())
                     {
                         isSnapping = true; // Set the cooldown
-                        SnapItemServerRpc(); // Tell server to spawn the snapped item
-                        
                         // ✅ MOVED THIS LINE INSIDE THE IF BLOCK
                         RemovePlayerItemSnapServerRpc(playerInventory.currentHeldItem.name); 
+                        SnapItemServerRpc(); // Tell server to spawn the snapped item
+                        
                     }
                     else
                     {

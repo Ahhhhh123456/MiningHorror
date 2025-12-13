@@ -17,15 +17,15 @@ public class BoxSpawner : NetworkBehaviour
 
     private MarchingCubes caveGenerator;
 
+    private bool boxesSpawned = false;
+
     void Awake()
     {
         caveGenerator = GetComponent<MarchingCubes>();
         if (caveGenerator == null)
             Debug.LogError("MarchingCubes component missing!");
     }
-
-    private bool boxesSpawned = false;
-
+    
     public IEnumerator SpawnBoxesOnSurface()
     {
         if (!IsServer || boxesSpawned)

@@ -63,65 +63,65 @@ public class MarchingCubes : NetworkBehaviour
     }
 
     // For Local Testing Only
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
-
-        if (IsServer)
-        {
-            noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
-            isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
-
-            // Listen for clients joining
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        }
-    }
-
-    // Non-testing version:
     // public override void OnNetworkSpawn()
     // {
     //     base.OnNetworkSpawn();
 
     //     if (IsServer)
     //     {
-    //         NetworkManager.SceneManager.OnLoadComplete += OnNetworkSceneLoaded;
-    //     }
-    // }
-
-    // public override void OnNetworkDespawn()
-    // {
-    //     if (IsServer)
-    //     {
-    //         NetworkManager.SceneManager.OnLoadComplete -= OnNetworkSceneLoaded;
-    //     }
-    // }
-
-    // private void OnNetworkSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
-    // {
-    //     Debug.Log($"[Netcode] Scene loaded for client {clientId}: {sceneName}");
-
-    //     // Only run logic once the SERVER finishes loading the Cave scene
-    //     if (IsServer)
-    //     {
     //         noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
     //         isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
-    //         Debug.Log("Cave scene finished loading — initializing marching cubes.");
-    //         SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
 
-    //         StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
-    //         {
-    //             // Tell all clients the spawn position via PlayerSpawn
-    //             foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
-    //             {
-    //                 PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
-    //                 if (ps != null)
-    //                     ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
-    //             }
-    //         }));
+    //         // Listen for clients joining
+    //         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
     //     }
+    // }
+
+    // Non-testing version:
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (IsServer)
+        {
+            NetworkManager.SceneManager.OnLoadComplete += OnNetworkSceneLoaded;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsServer)
+        {
+            NetworkManager.SceneManager.OnLoadComplete -= OnNetworkSceneLoaded;
+        }
+    }
+
+    private void OnNetworkSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
+    {
+        Debug.Log($"[Netcode] Scene loaded for client {clientId}: {sceneName}");
+
+        // Only run logic once the SERVER finishes loading the Cave scene
+        if (IsServer)
+        {
+            noiseScale = UnityEngine.Random.Range(0.1f, 0.15f);
+            isoLevel = UnityEngine.Random.Range(0.35f, 0.45f);
+            Debug.Log("Cave scene finished loading — initializing marching cubes.");
+            SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
+
+            StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
+            {
+                // Tell all clients the spawn position via PlayerSpawn
+                foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+                {
+                    PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
+                    if (ps != null)
+                        ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
+                }
+            }));
+        }
 
         
-    // }
+    }
 
 
     private void OnClientConnected(ulong clientId)
@@ -260,94 +260,92 @@ public class MarchingCubes : NetworkBehaviour
         }
                 
     }
-    
+
     private IEnumerator SpawnOresBatched()
     {
-        int batchSize = 10;
-        List<Vector3> spawnPositions = new List<Vector3>();
+        const int batchSize = 10;
+        const int step = 2;                 // scan every 2 voxels
+        const int yieldEvery = 5000;         // yield every N voxel checks
 
         float surfaceChance = oreChance * 0.06f;
-        float deepChance = oreChance * 0.12f;
+        float deepChance    = oreChance * 0.12f;
 
-        for (int x = 1; x < caveWidth; x++)
-            for (int y = 1; y < caveHeight; y++)
-                for (int z = 1; z < caveDepth; z++)
-                {
-                    float val = densityMap[x, y, z];
-                    bool solid = val > isoLevel;
-                    if (!solid) continue;
+        int voxelChecks = 0;
+        int spawnedThisBatch = 0;
 
-                    // --- Check for nearby air (surface detection)
-                    bool nearAir = false;
-                    for (int dx = -1; dx <= 1 && !nearAir; dx++)
-                        for (int dy = -1; dy <= 1 && !nearAir; dy++)
-                            for (int dz = -1; dz <= 1 && !nearAir; dz++)
-                            {
-                                int nx = x + dx, ny = y + dy, nz = z + dz;
-                                if (nx < 0 || ny < 0 || nz < 0 ||
-                                    nx > caveWidth || ny > caveHeight || nz > caveDepth)
-                                    continue;
-                                if (densityMap[nx, ny, nz] <= isoLevel)
-                                    nearAir = true;
-                            }
-
-                    // --- Choose correct spawn chance
-                    float chance = nearAir ? surfaceChance : deepChance;
-                    if (UnityEngine.Random.value > chance)
-                        continue;
-
-                    // --- Compute world-space position
-                    Vector3 pos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * resolution;
-
-                    if (nearAir)
-                    {
-                        // Surface ores: slight offset inward so they appear on walls
-                        pos += UnityEngine.Random.insideUnitSphere * (resolution * 0.15f);
-                    }
-                    else
-                    {
-                        // Deep ores: buried inside rock
-                        pos += UnityEngine.Random.insideUnitSphere * (resolution * 0.3f);
-                    }
-
-                    spawnPositions.Add(pos);
-                }
-
-        Debug.Log($"[OreGen] Found {spawnPositions.Count} potential ore spots.");
-
-        // --- Spawn them in small batches ---
-        int index = 0;
-        while (index < spawnPositions.Count)
+        for (int x = 1; x < caveWidth; x += step)
+        for (int y = 1; y < caveHeight; y += step)
+        for (int z = 1; z < caveDepth; z += step)
         {
-            for (int i = 0; i < batchSize && index < spawnPositions.Count; i++, index++)
+            voxelChecks++;
+
+            // ---- spread cost across frames ----
+            if (voxelChecks % yieldEvery == 0)
+                yield return null;
+
+            float val = densityMap[x, y, z];
+            if (val <= isoLevel)
+                continue; // not solid → skip immediately
+
+            // ---- 6-direction surface test (FAST) ----
+            bool nearAir =
+                densityMap[x + 1, y, z] <= isoLevel ||
+                densityMap[x - 1, y, z] <= isoLevel ||
+                densityMap[x, y + 1, z] <= isoLevel ||
+                densityMap[x, y - 1, z] <= isoLevel ||
+                densityMap[x, y, z + 1] <= isoLevel ||
+                densityMap[x, y, z - 1] <= isoLevel;
+
+            float chance = nearAir ? surfaceChance : deepChance;
+            if (UnityEngine.Random.value > chance)
+                continue;
+
+            // ---- compute spawn position ----
+            Vector3 pos = new Vector3(
+                x + 0.5f,
+                y + 0.5f,
+                z + 0.5f
+            ) * resolution;
+
+            float offsetRadius = nearAir
+                ? resolution * 0.15f
+                : resolution * 0.3f;
+
+            pos += UnityEngine.Random.insideUnitSphere * offsetRadius;
+
+            // ---- spawn ore ----
+            GameObject chosenOre =
+                orePrefabs[UnityEngine.Random.Range(0, orePrefabs.Length)];
+
+            NetworkObject oreInstance =
+                Instantiate(chosenOre, pos, Quaternion.identity)
+                .GetComponent<NetworkObject>();
+
+            NavMeshModifier modifier =
+                oreInstance.GetComponent<NavMeshModifier>();
+            if (modifier == null)
+                modifier = oreInstance.gameObject.AddComponent<NavMeshModifier>();
+
+            modifier.ignoreFromBuild = true;
+
+            oreInstance.Spawn();
+            SpawnTracker.Instance.Register(oreInstance);
+
+            oreInstance.name = chosenOre.name;
+            OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
+
+            spawnedThisBatch++;
+
+            // ---- batch spawns across frames ----
+            if (spawnedThisBatch >= batchSize)
             {
-                Vector3 spawnPos = spawnPositions[index];
-                GameObject chosenOre = orePrefabs[UnityEngine.Random.Range(0, orePrefabs.Length)];
-
-                NetworkObject oreInstance = Instantiate(chosenOre, spawnPos, Quaternion.identity)
-                    .GetComponent<NetworkObject>();
-
-                NavMeshModifier modifier = oreInstance.GetComponent<NavMeshModifier>();
-                if (modifier == null)
-                {
-                    modifier = oreInstance.gameObject.AddComponent<NavMeshModifier>();
-                }
-                modifier.ignoreFromBuild = true;
-
-                oreInstance.Spawn();
-                SpawnTracker.Instance.Register(oreInstance);
-
-                oreInstance.name = chosenOre.name;
-                OreNameClientRpc(oreInstance.NetworkObjectId, chosenOre.name);
+                spawnedThisBatch = 0;
+                yield return null;
             }
-
-            yield return null;
         }
 
-        Debug.Log("[OreGen] Finished spawning surface + deep ores.");
+        Debug.Log("[OreGen] Ore spawning complete.");
     }
-
-
 
     [ClientRpc]
     void OreNameClientRpc(ulong networkId, string newName)

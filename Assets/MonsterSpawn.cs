@@ -35,83 +35,59 @@ public class MonsterSpawn : NetworkBehaviour
 
     public IEnumerator SpawnMonstersOnSurface()
     {
-        // Ensure cave is ready
-        yield return null; // wait one frame to ensure NavMesh is updated
         yield return new WaitForSeconds(1f);
 
         var map = caveGenerator.densityMap;
-        if (map == null)
+        if (map == null) yield break;
+
+        int width = caveGenerator.caveWidth;
+        int height = caveGenerator.caveHeight;
+        int depth = caveGenerator.caveDepth;
+        float iso = caveGenerator.isoLevel;
+        float res = caveGenerator.resolution;
+
+        const int step = 2;
+        const int yieldEvery = 4000;
+        int checks = 0;
+
+        for (int x = 1; x < width - 1; x += step)
+        for (int y = 1; y < height - 1; y += step)
+        for (int z = 1; z < depth - 1; z += step)
         {
-            Debug.LogWarning("MonsterSpawn: Density map not ready.");
-            yield break;
+            checks++;
+            if (checks % yieldEvery == 0)
+                yield return null;
+
+            if (map[x, y, z] <= iso) continue;
+
+            bool surface =
+                map[x + 1, y, z] <= iso ||
+                map[x - 1, y, z] <= iso ||
+                map[x, y + 1, z] <= iso ||
+                map[x, y - 1, z] <= iso ||
+                map[x, y, z + 1] <= iso ||
+                map[x, y, z - 1] <= iso;
+
+            if (!surface || Random.value > spawnChance)
+                continue;
+
+            Vector3 pos = new Vector3(x + 0.5f, y + 0.6f, z + 0.5f) * res;
+            pos += Random.insideUnitSphere * spawnOffset * res;
+
+            if (!NavMesh.SamplePosition(pos, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
+                continue;
+
+            if (!IsServer) yield break;
+
+            NetworkObject obj = Instantiate(monsterPrefab, hit.position, Quaternion.identity)
+                                .GetComponent<NetworkObject>();
+
+            obj.Spawn();
+            SpawnTracker.Instance.Register(obj);
+
+            yield return null;
         }
-
-        List<Vector3> spawnPositions = new List<Vector3>();
-
-        for (int x = 1; x < caveGenerator.caveWidth; x++)
-            for (int y = 1; y < caveGenerator.caveHeight; y++)
-                for (int z = 1; z < caveGenerator.caveDepth; z++)
-                {
-                    float val = map[x, y, z];
-                    if (val <= caveGenerator.isoLevel) continue; // Not solid = skip
-
-                    // Check if near air (surface)
-                    bool surface = false;
-                    for (int dx = -1; dx <= 1 && !surface; dx++)
-                        for (int dy = -1; dy <= 1 && !surface; dy++)
-                            for (int dz = -1; dz <= 1 && !surface; dz++)
-                            {
-                                int nx = x + dx;
-                                int ny = y + dy;
-                                int nz = z + dz;
-
-                                if (nx < 0 || ny < 0 || nz < 0 ||
-                                    nx >= caveGenerator.caveWidth ||
-                                    ny >= caveGenerator.caveHeight ||
-                                    nz >= caveGenerator.caveDepth)
-                                    continue;
-
-                                if (map[nx, ny, nz] <= caveGenerator.isoLevel)
-                                    surface = true;
-                            }
-
-                    if (!surface || Random.value > spawnChance)
-                        continue;
-
-                    Vector3 pos = new Vector3(x + 0.5f, y + 0.6f, z + 0.5f) * caveGenerator.resolution;
-
-                    pos += Random.insideUnitSphere * spawnOffset * caveGenerator.resolution;
-
-                    spawnPositions.Add(pos);
-                }
-
-        Debug.Log($"[MonsterSpawn] Found {spawnPositions.Count} surface spawn points.");
-
-        // foreach (var pos in spawnPositions)
-        // {
-        //     GameObject obj = Instantiate(monsterPrefab, pos, Quaternion.identity);
-        //     obj.GetComponent<NetworkObject>().Spawn();
-        // }
-        foreach (var pos in spawnPositions)
-        {
-            // Check if the position is valid on the NavMesh
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(pos, out hit, 1f, NavMesh.AllAreas))
-            {
-                if (!IsServer) yield break;
-                
-                GameObject obj = Instantiate(monsterPrefab, hit.position, Quaternion.identity);
-                obj.GetComponent<NetworkObject>().Spawn();
-
-                SpawnTracker.Instance.Register(obj.GetComponent<NetworkObject>());
-            }
-            else
-            {
-                // Optional: skip or log if no valid NavMesh nearby
-                Debug.LogWarning($"MonsterSpawn: No NavMesh found near {pos}");
-            }
-        }
-
-        Debug.Log("[MonsterSpawn] Finished spawning monsters.");
     }
+
+
 }

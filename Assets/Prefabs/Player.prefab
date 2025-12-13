@@ -2204,7 +2204,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   walkSpeed: 5
   sprintMultiplier: 2
-  jumpForce: 8
+  jumpForce: 10
   moveSpeed: 0
   rb: {fileID: 7567113563126236500}
   verticalVelocity: 0
@@ -2427,7 +2427,7 @@ MonoBehaviour:
   - itemName: DrillBooster
     prefab: {fileID: 2398814197912516172, guid: 1e5e30face2739b4bad6e2aec21c9b6e, type: 3}
     holdRotation: {x: 0, y: 90, z: 0}
-    holdPositionOffset: {x: 0, y: 0, z: 0}
+    holdPositionOffset: {x: 0, y: 2, z: 0}
   - itemName: DrillPipe
     prefab: {fileID: 8079634310823188268, guid: b3f8f74a8e6ef2040bddd0a64c7bc742, type: 3}
     holdRotation: {x: 0, y: 90, z: 0}
@@ -2439,7 +2439,7 @@ MonoBehaviour:
   - itemName: DrillWheel
     prefab: {fileID: 1051738616790286295, guid: f5af144e1327772488ab10a0a951d094, type: 3}
     holdRotation: {x: 0, y: 0, z: 0}
-    holdPositionOffset: {x: 0, y: 0, z: 0}
+    holdPositionOffset: {x: 0, y: -1, z: 0}
 --- !u!114 &5579227905233273499
 MonoBehaviour:
   m_ObjectHideFlags: 0

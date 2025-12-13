@@ -32,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
   m_LocalPosition: {x: -2.6526644, y: -0.12333536, z: -0.06288171}
-  m_LocalScale: {x: 109.19318, y: 99.99996, z: 99.99997}
+  m_LocalScale: {x: 163.8, y: 150, z: 150}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -196,7 +196,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  snapRadius: 0.5
+  snapRadius: 1
   blueprintPiece: {fileID: 372392494349940690}
   isOccupied:
     m_InternalValue: 0

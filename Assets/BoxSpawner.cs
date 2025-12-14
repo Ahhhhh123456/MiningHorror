@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Netcode; 
+using Unity.Netcode;
 using Unity.AI.Navigation;
 
 public class BoxSpawner : NetworkBehaviour
@@ -11,12 +11,17 @@ public class BoxSpawner : NetworkBehaviour
     public GameObject box2;
     public GameObject box3And4;
 
+    [Header("Box Data")]
     public DrillBoxData bodyData;
     public DrillBoxData headData;
     public DrillBoxData wheelData;
 
-    private MarchingCubes caveGenerator;
+    [Header("Spawn Rules")]
+    public Transform playerSpawn;
+    public float minDistanceFromPlayer = 20f;
+    public int maxSurfaceSamples = 200;
 
+    private MarchingCubes caveGenerator;
     private bool boxesSpawned = false;
 
     void Awake()
@@ -25,7 +30,7 @@ public class BoxSpawner : NetworkBehaviour
         if (caveGenerator == null)
             Debug.LogError("MarchingCubes component missing!");
     }
-    
+
     public IEnumerator SpawnBoxesOnSurface()
     {
         if (!IsServer || boxesSpawned)
@@ -37,7 +42,7 @@ public class BoxSpawner : NetworkBehaviour
             yield break;
 
         GameObject[] boxes = { box1, box2, box3And4, box3And4 };
-        List<Vector3> surfacePoints = new List<Vector3>(boxes.Length);
+        List<Vector3> surfacePoints = new List<Vector3>();
 
         var density = caveGenerator.densityMap;
         int width = caveGenerator.caveWidth;
@@ -63,7 +68,11 @@ public class BoxSpawner : NetworkBehaviour
             if (density[x, y + 1, z] > iso) continue;
             if (density[x, y + 2, z] > iso) continue;
 
-            Vector3 approx = new Vector3(x + 0.5f, y + 3f, z + 0.5f) * res;
+            Vector3 approx = new Vector3(
+                x + 0.5f,
+                y + 3f,
+                z + 0.5f
+            ) * res;
 
             if (!Physics.Raycast(approx, Vector3.down, out RaycastHit hit, 10f))
                 continue;
@@ -71,36 +80,55 @@ public class BoxSpawner : NetworkBehaviour
             if (Vector3.Angle(hit.normal, Vector3.up) > 35f)
                 continue;
 
+            if (playerSpawn != null &&
+                Vector3.Distance(hit.point, playerSpawn.position) < minDistanceFromPlayer)
+                continue;
+
             surfacePoints.Add(hit.point + Vector3.up * 0.1f);
 
-            if (surfacePoints.Count >= boxes.Length)
-                goto SPAWN;
+            if (surfacePoints.Count >= maxSurfaceSamples)
+                goto DONE;
         }
 
-    SPAWN:
+    DONE:
+
         if (surfacePoints.Count < boxes.Length)
+        {
+            Debug.LogWarning("Not enough valid surface points for box spawning.");
             yield break;
+        }
+
+        for (int i = surfacePoints.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (surfacePoints[i], surfacePoints[j]) =
+                (surfacePoints[j], surfacePoints[i]);
+        }
 
         for (int i = 0; i < boxes.Length; i++)
         {
-            NetworkObject box = Instantiate(boxes[i], surfacePoints[i], Quaternion.identity)
-                                .GetComponent<NetworkObject>();
+            NetworkObject box = Instantiate(
+                boxes[i],
+                surfacePoints[i],
+                Quaternion.identity
+            ).GetComponent<NetworkObject>();
 
-            var mod = box.GetComponent<NavMeshModifier>() ??
-                    box.gameObject.AddComponent<NavMeshModifier>();
-            mod.ignoreFromBuild = true;
+            var navMod = box.GetComponent<NavMeshModifier>() ??
+                         box.gameObject.AddComponent<NavMeshModifier>();
+            navMod.ignoreFromBuild = true;
 
             box.Spawn();
             SpawnTracker.Instance.Register(box);
 
             var data = box.GetComponent<NetworkedBoxData>();
-            if (boxes[i] == box1) data.InitializeFromDrillBoxData(bodyData);
-            else if (boxes[i] == box2) data.InitializeFromDrillBoxData(headData);
-            else data.InitializeFromDrillBoxData(wheelData);
+            if (boxes[i] == box1)
+                data.InitializeFromDrillBoxData(bodyData);
+            else if (boxes[i] == box2)
+                data.InitializeFromDrillBoxData(headData);
+            else
+                data.InitializeFromDrillBoxData(wheelData);
 
             yield return null;
         }
     }
-
-
 }

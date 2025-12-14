@@ -10,6 +10,9 @@ public class SceneSpawnPoint : NetworkBehaviour
     [Header("Spawn Point Prefab")]
     public GameObject spawnPointPrefab;
 
+    [Header("Drill Prefab")]
+    public GameObject brokenDrillPrefab;
+
     private MarchingCubes caveGenerator;
 
     public Transform latestSpawnPoint { get; private set; }
@@ -64,19 +67,60 @@ public class SceneSpawnPoint : NetworkBehaviour
             Vector3 spawnPos = hit.point + Vector3.up * 0.1f;
 
             // ---- INSTANTIATE ----
-            GameObject obj = Instantiate(spawnPointPrefab, spawnPos, Quaternion.identity);
-            obj.name = "SpawnPoint";
+            GameObject spawnObj = Instantiate(
+                spawnPointPrefab,
+                spawnPos,
+                Quaternion.identity
+            );
+            spawnObj.name = "SpawnPoint";
+            latestSpawnPoint = spawnObj.transform;
 
-            // ✅ CRITICAL FIX
-            latestSpawnPoint = obj.transform;
+            // --------------------
+            // Spawn Broken Drill
+            // --------------------
+            Vector3 drillOffset = new Vector3(0f, 0f, 1.2f);
+            Quaternion drillRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
 
-            NetworkObject netObj = obj.GetComponent<NetworkObject>();
-            if (IsServer && netObj != null)
+            GameObject drillObj = Instantiate(
+                brokenDrillPrefab,
+                spawnPos + drillOffset,
+                drillRotation
+            );
+            drillObj.name = "BrokenDrill";
+
+            // NetworkObject netObj = obj.GetComponent<NetworkObject>();
+            // if (IsServer && netObj != null)
+            // {
+            //     netObj.Spawn();
+            //     SpawnTracker.Instance.Register(netObj);
+
+            //     // ✅ restore player spawn assignment
+            //     foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            //     {
+            //         PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
+            //         if (ps != null)
+            //             ps.SetSpawnPosition(spawnPos);
+            //     }
+            // }
+
+            if (IsServer)
             {
-                netObj.Spawn();
-                SpawnTracker.Instance.Register(netObj);
+                NetworkObject spawnNet = spawnObj.GetComponent<NetworkObject>();
+                NetworkObject drillNet = drillObj.GetComponent<NetworkObject>();
 
-                // ✅ restore player spawn assignment
+                if (spawnNet != null)
+                {
+                    spawnNet.Spawn();
+                    SpawnTracker.Instance.Register(spawnNet);
+                }
+
+                if (drillNet != null)
+                {
+                    drillNet.Spawn();
+                    SpawnTracker.Instance.Register(drillNet);
+                }
+
+                // Assign spawn position to players
                 foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
                 {
                     PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();

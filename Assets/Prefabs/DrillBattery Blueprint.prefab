@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &683026812475744466
+--- !u!1 &7110846980020226257
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,12 +8,12 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2595221138218377670}
-  - component: {fileID: 6087293405875628788}
-  - component: {fileID: 5212067326861486595}
-  - component: {fileID: 9064117556855533411}
-  - component: {fileID: 371249748965784763}
-  - component: {fileID: 9015480879543462948}
+  - component: {fileID: 9203775645553985878}
+  - component: {fileID: 1005477203018213407}
+  - component: {fileID: 8590837694610839381}
+  - component: {fileID: 6514931863888252097}
+  - component: {fileID: 805468000398695663}
+  - component: {fileID: 7947448658802201534}
   m_Layer: 0
   m_Name: DrillBattery Blueprint
   m_TagString: DrillBattery
@@ -21,36 +21,36 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2595221138218377670
+--- !u!4 &9203775645553985878
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 683026812475744466}
+  m_GameObject: {fileID: 7110846980020226257}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: -2.273665, y: 2.9816642, z: 1.052119}
-  m_LocalScale: {x: 163.8, y: 150, z: 150}
+  m_LocalRotation: {x: -0.5, y: -0.5, z: -0.5, w: 0.5}
+  m_LocalPosition: {x: -12.363499, y: 2.4654999, z: -17.967}
+  m_LocalScale: {x: 163.78987, y: 150.00002, z: 150}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: -90}
---- !u!33 &6087293405875628788
+--- !u!33 &1005477203018213407
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 683026812475744466}
+  m_GameObject: {fileID: 7110846980020226257}
   m_Mesh: {fileID: 1632420224461344386, guid: 4d6b9005638f5d04880e680c93db71e3, type: 3}
---- !u!23 &5212067326861486595
+--- !u!23 &8590837694610839381
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 683026812475744466}
+  m_GameObject: {fileID: 7110846980020226257}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -89,13 +89,13 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &9064117556855533411
+--- !u!64 &6514931863888252097
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 683026812475744466}
+  m_GameObject: {fileID: 7110846980020226257}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -111,20 +111,20 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 1632420224461344386, guid: 4d6b9005638f5d04880e680c93db71e3, type: 3}
---- !u!114 &371249748965784763
+--- !u!114 &805468000398695663
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 683026812475744466}
+  m_GameObject: {fileID: 7110846980020226257}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2908640024
-  InScenePlacedSourceGlobalObjectIdHash: 820410326
+  GlobalObjectIdHash: 64518251
+  InScenePlacedSourceGlobalObjectIdHash: 1344329280
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
@@ -136,13 +136,13 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &9015480879543462948
+--- !u!114 &7947448658802201534
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 683026812475744466}
+  m_GameObject: {fileID: 7110846980020226257}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8048e76cc0afe7e45bf036602c9956be, type: 3}
@@ -150,7 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   snapRadius: 1
-  blueprintPiece: {fileID: 371249748965784763}
+  blueprintPiece: {fileID: 0}
   isOccupied:
     m_InternalValue: 0
   itemPrefab: {fileID: 8978342421061480766, guid: 3fac1e22c64fc1f40be0b70d23059ff1, type: 3}

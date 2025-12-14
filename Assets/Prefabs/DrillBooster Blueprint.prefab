@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1294155213570086847
+--- !u!1 &3833200687185097803
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,12 +8,12 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5372038215470574955}
-  - component: {fileID: 5702181107917061301}
-  - component: {fileID: 3961453794738521021}
-  - component: {fileID: 811765808405483066}
-  - component: {fileID: 5687690777534918088}
-  - component: {fileID: 4343038568960473140}
+  - component: {fileID: 7361192824548042141}
+  - component: {fileID: 4746790825127909447}
+  - component: {fileID: 4428252362772111857}
+  - component: {fileID: 6690642146518418281}
+  - component: {fileID: 8149002398504696379}
+  - component: {fileID: 512084879340779133}
   m_Layer: 0
   m_Name: DrillBooster Blueprint
   m_TagString: DrillBooster
@@ -21,36 +21,36 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5372038215470574955
+--- !u!4 &7361192824548042141
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1294155213570086847}
+  m_GameObject: {fileID: 3833200687185097803}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -2.2856643, y: 2.167664, z: -5.412883}
-  m_LocalScale: {x: 163.8, y: 150, z: 150}
+  m_LocalRotation: {x: -0.5, y: 0.5, z: 0.5, w: 0.5}
+  m_LocalPosition: {x: -22.061, y: 1.2444992, z: -17.948997}
+  m_LocalScale: {x: 163.78987, y: 150.00002, z: 150}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 90}
---- !u!33 &5702181107917061301
+--- !u!33 &4746790825127909447
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1294155213570086847}
+  m_GameObject: {fileID: 3833200687185097803}
   m_Mesh: {fileID: 5164724919022158925, guid: 4d6b9005638f5d04880e680c93db71e3, type: 3}
---- !u!23 &3961453794738521021
+--- !u!23 &4428252362772111857
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1294155213570086847}
+  m_GameObject: {fileID: 3833200687185097803}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -89,13 +89,13 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &811765808405483066
+--- !u!64 &6690642146518418281
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1294155213570086847}
+  m_GameObject: {fileID: 3833200687185097803}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -111,46 +111,46 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 5164724919022158925, guid: 4d6b9005638f5d04880e680c93db71e3, type: 3}
---- !u!114 &5687690777534918088
+--- !u!114 &8149002398504696379
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1294155213570086847}
+  m_GameObject: {fileID: 3833200687185097803}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 208516469
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 3219224477
+  InScenePlacedSourceGlobalObjectIdHash: 1344329280
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &4343038568960473140
+--- !u!114 &512084879340779133
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1294155213570086847}
+  m_GameObject: {fileID: 3833200687185097803}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8048e76cc0afe7e45bf036602c9956be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  snapRadius: 1
-  blueprintPiece: {fileID: 5687690777534918088}
+  snapRadius: 1.5
+  blueprintPiece: {fileID: 0}
   isOccupied:
     m_InternalValue: 0
   itemPrefab: {fileID: 5660777095197426735, guid: 1e5e30face2739b4bad6e2aec21c9b6e, type: 3}

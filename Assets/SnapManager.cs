@@ -42,21 +42,13 @@ public class SnapManager : NetworkBehaviour
         ReplaceWithComplete();
     }
 
-    // Register snapped pieces and blueprint objects
-    public void RegisterSnappedPiece(NetworkObject snappedObj, NetworkObject blueprintObj)
+    public void RegisterSnappedPiece(NetworkObject snappedObj)
     {
         if (snappedObj != null)
         {
             var netRef = new NetworkObjectReference(snappedObj);
             if (!snappedPieces.Contains(netRef))
                 snappedPieces.Add(netRef);
-        }
-
-        if (blueprintObj != null)
-        {
-            var netRef = new NetworkObjectReference(blueprintObj);
-            if (!blueprintPieces.Contains(netRef))
-                blueprintPieces.Add(netRef);
         }
     }
 
@@ -80,21 +72,6 @@ public class SnapManager : NetworkBehaviour
             }
         }
         snappedPieces.Clear();
-
-        // Despawn all blueprint pieces
-        foreach (var netRef in blueprintPieces)
-        {
-            if (netRef.TryGet(out NetworkObject netObj))
-            {
-                if (netObj.IsSpawned)
-                {
-                    //Debug.Log("Despawning blueprint piece: " + netObj.name);
-                    netObj.Despawn();
-                }
-
-            }
-        }
-        blueprintPieces.Clear();
 
         // Spawn the complete prefab
         GameObject newDrill = Instantiate(completePrefab, position, rotation);

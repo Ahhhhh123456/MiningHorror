@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 
 public class SceneSpawnPoint : NetworkBehaviour
@@ -13,10 +12,22 @@ public class SceneSpawnPoint : NetworkBehaviour
     [Header("Drill Prefab")]
     public GameObject brokenDrillPrefab;
 
+    [Header("Drill Blueprints")]
+    public GameObject drillBatteryPrefab;
+    public GameObject drillBoosterPrefab;
+    public GameObject drillPointPrefab;
+    public GameObject drillWheelOnePrefab;
+    public GameObject drillWheelTwoPrefab;
+    public GameObject drillPipePrefab;
+
+    [Header("Spawn Settings")]
+    public int margin = 2;               // Distance from cave edges
+    public float minHeadroom = 2f;       // Minimum vertical clearance
+    public float maxSlope = 35f;         // Max slope for surface
+    public int safeRadius = 1;           // Radius for clear spawn volume
+
     private MarchingCubes caveGenerator;
-
     public Transform latestSpawnPoint { get; private set; }
-
     public static event System.Action<Vector3> OnSpawnPointReady;
 
     private void Awake()
@@ -27,7 +38,6 @@ public class SceneSpawnPoint : NetworkBehaviour
             Debug.LogError("MarchingCubes component not found!");
     }
 
-    
     public IEnumerator RandomSpawnLocation(System.Action<Vector3> callback)
     {
         var density = caveGenerator.densityMap;
@@ -36,107 +46,132 @@ public class SceneSpawnPoint : NetworkBehaviour
         int width = caveGenerator.caveWidth;
         int height = caveGenerator.caveHeight;
         int depth = caveGenerator.caveDepth;
-
-        float iso = caveGenerator.isoLevel;
         float res = caveGenerator.resolution;
 
         const int step = 3;
         const int yieldEvery = 3000;
         int checks = 0;
 
-        for (int x = 1; x < width - 1; x += step)
-        for (int y = 1; y < height - 3; y += step)
-        for (int z = 1; z < depth - 1; z += step)
+        for (int x = margin; x < width - margin; x += step)
+        for (int y = margin; y < height - margin; y += step)
+        for (int z = margin; z < depth - margin; z += step)
         {
             checks++;
-            if (checks % yieldEvery == 0)
-                yield return null;
+            if (checks % yieldEvery == 0) yield return null;
 
-            if (density[x, y, z] <= iso) continue;
-            if (density[x, y + 1, z] > iso) continue;
-            if (density[x, y + 2, z] > iso) continue;
+            Vector3Int voxelPos = new Vector3Int(x, y, z);
 
-            Vector3 approx = new Vector3(x + 0.5f, y + 3f, z + 0.5f) * res;
+            if (!IsSpawnVolumeClear(voxelPos, safeRadius)) continue;
+            if (!IsVerticalClear(voxelPos, Mathf.CeilToInt(minHeadroom), 1)) continue;
 
-            if (!Physics.Raycast(approx, Vector3.down, out RaycastHit hit, 10f))
-                continue;
+            Vector3 approx = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * res;
 
-            if (Vector3.Angle(hit.normal, Vector3.up) > 35f)
-                continue;
+            if (!IsSlopeSafe(approx, maxSlope)) continue;
 
-            Vector3 spawnPos = hit.point + Vector3.up * 0.1f;
-
-            // ---- INSTANTIATE ----
-            GameObject spawnObj = Instantiate(
-                spawnPointPrefab,
-                spawnPos,
-                Quaternion.identity
-            );
-            spawnObj.name = "SpawnPoint";
-            latestSpawnPoint = spawnObj.transform;
-
-            // --------------------
-            // Spawn Broken Drill
-            // --------------------
-            Vector3 drillOffset = new Vector3(0f, 0f, 1.2f);
-            Quaternion drillRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-
-            GameObject drillObj = Instantiate(
-                brokenDrillPrefab,
-                spawnPos + drillOffset,
-                drillRotation
-            );
-            drillObj.name = "BrokenDrill";
-
-            // NetworkObject netObj = obj.GetComponent<NetworkObject>();
-            // if (IsServer && netObj != null)
-            // {
-            //     netObj.Spawn();
-            //     SpawnTracker.Instance.Register(netObj);
-
-            //     // ✅ restore player spawn assignment
-            //     foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
-            //     {
-            //         PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
-            //         if (ps != null)
-            //             ps.SetSpawnPosition(spawnPos);
-            //     }
-            // }
-
-            if (IsServer)
+            if (IsServer) // Only server spawns NetworkObjects
             {
-                NetworkObject spawnNet = spawnObj.GetComponent<NetworkObject>();
-                NetworkObject drillNet = drillObj.GetComponent<NetworkObject>();
+                // ---- Spawn Point ----
+                NetworkObject spawnNet = Instantiate(spawnPointPrefab, approx, Quaternion.identity)
+                                        .GetComponent<NetworkObject>();
+                spawnNet.Spawn();
+                SpawnTracker.Instance.Register(spawnNet);
+                latestSpawnPoint = spawnNet.transform;
 
-                if (spawnNet != null)
-                {
-                    spawnNet.Spawn();
-                    SpawnTracker.Instance.Register(spawnNet);
-                }
+                // ---- Broken Drill ----
+                Vector3 drillOffset = new Vector3(0f, 0f, 1.2f);
+                Quaternion drillRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                NetworkObject drillNet = Instantiate(brokenDrillPrefab, approx + drillOffset, drillRotation)
+                                        .GetComponent<NetworkObject>();
+                drillNet.Spawn();
+                SpawnTracker.Instance.Register(drillNet);
 
-                if (drillNet != null)
-                {
-                    drillNet.Spawn();
-                    SpawnTracker.Instance.Register(drillNet);
-                }
+                // ---- Drill Blueprints ----
+                // Vector3 basePos = approx; // drill base position
+                // SpawnNetworkBlueprint(drillBatteryPrefab, basePos);
+                // SpawnNetworkBlueprint(drillBoosterPrefab, basePos + new Vector3(0f, 0.2f, 0f));
+                // SpawnNetworkBlueprint(drillPointPrefab,   basePos + new Vector3(0f, 0.4f, 0f));
+                // SpawnNetworkBlueprint(drillWheelOnePrefab, basePos + new Vector3(0.3f, 0f, 0f));
+                // SpawnNetworkBlueprint(drillWheelTwoPrefab, basePos + new Vector3(-0.3f, 0f, 0f));
+                // SpawnNetworkBlueprint(drillPipePrefab,     basePos + new Vector3(0f, 0f, 0.3f));
 
-                // Assign spawn position to players
+                // ---- Assign spawn to players ----
                 foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
                 {
                     PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
                     if (ps != null)
-                        ps.SetSpawnPosition(spawnPos);
+                        ps.SetSpawnPosition(approx);
                 }
             }
 
-            // ✅ restore event + callback
-            OnSpawnPointReady?.Invoke(spawnPos);
-            callback?.Invoke(spawnPos);
+            // Optional: carve around spawn (doesn't need network logic)
+            //caveGenerator?.MineCave(approx, 8.5f, 0.4f, ignoreHold: true, raiseAmount: 2f);
 
-            yield break;
+            // Notify local callbacks
+            OnSpawnPointReady?.Invoke(approx);
+            callback?.Invoke(approx);
+
+            yield break; // spawn only one
         }
 
-        Debug.LogWarning("No valid spawn point found.");
+        Debug.LogWarning("No valid spawn point found within cave bounds.");
+    }
+
+    // Helper to spawn blueprints only on server
+    private NetworkObject SpawnNetworkBlueprint(GameObject prefab, Vector3 worldPos)
+    {
+        NetworkObject netObj = Instantiate(prefab, worldPos, Quaternion.identity).GetComponent<NetworkObject>();
+        netObj.Spawn();
+        Debug.Log("Spawned blueprint: " + prefab.name);
+        return netObj;
+    }
+
+
+    private bool IsSpawnVolumeClear(Vector3Int pos, int radius)
+    {
+        for (int x = -radius; x <= radius; x++)
+        for (int y = -radius; y <= radius; y++)
+        for (int z = -radius; z <= radius; z++)
+        {
+            int nx = pos.x + x;
+            int ny = pos.y + y;
+            int nz = pos.z + z;
+
+            if (nx < 0 || nx >= caveGenerator.caveWidth ||
+                ny < 0 || ny >= caveGenerator.caveHeight ||
+                nz < 0 || nz >= caveGenerator.caveDepth)
+                return false;
+
+            if (caveGenerator.densityMap[nx, ny, nz] > caveGenerator.isoLevel)
+                return false;
+        }
+        return true;
+    }
+
+    private bool IsVerticalClear(Vector3Int pos, int minUp, int minDown)
+    {
+        for (int i = 1; i <= minUp; i++)
+            if (caveGenerator.densityMap[pos.x, pos.y + i, pos.z] > caveGenerator.isoLevel)
+                return false;
+
+        for (int i = 1; i <= minDown; i++)
+            if (caveGenerator.densityMap[pos.x, pos.y - i, pos.z] > caveGenerator.isoLevel)
+                return false;
+
+        return true;
+    }
+
+    private bool IsSlopeSafe(Vector3 worldPos, float maxSlope)
+    {
+        Vector3[] offsets = { Vector3.zero, Vector3.forward, Vector3.back, Vector3.left, Vector3.right };
+        foreach (var off in offsets)
+        {
+            if (Physics.Raycast(worldPos + off + Vector3.up * 2f, Vector3.down, out RaycastHit hit, 5f))
+            {
+                if (Vector3.Angle(hit.normal, Vector3.up) > maxSlope)
+                    return false;
+            }
+        }
+        return true;
     }
 
 

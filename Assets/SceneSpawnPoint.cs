@@ -119,9 +119,6 @@ public class SceneSpawnPoint : NetworkBehaviour
                 }
             }
 
-            // Optional: carve around spawn (doesn't need network logic)
-            //caveGenerator?.MineCave(approx, 8.5f, 0.4f, ignoreHold: true, raiseAmount: 2f);
-
             // Notify local callbacks
             OnSpawnPointReady?.Invoke(approx);
             callback?.Invoke(approx);

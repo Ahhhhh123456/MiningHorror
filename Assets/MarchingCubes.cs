@@ -108,16 +108,22 @@ public class MarchingCubes : NetworkBehaviour
             Debug.Log("Cave scene finished loading — initializing marching cubes.");
             SendCaveParametersClientRpc(noiseScale, isoLevel, resolution);
 
-            StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
-            {
-                // Tell all clients the spawn position via PlayerSpawn
-                foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
-                {
-                    PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
-                    if (ps != null)
-                        ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
-                }
-            }));
+            // StartCoroutine(SceneSpawnPoint.Instance.RandomSpawnLocation((spawnPos) =>
+            // {
+            //     // Tell all clients the spawn position via PlayerSpawn
+            //     // foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            //     // {
+            //     //     PlayerSpawn ps = client.PlayerObject.GetComponent<PlayerSpawn>();
+            //     //     if (ps != null)
+            //     //     {
+            //     //         ps.SetSpawnPosition(spawnPos); // <-- updates NetworkVariable
+            //     //         Debug.Log($"Set spawn position for client {client.ClientId} to {spawnPos}");
+            //     //         //MineCaveServerRpc(spawnPos, 8.5f, 0.4f, ignoreHold: true, raiseAmount: 2f);
+
+            //     //     }
+
+            //     // }
+            // }));
         }
 
         

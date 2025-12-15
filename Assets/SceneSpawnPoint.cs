@@ -79,6 +79,8 @@ public class SceneSpawnPoint : NetworkBehaviour
                 }
 
                 hasSpawned = true;
+
+                
                 // ---- Spawn Point ----
                 NetworkObject spawnNet = Instantiate(spawnPointPrefab, approx, Quaternion.identity)
                                         .GetComponent<NetworkObject>();
@@ -109,7 +111,6 @@ public class SceneSpawnPoint : NetworkBehaviour
                     SpawnBlueprintAtAnchor(drillWheelTwoPrefab, anchors.wheelTwoAnchor);
                     SpawnBlueprintAtAnchor(drillPipePrefab,     anchors.pipeAnchor);
                 }
-
                 // ---- Assign spawn to players ----
                 foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
                 {

@@ -53,6 +53,10 @@ public class MarchingCubes : NetworkBehaviour
 
     public ParticleSystem mineParticlePrefab; 
 
+    private int clientsReadyForMine = 0;
+
+    private bool hasConfirmedReady = false;
+
 
     public static event Action OnCaveFinished;
 
@@ -129,6 +133,29 @@ public class MarchingCubes : NetworkBehaviour
         
     }
 
+    
+    [ServerRpc(RequireOwnership = false)]
+    private void ConfirmReadyToMineServerRpc(ServerRpcParams rpcParams = default)
+    {
+        clientsReadyForMine++;
+
+        int totalClients = NetworkManager.Singleton.ConnectedClients.Count;
+
+        if (clientsReadyForMine >= totalClients)
+        {
+            Debug.Log($"Total {clientsReadyForMine} clients ready for mining out of {totalClients}.");
+
+            // Get the spawn position of the client that just confirmed
+            ulong clientId = rpcParams.Receive.SenderClientId;
+            var playerObj = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;
+            Vector3 spawnPos = playerObj.GetComponent<PlayerSpawn>().spawnPosition.Value;
+
+            // Call MineCave at that spawn position
+            MineCaveServerRpc(spawnPos, radius: 10f, depth: 10f, ignoreHold: true, raiseAmount: 2f);
+        }
+    }
+
+
 
     private void OnClientConnected(ulong clientId)
     {
@@ -148,6 +175,8 @@ public class MarchingCubes : NetworkBehaviour
             SendCaveParametersClientRpc(noiseScale, isoLevel, resolution, rpcParams);
         }
     }
+
+    
 
     [ClientRpc]
     private void SendCaveParametersClientRpc(
@@ -184,8 +213,13 @@ public class MarchingCubes : NetworkBehaviour
 
         yield return new WaitForSeconds(6.0f);
 
-        // NOW the cave is fully ready on the client
-        CaveFinished();  // 🔥 Fire event here instead
+        CaveFinished();
+
+        if (IsClient && !hasConfirmedReady)
+        {
+            hasConfirmedReady = true;
+            ConfirmReadyToMineServerRpc();
+        }
     }
 
 

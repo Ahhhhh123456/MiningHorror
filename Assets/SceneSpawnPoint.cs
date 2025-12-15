@@ -70,6 +70,7 @@ public class SceneSpawnPoint : NetworkBehaviour
 
             if (IsServer) // Only server spawns NetworkObjects
             {
+                Debug.Log($"[SERVER] Spawning drill at {approx}");
                 // ---- Spawn Point ----
                 NetworkObject spawnNet = Instantiate(spawnPointPrefab, approx, Quaternion.identity)
                                         .GetComponent<NetworkObject>();
@@ -85,14 +86,21 @@ public class SceneSpawnPoint : NetworkBehaviour
                 drillNet.Spawn();
                 SpawnTracker.Instance.Register(drillNet);
 
-                // ---- Drill Blueprints ----
-                // Vector3 basePos = approx; // drill base position
-                // SpawnNetworkBlueprint(drillBatteryPrefab, basePos);
-                // SpawnNetworkBlueprint(drillBoosterPrefab, basePos + new Vector3(0f, 0.2f, 0f));
-                // SpawnNetworkBlueprint(drillPointPrefab,   basePos + new Vector3(0f, 0.4f, 0f));
-                // SpawnNetworkBlueprint(drillWheelOnePrefab, basePos + new Vector3(0.3f, 0f, 0f));
-                // SpawnNetworkBlueprint(drillWheelTwoPrefab, basePos + new Vector3(-0.3f, 0f, 0f));
-                // SpawnNetworkBlueprint(drillPipePrefab,     basePos + new Vector3(0f, 0f, 0.3f));
+                // ---- Blueprint Anchors ----
+                PlaceBlueprints anchors = drillNet.GetComponent<PlaceBlueprints>();
+                if (anchors == null)
+                {
+                    Debug.LogError("BrokenDrill is missing PlaceBlueprints!");
+                }
+                else
+                {
+                    SpawnBlueprintAtAnchor(drillBatteryPrefab, anchors.batteryAnchor);
+                    // SpawnBlueprintAtAnchor(drillBoosterPrefab, anchors.boosterAnchor);
+                    // SpawnBlueprintAtAnchor(drillPointPrefab,   anchors.pointAnchor);
+                    // SpawnBlueprintAtAnchor(drillWheelOnePrefab, anchors.wheelOneAnchor);
+                    // SpawnBlueprintAtAnchor(drillWheelTwoPrefab, anchors.wheelTwoAnchor);
+                    // SpawnBlueprintAtAnchor(drillPipePrefab,     anchors.pipeAnchor);
+                }
 
                 // ---- Assign spawn to players ----
                 foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
@@ -116,14 +124,21 @@ public class SceneSpawnPoint : NetworkBehaviour
         Debug.LogWarning("No valid spawn point found within cave bounds.");
     }
 
-    // Helper to spawn blueprints only on server
-    private NetworkObject SpawnNetworkBlueprint(GameObject prefab, Vector3 worldPos)
+    private void SpawnBlueprintAtAnchor(GameObject prefab, Transform anchor)
     {
-        NetworkObject netObj = Instantiate(prefab, worldPos, Quaternion.identity).GetComponent<NetworkObject>();
+        if (!IsServer || prefab == null || anchor == null)
+            return;
+
+        NetworkObject netObj = Instantiate(
+            prefab,
+            anchor.position,
+            anchor.rotation
+        ).GetComponent<NetworkObject>();
+
         netObj.Spawn();
-        Debug.Log("Spawned blueprint: " + prefab.name);
-        return netObj;
+        SpawnTracker.Instance.Register(netObj);
     }
+
 
 
     private bool IsSpawnVolumeClear(Vector3Int pos, int radius)

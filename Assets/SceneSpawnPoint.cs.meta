@@ -1,2 +1,19 @@
 fileFormatVersion: 2
 guid: 57b80a36bbc0090409fd5195731db5a9
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - spawnPointPrefab: {instanceID: 0}
+  - brokenDrillPrefab: {instanceID: 0}
+  - drillBatteryPrefab: {instanceID: 0}
+  - drillBoosterPrefab: {instanceID: 0}
+  - drillPointPrefab: {instanceID: 0}
+  - drillWheelOnePrefab: {instanceID: 0}
+  - drillWheelTwoPrefab: {instanceID: 0}
+  - drillPipePrefab: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

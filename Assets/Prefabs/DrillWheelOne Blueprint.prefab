@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 7832441589554390588}
   - component: {fileID: 7865997204705242747}
   - component: {fileID: 6415190627153890232}
-  - component: {fileID: 4752294519122328796}
   - component: {fileID: 6600454550265243441}
+  - component: {fileID: 4752294519122328796}
   m_Layer: 0
   m_Name: DrillWheelOne Blueprint
   m_TagString: DrillWheel
@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 2336668764615419596}
   serializedVersion: 2
   m_LocalRotation: {x: -0.5, y: -0.5, z: -0.5, w: 0.5}
-  m_LocalPosition: {x: -14.035999, y: -2.1919994, z: -17.398499}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 163.78987, y: 150.00002, z: 150}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -111,6 +111,31 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: -1922531732730939125, guid: 4d6b9005638f5d04880e680c93db71e3, type: 3}
+--- !u!114 &6600454550265243441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2336668764615419596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3146980979
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &4752294519122328796
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -129,28 +154,3 @@ MonoBehaviour:
   isOccupied:
     m_InternalValue: 0
   itemPrefab: {fileID: 3641898658165121449, guid: f5af144e1327772488ab10a0a951d094, type: 3}
---- !u!114 &6600454550265243441
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2336668764615419596}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2276744707
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0

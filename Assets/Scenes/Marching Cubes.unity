@@ -2739,7 +2739,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   spawnPointPrefab: {fileID: 4604621007506595797, guid: 74441850448611c48b4dad96e63531fc, type: 3}
-  brokenDrillPrefab: {fileID: 2925345290983985866, guid: 613a9faa5bdaa0b4fae57a000a981494, type: 3}
+  brokenDrillPrefab: {fileID: 3291854348192436454, guid: 613a9faa5bdaa0b4fae57a000a981494, type: 3}
   drillBatteryPrefab: {fileID: 7110846980020226257, guid: ca8d8370e5decf9468aff31d712ef7fd, type: 3}
   drillBoosterPrefab: {fileID: 3833200687185097803, guid: 53942aadf0a65b34596a58900b214bb0, type: 3}
   drillPointPrefab: {fileID: 7904367129522728776, guid: e1bc704593bb3fa4e9ac04c65455c6e4, type: 3}

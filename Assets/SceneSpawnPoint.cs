@@ -26,6 +26,8 @@ public class SceneSpawnPoint : NetworkBehaviour
     public float maxSlope = 35f;         // Max slope for surface
     public int safeRadius = 1;           // Radius for clear spawn volume
 
+    private static bool hasSpawned = false;
+
     private MarchingCubes caveGenerator;
     public Transform latestSpawnPoint { get; private set; }
     public static event System.Action<Vector3> OnSpawnPointReady;
@@ -70,7 +72,13 @@ public class SceneSpawnPoint : NetworkBehaviour
 
             if (IsServer) // Only server spawns NetworkObjects
             {
-                Debug.Log($"[SERVER] Spawning drill at {approx}");
+                if (hasSpawned)
+                {
+                    Debug.LogWarning("[SERVER] Spawn already done — skipping");
+                    yield break;
+                }
+
+                hasSpawned = true;
                 // ---- Spawn Point ----
                 NetworkObject spawnNet = Instantiate(spawnPointPrefab, approx, Quaternion.identity)
                                         .GetComponent<NetworkObject>();
@@ -95,11 +103,11 @@ public class SceneSpawnPoint : NetworkBehaviour
                 else
                 {
                     SpawnBlueprintAtAnchor(drillBatteryPrefab, anchors.batteryAnchor);
-                    // SpawnBlueprintAtAnchor(drillBoosterPrefab, anchors.boosterAnchor);
-                    // SpawnBlueprintAtAnchor(drillPointPrefab,   anchors.pointAnchor);
-                    // SpawnBlueprintAtAnchor(drillWheelOnePrefab, anchors.wheelOneAnchor);
-                    // SpawnBlueprintAtAnchor(drillWheelTwoPrefab, anchors.wheelTwoAnchor);
-                    // SpawnBlueprintAtAnchor(drillPipePrefab,     anchors.pipeAnchor);
+                    SpawnBlueprintAtAnchor(drillBoosterPrefab, anchors.boosterAnchor);
+                    SpawnBlueprintAtAnchor(drillPointPrefab,   anchors.pointAnchor);
+                    SpawnBlueprintAtAnchor(drillWheelOnePrefab, anchors.wheelOneAnchor);
+                    SpawnBlueprintAtAnchor(drillWheelTwoPrefab, anchors.wheelTwoAnchor);
+                    SpawnBlueprintAtAnchor(drillPipePrefab,     anchors.pipeAnchor);
                 }
 
                 // ---- Assign spawn to players ----

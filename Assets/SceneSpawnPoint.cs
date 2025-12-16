@@ -5,6 +5,9 @@ using Unity.Netcode;
 public class SceneSpawnPoint : NetworkBehaviour
 {
     public static SceneSpawnPoint Instance;
+    [Header("Tool Prefabs")]
+
+    public NetworkObject pickaxeToolPrefab;
 
     [Header("Spawn Point Prefab")]
     public GameObject spawnPointPrefab;
@@ -79,7 +82,6 @@ public class SceneSpawnPoint : NetworkBehaviour
                 }
 
                 hasSpawned = true;
-
                 
                 // ---- Spawn Point ----
                 NetworkObject spawnNet = Instantiate(spawnPointPrefab, approx, Quaternion.identity)
@@ -95,6 +97,9 @@ public class SceneSpawnPoint : NetworkBehaviour
                                         .GetComponent<NetworkObject>();
                 drillNet.Spawn();
                 SpawnTracker.Instance.Register(drillNet);
+
+                NetworkObject pickaxeNet = Instantiate(pickaxeToolPrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
+                pickaxeNet.Spawn();
 
                 // ---- Blueprint Anchors ----
                 PlaceBlueprints anchors = drillNet.GetComponent<PlaceBlueprints>();

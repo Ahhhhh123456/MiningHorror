@@ -2700,12 +2700,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  box1: {fileID: 4608852769024827792, guid: f6140c807bdcdc54bbb994d138d9e544, type: 3}
-  box2: {fileID: 729531574931480515, guid: 3c4a81b6e5c08b745861dacabb6c3ede, type: 3}
-  box3And4: {fileID: 6611217039265726838, guid: ffd163fb0966a1243b9e500081a3bfd2, type: 3}
-  bodyData: {fileID: 11400000, guid: 17afa7cf2015376468d5f8e4c41ea9aa, type: 2}
-  headData: {fileID: 11400000, guid: 01c818dea15e5bb44abc3c8a055982d1, type: 2}
-  wheelData: {fileID: 11400000, guid: a62eff72a6413cc47a172ae82670a1e5, type: 2}
+  box1: {fileID: 6122750921393482666, guid: 75e042fc3f9f02e45840c47891e519a9, type: 3}
+  box2: {fileID: 6122750921393482666, guid: c43439d11c429e34c8a131b30ed2e6bd, type: 3}
+  box3: {fileID: 6122750921393482666, guid: 62f7d63a403ad154e8285dc4e0335f7f, type: 3}
+  box4: {fileID: 6122750921393482666, guid: 04e88e29988e61a449ab56f5e3097fa9, type: 3}
+  box5And6: {fileID: 6122750921393482666, guid: 29950ec20de0d4641a6a50abb9157bce, type: 3}
+  batteryData: {fileID: 11400000, guid: f862e3469d050964bb4c26f2f45ead0c, type: 2}
+  boosterData: {fileID: 11400000, guid: f2fbbe9d8c0ad594996a675cd32f2c4d, type: 2}
+  pipeData: {fileID: 11400000, guid: 0bddab65a24bbfb4d96483ca1dc92c19, type: 2}
+  pointData: {fileID: 11400000, guid: be22a26bed96f5742b38bc644253775a, type: 2}
+  wheelData: {fileID: 11400000, guid: 563b2b82dc6fd2648ace22095379fd1e, type: 2}
   playerSpawn: {fileID: 0}
   minDistanceFromPlayer: 20
   maxSurfaceSamples: 200

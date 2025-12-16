@@ -9,11 +9,15 @@ public class BoxSpawner : NetworkBehaviour
     [Header("Prefabs")]
     public GameObject box1;
     public GameObject box2;
-    public GameObject box3And4;
+    public GameObject box3;
+    public GameObject box4;
+    public GameObject box5And6;
 
     [Header("Box Data")]
-    public DrillBoxData bodyData;
-    public DrillBoxData headData;
+    public DrillBoxData batteryData;
+    public DrillBoxData boosterData;
+    public DrillBoxData pipeData;
+    public DrillBoxData pointData;
     public DrillBoxData wheelData;
 
     [Header("Spawn Rules")]
@@ -41,7 +45,7 @@ public class BoxSpawner : NetworkBehaviour
         if (caveGenerator.densityMap == null)
             yield break;
 
-        GameObject[] boxes = { box1, box2, box3And4, box3And4 };
+        GameObject[] boxes = { box1, box2, box3, box4, box5And6, box5And6 };
         List<Vector3> surfacePoints = new List<Vector3>();
 
         var density = caveGenerator.densityMap;
@@ -122,9 +126,13 @@ public class BoxSpawner : NetworkBehaviour
 
             var data = box.GetComponent<NetworkedBoxData>();
             if (boxes[i] == box1)
-                data.InitializeFromDrillBoxData(bodyData);
+                data.InitializeFromDrillBoxData(batteryData);
             else if (boxes[i] == box2)
-                data.InitializeFromDrillBoxData(headData);
+                data.InitializeFromDrillBoxData(boosterData);
+            else if (boxes[i] == box3)
+                data.InitializeFromDrillBoxData(pipeData);
+            else if (boxes[i] == box4)
+                data.InitializeFromDrillBoxData(pointData);
             else
                 data.InitializeFromDrillBoxData(wheelData);
 

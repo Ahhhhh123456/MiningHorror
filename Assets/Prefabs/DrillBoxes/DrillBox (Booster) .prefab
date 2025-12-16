@@ -58,7 +58,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: aa027e1831d691840befc522cca39a27, type: 3}
       propertyPath: m_Name
-      value: DrillBox (Battery)
+      value: 'DrillBox (Booster) '
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: aa027e1831d691840befc522cca39a27, type: 3}
       propertyPath: m_Layer
@@ -144,7 +144,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3568581137
+  GlobalObjectIdHash: 3274729667
   InScenePlacedSourceGlobalObjectIdHash: 2543341309
   DeferredDespawnTick: 0
   Ownership: 1
@@ -170,7 +170,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  boxData: {fileID: 11400000, guid: f862e3469d050964bb4c26f2f45ead0c, type: 2}
+  boxData: {fileID: 11400000, guid: f2fbbe9d8c0ad594996a675cd32f2c4d, type: 2}
 --- !u!114 &1945291961072812085
 MonoBehaviour:
   m_ObjectHideFlags: 0

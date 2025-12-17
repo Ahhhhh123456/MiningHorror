@@ -2743,6 +2743,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   pickaxeToolPrefab: {fileID: -1680910727774519975, guid: 056679d8d44c41a4ca77fc23e6f41973, type: 3}
+  shovelToolPrefab: {fileID: 8181117425669188380, guid: c6e7569c84e36d74cbfbccbfa2f16698, type: 3}
+  dynamitePrefab: {fileID: 4810000188225527060, guid: 4356678001a363549a8b11e036dd447f, type: 3}
+  jumpPadPrefab: {fileID: 4527329764325098665, guid: cd29d31a8ab07c6498cd96196b101e41, type: 3}
+  compassPrefab: {fileID: 5640424600919923349, guid: a1b516d462511c24f99555ea8316593a, type: 3}
   spawnPointPrefab: {fileID: 4604621007506595797, guid: 74441850448611c48b4dad96e63531fc, type: 3}
   brokenDrillPrefab: {fileID: 1967448739862797771, guid: 613a9faa5bdaa0b4fae57a000a981494, type: 3}
   drillBatteryPrefab: {fileID: 7110846980020226257, guid: ca8d8370e5decf9468aff31d712ef7fd, type: 3}
@@ -2875,7 +2879,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 4.2, y: -15.963356, z: -3.6}
-  m_LocalScale: {x: 10, y: 0.05, z: 10}
+  m_LocalScale: {x: 30, y: 0.05, z: 30}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}

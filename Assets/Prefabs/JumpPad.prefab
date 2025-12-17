@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: 8633891914079294230}
   - component: {fileID: 7253120413941474159}
   - component: {fileID: 18486059287185156}
+  - component: {fileID: -5700927416552599908}
   m_Layer: 7
   m_Name: JumpPad
   m_TagString: Dropped
@@ -271,3 +272,16 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
+--- !u!114 &-5700927416552599908
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1884950559434735710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea6ef46071d3b0542b8d8703f9853021, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1

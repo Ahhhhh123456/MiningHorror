@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: -989335857755308725}
   - component: {fileID: 7145939736576892969}
   - component: {fileID: 1098367143714515540}
+  - component: {fileID: 8019053426281510783}
   m_Layer: 7
   m_Name: Pickaxe
   m_TagString: Dropped
@@ -261,6 +262,19 @@ MonoBehaviour:
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
 --- !u!114 &1098367143714515540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3153184520594772525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea6ef46071d3b0542b8d8703f9853021, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8019053426281510783
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

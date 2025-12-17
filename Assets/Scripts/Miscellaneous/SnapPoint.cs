@@ -36,8 +36,6 @@ public class SnapPoint : NetworkBehaviour
                     transform.position
                 );
 
-                Debug.Log($"Player {localClientId} holding {playerInventory.currentHeldItem.name}");
-
                 // Player is close enough to snap
                 if (distance <= snapRadius)
                 {

@@ -19,6 +19,8 @@ public class SceneSpawnPoint : NetworkBehaviour
     [Header("Drill Prefab")]
     public GameObject brokenDrillPrefab;
 
+    public NetworkObject DrillReference {get; private set;}
+
     [Header("Drill Blueprints")]
     public GameObject drillBatteryPrefab;
     public GameObject drillBoosterPrefab;
@@ -102,6 +104,15 @@ public class SceneSpawnPoint : NetworkBehaviour
                 drillNet.Spawn();
                 SpawnTracker.Instance.Register(drillNet);
 
+                DrillReference = drillNet;
+
+                Rigidbody rb = drillNet.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.useGravity = false;
+                    rb.isKinematic = true;
+                }
+
                 // ---- Tools ----
 
                 NetworkObject pickaxeNet = Instantiate(pickaxeToolPrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
@@ -153,11 +164,43 @@ public class SceneSpawnPoint : NetworkBehaviour
         Debug.LogWarning("No valid spawn point found within cave bounds.");
     }
 
+    // private void SpawnBlueprintAtAnchor(GameObject prefab, Transform anchor)
+    // {
+    //     if (!IsServer || prefab == null || anchor == null)
+    //         return;
+
+    //     NetworkObject netObj = Instantiate(
+    //         prefab,
+    //         anchor.position,
+    //         anchor.rotation
+    //     ).GetComponent<NetworkObject>();
+
+    //     netObj.Spawn();
+    //     SpawnTracker.Instance.Register(netObj);
+
+    // }
+
+    public void DrillPhysicsOn()
+    {
+        if (DrillReference == null)
+            return;
+
+        Rigidbody rb = DrillReference.GetComponent<Rigidbody>();
+
+        if (rb == null)
+            return;
+
+        Debug.Log("Enabling drill physics");
+        rb.useGravity = true;
+        rb.isKinematic = false;
+    }
+
     private void SpawnBlueprintAtAnchor(GameObject prefab, Transform anchor)
     {
         if (!IsServer || prefab == null || anchor == null)
             return;
 
+        // Spawn at anchor position
         NetworkObject netObj = Instantiate(
             prefab,
             anchor.position,
@@ -165,6 +208,21 @@ public class SceneSpawnPoint : NetworkBehaviour
         ).GetComponent<NetworkObject>();
 
         netObj.Spawn();
+
+        // Parent to the drill (network-safe)
+        NetworkObject parentNet = anchor.GetComponentInParent<NetworkObject>();
+        if (parentNet != null)
+        {
+            netObj.TrySetParent(parentNet, true);
+        }
+        else
+        {
+            Debug.LogError("Anchor has no NetworkObject parent!");
+        }
+
+
+        Debug.Log($"Blueprint spawned at anchor: {anchor.name}, {netObj.transform.position}");
+
         SpawnTracker.Instance.Register(netObj);
     }
 

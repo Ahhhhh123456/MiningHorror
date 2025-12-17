@@ -57,7 +57,7 @@ public class MarchingCubes : NetworkBehaviour
 
     private bool hasConfirmedReady = false;
 
-
+    private bool drillSpawnArea = false;
     public static event Action OnCaveFinished;
 
     private void CaveFinished()
@@ -134,27 +134,6 @@ public class MarchingCubes : NetworkBehaviour
     }
 
     
-    [ServerRpc(RequireOwnership = false)]
-    private void ConfirmReadyToMineServerRpc(ServerRpcParams rpcParams = default)
-    {
-        clientsReadyForMine++;
-
-        int totalClients = NetworkManager.Singleton.ConnectedClients.Count;
-
-        if (clientsReadyForMine >= totalClients)
-        {
-            Debug.Log($"Total {clientsReadyForMine} clients ready for mining out of {totalClients}.");
-
-            // Get the spawn position of the client that just confirmed
-            ulong clientId = rpcParams.Receive.SenderClientId;
-            var playerObj = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;
-            Vector3 spawnPos = playerObj.GetComponent<PlayerSpawn>().spawnPosition.Value;
-
-            // Call MineCave at that spawn position
-            MineCaveServerRpc(spawnPos, radius: 10f, depth: 10f, ignoreHold: true, raiseAmount: 2f);
-        }
-    }
-
 
 
     private void OnClientConnected(ulong clientId)
@@ -219,6 +198,40 @@ public class MarchingCubes : NetworkBehaviour
         {
             hasConfirmedReady = true;
             ConfirmReadyToMineServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ConfirmReadyToMineServerRpc(ServerRpcParams rpcParams = default)
+    {
+        clientsReadyForMine++;
+
+        int totalClients = NetworkManager.Singleton.ConnectedClients.Count;
+
+        if (clientsReadyForMine >= totalClients)
+        {
+            Debug.Log($"Total {clientsReadyForMine} clients ready for mining out of {totalClients}.");
+
+            // Get the spawn position of the client that just confirmed
+            ulong clientId = rpcParams.Receive.SenderClientId;
+            var playerObj = NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject;
+            Vector3 spawnPos = playerObj.GetComponent<PlayerSpawn>().spawnPosition.Value;
+
+            // Mines cave out so drill is in cave
+            MineCaveServerRpc(spawnPos, radius: 9f, depth: 9f, ignoreHold: true, raiseAmount: 2f);
+            Collider[] hits = Physics.OverlapSphere(spawnPos, 9f);
+            foreach (var hit in hits)
+            {
+                MineType ore = hit.GetComponent<MineType>();
+                if (ore != null)
+                {
+                    ore.oreData.durability = 1; // skip mining, instantly break
+                    ore.MiningOre(Vector3.zero, Vector3.zero); // break now
+                }
+            }
+
+            SceneSpawnPoint spawnPoint = GetComponent<SceneSpawnPoint>();
+            spawnPoint.DrillPhysicsOn();
         }
     }
 
@@ -918,15 +931,29 @@ public class MarchingCubes : NetworkBehaviour
 
 
     [ServerRpc(RequireOwnership = false)]
-    public void MineCaveServerRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold, float raiseAmount)
+    public void MineCaveServerRpc(Vector3 worldPos,float radius,float depth,bool ignoreHold,float raiseAmount)
     {
+        bool cubeThisCall = false;
+
+        if (!drillSpawnArea)
+        {
+            drillSpawnArea = true;
+            cubeThisCall = true;
+            MineCaveCube(worldPos, radius, depth, raiseAmount);
+        }
+
         MineCave(worldPos, radius, depth, ignoreHold, raiseAmount);
-        MineCaveClientRpc(worldPos, radius, depth, ignoreHold, raiseAmount);
+
+        MineCaveClientRpc(worldPos, radius, depth, ignoreHold, raiseAmount, cubeThisCall );
     }
 
     [ClientRpc]
-    private void MineCaveClientRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold, float raiseAmount)
+    private void MineCaveClientRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold, float raiseAmount, bool cubeWasUsed = false)
     {
+        if (cubeWasUsed)
+        {
+            MineCaveCube(worldPos, radius, depth, raiseAmount);
+        }
         MineCave(worldPos, radius, depth, ignoreHold, raiseAmount);
     }
 
@@ -1041,7 +1068,43 @@ public class MarchingCubes : NetworkBehaviour
             StartCoroutine(DelayedNavMeshRebuild());
     }
 
+    public void MineCaveCube(Vector3 worldPos,float halfSize,float depth,float raiseAmount = 0f)
+    {
+        Vector3 adjustedPos = worldPos + Vector3.up * raiseAmount;
 
+        int x0 = Mathf.FloorToInt(adjustedPos.x / resolution);
+        int y0 = Mathf.FloorToInt(adjustedPos.y / resolution);
+        int z0 = Mathf.FloorToInt(adjustedPos.z / resolution);
+
+        int half = Mathf.CeilToInt(halfSize / resolution);
+
+        for (int x = x0 - half; x <= x0 + half; x++)
+        for (int y = y0 - half; y <= y0 + half; y++)
+        for (int z = z0 - half; z <= z0 + half; z++)
+        {
+            if (x < 0 || x > caveWidth ||
+                y < 0 || y > caveHeight ||
+                z < 0 || z > caveDepth)
+                continue;
+
+            if (Mathf.Abs(x - x0) > half ||
+                Mathf.Abs(y - y0) > half ||
+                Mathf.Abs(z - z0) > half)
+                continue;
+
+            densityMap[x, y, z] = Mathf.Clamp(
+                densityMap[x, y, z] - depth,
+                0f,
+                1f
+            );
+        }
+
+        UpdateAffectedChunks(worldPos, halfSize);
+        PlayMineEffectsClientRpc(worldPos);
+
+        if (surface != null)
+            StartCoroutine(DelayedNavMeshRebuild());
+    }
     
     
 

@@ -61,17 +61,6 @@ public class TrackBoxes : NetworkBehaviour
             Debug.LogWarning("Compass arrow or tip not found!");
     }
 
-    // [ClientRpc]
-    // private void SendClosestTargetClientRpc(Vector3 targetPos, string targetName, ClientRpcParams rpcParams = default)
-    // {
-    //     closestTargetPosition = targetPos;
-
-    //     Vector3 direction = (closestTargetPosition - transform.position).normalized;
-
-    //     // Log the direction for debugging
-    //     Debug.Log($"Direction to closest target: {direction}");
-
-    // }
 
     [ClientRpc]
     private void SendClosestTargetClientRpc(Vector3 targetPos, string targetName, ClientRpcParams rpcParams = default)
@@ -79,7 +68,7 @@ public class TrackBoxes : NetworkBehaviour
         closestTargetPosition = targetPos;
 
         Vector3 direction = (closestTargetPosition - compassArrow.position);
-        direction.y = 0f; // Keep arrow level
+        direction.y = 180f; // Keep arrow level
 
         if (direction != Vector3.zero)
         {
@@ -88,13 +77,12 @@ public class TrackBoxes : NetworkBehaviour
 
             // Rotate arrow base
             if (compassArrow != null)
-                compassArrow.rotation = Quaternion.Lerp(
-                    compassArrow.rotation,
-                    targetRot,
-                    Time.deltaTime * smoothRotate);
-
+                compassArrow.rotation = Quaternion.Lerp(compassArrow.rotation, targetRot, Time.deltaTime * smoothRotate);
 
         }
     }
+
+
+
 
 }

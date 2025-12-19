@@ -2393,7 +2393,7 @@ MonoBehaviour:
     holdRotation: {x: 0, y: 0, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Pickaxe
-    prefab: {fileID: 3153184520594772525, guid: 056679d8d44c41a4ca77fc23e6f41973, type: 3}
+    prefab: {fileID: 1657336191607293612, guid: 34894c68b64ffe34b995fbd03b57eb2a, type: 3}
     holdRotation: {x: -90, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Ladder
@@ -2401,25 +2401,25 @@ MonoBehaviour:
     holdRotation: {x: -90, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Dynamite
-    prefab: {fileID: 9219746269787248094, guid: 4356678001a363549a8b11e036dd447f, type: 3}
-    holdRotation: {x: -90, y: 90, z: 0}
-    holdPositionOffset: {x: 0, y: 0, z: 0}
+    prefab: {fileID: 425920506397882693, guid: 5a9dd73e49c388a439e36b48858abc2c, type: 3}
+    holdRotation: {x: 90, y: 90, z: 0}
+    holdPositionOffset: {x: -0.5, y: 0, z: 0}
   - itemName: Compass
-    prefab: {fileID: 5127088424060007351, guid: a1b516d462511c24f99555ea8316593a, type: 3}
-    holdRotation: {x: 0, y: 90, z: 0}
+    prefab: {fileID: 3003091112177476603, guid: 72a18b3713e09c949aee814f24d7593e, type: 3}
+    holdRotation: {x: -100, y: 0, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Shovel
-    prefab: {fileID: 3983485373818652762, guid: c6e7569c84e36d74cbfbccbfa2f16698, type: 3}
-    holdRotation: {x: 0, y: 90, z: 0}
+    prefab: {fileID: 6842924367344769987, guid: 6120ac989a0b5614eb368bb1718e3758, type: 3}
+    holdRotation: {x: -90, y: 0, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: JumpPad
     prefab: {fileID: 1884950559434735710, guid: cd29d31a8ab07c6498cd96196b101e41, type: 3}
     holdRotation: {x: 0, y: 90, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Torch
-    prefab: {fileID: 4106730588810929182, guid: e182565ee7597fd4f8f7fc3ce898738a, type: 3}
-    holdRotation: {x: 0, y: 90, z: 0}
-    holdPositionOffset: {x: 0, y: 0, z: 0}
+    prefab: {fileID: 9070862679572061835, guid: 41d490040f0676149b443f4a74dff0de, type: 3}
+    holdRotation: {x: -90, y: 0, z: 0}
+    holdPositionOffset: {x: 0, y: -0.5, z: 0}
   - itemName: DrillBattery
     prefab: {fileID: 6419779173154853362, guid: 3fac1e22c64fc1f40be0b70d23059ff1, type: 3}
     holdRotation: {x: 0, y: 90, z: 0}
@@ -2624,9 +2624,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   targetPrefabs:
-  - {fileID: 4608852769024827792, guid: f6140c807bdcdc54bbb994d138d9e544, type: 3}
-  - {fileID: 729531574931480515, guid: 3c4a81b6e5c08b745861dacabb6c3ede, type: 3}
-  - {fileID: 6611217039265726838, guid: ffd163fb0966a1243b9e500081a3bfd2, type: 3}
+  - {fileID: 6122750921393482666, guid: 75e042fc3f9f02e45840c47891e519a9, type: 3}
+  - {fileID: 6122750921393482666, guid: c43439d11c429e34c8a131b30ed2e6bd, type: 3}
+  - {fileID: 6122750921393482666, guid: 62f7d63a403ad154e8285dc4e0335f7f, type: 3}
+  - {fileID: 6122750921393482666, guid: 04e88e29988e61a449ab56f5e3097fa9, type: 3}
+  - {fileID: 6122750921393482666, guid: 29950ec20de0d4641a6a50abb9157bce, type: 3}
   updateRate: 0.05
   compassArrow: {fileID: 0}
   smoothRotate: 50

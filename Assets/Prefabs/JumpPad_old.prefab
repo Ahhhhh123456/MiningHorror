@@ -21,7 +21,7 @@ GameObject:
   - component: {fileID: 18486059287185156}
   - component: {fileID: -5700927416552599908}
   m_Layer: 7
-  m_Name: JumpPad
+  m_Name: JumpPad_old
   m_TagString: Dropped
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -67,13 +67,13 @@ public class TrackBoxes : NetworkBehaviour
     {
         closestTargetPosition = targetPos;
 
-        Vector3 direction = (closestTargetPosition - compassArrow.position);
+        Vector3 direction = closestTargetPosition - compassArrow.position;
         direction.y = 180f; // Keep arrow level
 
         if (direction != Vector3.zero)
         {
             // Rotate in the opposite direction by flipping forward
-            Quaternion targetRot = Quaternion.LookRotation(-direction); // <-- negate direction
+            Quaternion targetRot = Quaternion.LookRotation(direction);
 
             // Rotate arrow base
             if (compassArrow != null)
@@ -81,6 +81,8 @@ public class TrackBoxes : NetworkBehaviour
 
         }
     }
+
+
 
 
 

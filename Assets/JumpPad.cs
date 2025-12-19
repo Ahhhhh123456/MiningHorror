@@ -6,7 +6,7 @@ public class JumpPad : MonoBehaviour
 {
     PlayerMovement playerMovement;
 
-    private float knockbackForce = 25f;
+    private float knockbackForce = 40f;
 
     private HashSet<ulong> clientsTouching = new HashSet<ulong>();
 

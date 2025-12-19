@@ -2560,9 +2560,6 @@ PrefabInstance:
       addedObject: {fileID: 638049938605552823}
     - targetCorrespondingSourceObject: {fileID: 2082144692181218838, guid: 8c4cf0662427c3145ab5671e7c067791, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 638049938605552822}
-    - targetCorrespondingSourceObject: {fileID: 2082144692181218838, guid: 8c4cf0662427c3145ab5671e7c067791, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 638049938605552828}
     - targetCorrespondingSourceObject: {fileID: 2082144692181218838, guid: 8c4cf0662427c3145ab5671e7c067791, type: 3}
       insertIndex: -1
@@ -2615,25 +2612,6 @@ MonoBehaviour:
   - {fileID: 7040635711557364015, guid: f21de0c4bed194a4fbbe02ca1990333a, type: 3}
   meshysPrefab: {fileID: 3351218058396261916, guid: d515deac896e6854e9f3cb8b0a5e2d86, type: 3}
   mineParticlePrefab: {fileID: 29186453002920994, guid: db32ecee90d496244b669532db5d9609, type: 3}
---- !u!114 &638049938605552822
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 638049938605552813}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8194e4fb3a07fb64b934b64f47b6db93, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  width: 200
-  height: 3
-  resolution: 10
-  noiseScale: 0.05
-  heightTresshold: 0.5
-  visualizeNoise: 0
-  use3DNoise: 0
 --- !u!23 &638049938605552823
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2742,11 +2720,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  pickaxeToolPrefab: {fileID: -1680910727774519975, guid: 056679d8d44c41a4ca77fc23e6f41973, type: 3}
-  shovelToolPrefab: {fileID: 8181117425669188380, guid: c6e7569c84e36d74cbfbccbfa2f16698, type: 3}
-  dynamitePrefab: {fileID: 4810000188225527060, guid: 4356678001a363549a8b11e036dd447f, type: 3}
-  jumpPadPrefab: {fileID: 4527329764325098665, guid: cd29d31a8ab07c6498cd96196b101e41, type: 3}
-  compassPrefab: {fileID: 5640424600919923349, guid: a1b516d462511c24f99555ea8316593a, type: 3}
+  pickaxeToolPrefab: {fileID: 5038605355127760367, guid: 34894c68b64ffe34b995fbd03b57eb2a, type: 3}
+  shovelToolPrefab: {fileID: 2034052159379035824, guid: 6120ac989a0b5614eb368bb1718e3758, type: 3}
+  dynamitePrefab: {fileID: 5073313728490354567, guid: 5a9dd73e49c388a439e36b48858abc2c, type: 3}
+  jumpPadPrefab: {fileID: 2077810585110823769, guid: 49a16fa6aa75c7646bb437a7063e6a7c, type: 3}
+  compassPrefab: {fileID: 4353041682771573972, guid: 72a18b3713e09c949aee814f24d7593e, type: 3}
+  torchPrefab: {fileID: 6322023927707099240, guid: 41d490040f0676149b443f4a74dff0de, type: 3}
   spawnPointPrefab: {fileID: 4604621007506595797, guid: 74441850448611c48b4dad96e63531fc, type: 3}
   brokenDrillPrefab: {fileID: 1967448739862797771, guid: 613a9faa5bdaa0b4fae57a000a981494, type: 3}
   drillBatteryPrefab: {fileID: 7110846980020226257, guid: ca8d8370e5decf9468aff31d712ef7fd, type: 3}

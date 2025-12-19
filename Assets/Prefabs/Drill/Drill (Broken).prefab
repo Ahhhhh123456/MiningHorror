@@ -1413,9 +1413,9 @@ GameObject:
   - component: {fileID: 4131367613341526844}
   - component: {fileID: 7308849117100392044}
   - component: {fileID: 6410263971584858807}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: drill_body_bottom
-  m_TagString: Dropped
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10438,9 +10438,9 @@ GameObject:
   - component: {fileID: 6077265807156938545}
   - component: {fileID: 6935037409046431258}
   - component: {fileID: 6106511102097859799}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: drill_body_bottom2
-  m_TagString: Dropped
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -19229,7 +19229,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4682727834865436653}
   - component: {fileID: 7082020090002523146}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: drill_body_bottom_flooring
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19613,7 +19613,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8576024793808865335}
   - component: {fileID: 7716470712477346456}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: drill_body_bottom_flooring2
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -13,6 +13,8 @@ public class SceneSpawnPoint : NetworkBehaviour
     public NetworkObject jumpPadPrefab;
     public NetworkObject compassPrefab;
 
+    public NetworkObject torchPrefab;
+
     [Header("Spawn Point Prefab")]
     public GameObject spawnPointPrefab;
 
@@ -129,6 +131,9 @@ public class SceneSpawnPoint : NetworkBehaviour
 
                 NetworkObject compassNet = Instantiate(compassPrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
                 compassNet.Spawn();
+
+                NetworkObject torchNet = Instantiate(torchPrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
+                torchNet.Spawn();
 
                 // ---- Blueprint Anchors ----
                 PlaceBlueprints anchors = drillNet.GetComponent<PlaceBlueprints>();

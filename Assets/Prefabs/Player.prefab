@@ -2413,8 +2413,8 @@ MonoBehaviour:
     holdRotation: {x: -90, y: 0, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: JumpPad
-    prefab: {fileID: 8335229909734962743, guid: 989ecd05908eea84fa9cb77884298c86, type: 3}
-    holdRotation: {x: 0, y: 90, z: 0}
+    prefab: {fileID: 6375080530076494488, guid: 49a16fa6aa75c7646bb437a7063e6a7c, type: 3}
+    holdRotation: {x: -90, y: 0, z: 0}
     holdPositionOffset: {x: 0, y: 0, z: 0}
   - itemName: Torch
     prefab: {fileID: 9070862679572061835, guid: 41d490040f0676149b443f4a74dff0de, type: 3}

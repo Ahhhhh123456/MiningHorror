@@ -478,6 +478,7 @@ public class PlayerInventory : NetworkBehaviour
                     holdPickaxe = false;
                     holdShovel = false;
                     IsHoldingCompass = false;
+                    UpdateDroppedItemClientRpc();
                     Debug.Log($"[Inventory] Dropped '{itemName}' (Weight {itemWeight}). Total weight: {playerWeight}");
 
                 }
@@ -490,6 +491,16 @@ public class PlayerInventory : NetworkBehaviour
                 break; // Stop after removing one matching item
             }
         }
+    }
+
+    // Helper function to update dropped item booleans when dropping
+    [ClientRpc]
+    public void UpdateDroppedItemClientRpc()
+    {
+        holdTool = false;
+        holdPickaxe = false;
+        holdShovel = false;
+        IsHoldingCompass = false;
     }
 
 
@@ -606,7 +617,7 @@ public class PlayerInventory : NetworkBehaviour
     {
         // Tool handling
         Transform targetHoldPosition = holdPosition;
-        holdTool = holdPickaxe = holdShovel = false;
+        IsHoldingCompass = holdTool = holdPickaxe = holdShovel = false;
 
         // Destroy previous held item
         if (currentHeldItem != null)

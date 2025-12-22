@@ -14,7 +14,7 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 0
+  m_Fog: 1
   m_FogColor: {r: 0, g: 0, b: 0, a: 1}
   m_FogMode: 2
   m_FogDensity: 0.244
@@ -2601,7 +2601,7 @@ MonoBehaviour:
   mineCooldown: 1
   caveParent: {fileID: 786366002}
   surface: {fileID: 1325947495}
-  oreChance: 0.12
+  oreChance: 0.14
   orePrefabs:
   - {fileID: 6319728801581947189, guid: e984d0414e0bebb478bdcccf86ebfdee, type: 3}
   - {fileID: 8551429989948833742, guid: dec1a671e7572e24b84b231aa5b54d26, type: 3}

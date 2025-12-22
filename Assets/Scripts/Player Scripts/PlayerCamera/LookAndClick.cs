@@ -378,7 +378,7 @@ public class LookAndClickInteraction : NetworkBehaviour
                 if (mineTimer >= mineInterval)
                 {
                     // Adjust radius and depth for shovel
-                    float radius = playerInventory.holdShovel ? mineRadius * 1.75f : mineRadius;
+                    float radius = playerInventory.holdShovel ? mineRadius * 1.35f : mineRadius;
                     float depth = playerInventory.holdShovel ? mineDepth * 1.0f : mineDepth;
 
                     helper.caveGenerator.MineCaveServerRpc(

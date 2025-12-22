@@ -99,36 +99,38 @@ public class MonsterFollow : NetworkBehaviour
                 return;
             }
 
+            ChasePlayer();
+
             // Chase if in chase range
-            if (distance < chaseRange)
-            {
-                ChasePlayer();
+            // if (distance < chaseRange)
+            // {
+            //     ChasePlayer();
 
-                // Increment aggro timer while chasing
-                aggroTimer += Time.deltaTime;
+            //     // Increment aggro timer while chasing
+            //     aggroTimer += Time.deltaTime;
 
-                // Try to summon reinforcements
-                if (aggroTimer >= summonDelay && Time.time >= globalNextSummonTime)
-                {
-                    globalNextSummonTime = Time.time + summonCooldown; // Update global cooldown
-                    aggroTimer = 0f;
+            //     // Try to summon reinforcements
+            //     if (aggroTimer >= summonDelay && Time.time >= globalNextSummonTime)
+            //     {
+            //         globalNextSummonTime = Time.time + summonCooldown; // Update global cooldown
+            //         aggroTimer = 0f;
 
-                    int count = Random.Range(minSummons, maxSummons + 1);
-                    for (int i = 0; i < count; i++)
-                    {
-                        SpawnReinforcement();
-                    }
+            //         int count = Random.Range(minSummons, maxSummons + 1);
+            //         for (int i = 0; i < count; i++)
+            //         {
+            //             SpawnReinforcement();
+            //         }
 
-                    Debug.Log($"Global summon triggered by {name}, next available in {summonCooldown} seconds.");
-                }
+            //         Debug.Log($"Global summon triggered by {name}, next available in {summonCooldown} seconds.");
+            //     }
 
-                return;
-            }
-            else
-            {
-                // Reset aggro timer if no target
-                aggroTimer = 0f;
-            }
+            //     return;
+            // }
+            // else
+            // {
+            //     // Reset aggro timer if no target
+            //     aggroTimer = 0f;
+            // }
         }
 
         Roam();

@@ -12,11 +12,24 @@ public class SceneSpawnPoint : NetworkBehaviour
     public NetworkObject dynamitePrefab;
     public NetworkObject jumpPadPrefab;
     public NetworkObject compassPrefab;
-
     public NetworkObject torchPrefab;
+
+    [Header("Tool Spawn Settings")]
+    public int pickaxeCount;
+    public int shovelCount;
+    public int dynamiteCount;
+    public int jumpPadCount;
+    public int compassCount;
+    public int torchCount;
+
+    [Header("Tool Spawn Offset")]
+    public Vector3 toolSpawnOffset;
+    public float toolScatterRadius;
+
 
     [Header("Spawn Point Prefab")]
     public GameObject spawnPointPrefab;
+
 
     [Header("Drill Prefab")]
     public GameObject brokenDrillPrefab;
@@ -98,6 +111,20 @@ public class SceneSpawnPoint : NetworkBehaviour
                 SpawnTracker.Instance.Register(spawnNet);
                 latestSpawnPoint = spawnNet.transform;
 
+
+                // ---- Tool Spawn Point ----
+                Vector3 toolSpawnPoint = approx + toolSpawnOffset;
+
+                // Snap tools to ground
+                if (Physics.Raycast(toolSpawnPoint + Vector3.up * 2f, Vector3.down, out RaycastHit hit, 5f))
+                {
+                    toolSpawnPoint = hit.point;
+                }
+
+                // Small lift so tools don't clip
+                toolSpawnPoint += Vector3.up * 0.05f;
+
+
                 // ---- Broken Drill ----
                 Vector3 drillOffset = new Vector3(0f, 0f, 1.2f);
                 Quaternion drillRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
@@ -116,24 +143,12 @@ public class SceneSpawnPoint : NetworkBehaviour
                 }
 
                 // ---- Tools ----
-
-                NetworkObject pickaxeNet = Instantiate(pickaxeToolPrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
-                pickaxeNet.Spawn();
-
-                NetworkObject shovelNet = Instantiate(shovelToolPrefab, approx + Vector3.up * 0.5f , Quaternion.identity);
-                shovelNet.Spawn();
-
-                NetworkObject dynamiteNet = Instantiate(dynamitePrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
-                dynamiteNet.Spawn();
-
-                NetworkObject jumpPadNet = Instantiate(jumpPadPrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
-                jumpPadNet.Spawn();
-
-                NetworkObject compassNet = Instantiate(compassPrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
-                compassNet.Spawn();
-
-                NetworkObject torchNet = Instantiate(torchPrefab, approx + Vector3.up * 0.5f, Quaternion.identity);
-                torchNet.Spawn();
+                SpawnNetworkObjectMultiple(pickaxeToolPrefab, toolSpawnPoint, pickaxeCount);
+                SpawnNetworkObjectMultiple(shovelToolPrefab, toolSpawnPoint, shovelCount);
+                SpawnNetworkObjectMultiple(dynamitePrefab, toolSpawnPoint, dynamiteCount);
+                SpawnNetworkObjectMultiple(jumpPadPrefab, toolSpawnPoint, jumpPadCount);
+                SpawnNetworkObjectMultiple(compassPrefab, toolSpawnPoint, compassCount);
+                SpawnNetworkObjectMultiple(torchPrefab, toolSpawnPoint, torchCount);
 
                 // ---- Blueprint Anchors ----
                 PlaceBlueprints anchors = drillNet.GetComponent<PlaceBlueprints>();
@@ -169,21 +184,21 @@ public class SceneSpawnPoint : NetworkBehaviour
         Debug.LogWarning("No valid spawn point found within cave bounds.");
     }
 
-    // private void SpawnBlueprintAtAnchor(GameObject prefab, Transform anchor)
-    // {
-    //     if (!IsServer || prefab == null || anchor == null)
-    //         return;
+    private void SpawnNetworkObjectMultiple(NetworkObject prefab, Vector3 center, int count)
+    {
+        if (!IsServer || prefab == null || count <= 0)
+            return;
 
-    //     NetworkObject netObj = Instantiate(
-    //         prefab,
-    //         anchor.position,
-    //         anchor.rotation
-    //     ).GetComponent<NetworkObject>();
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 scatter = Random.insideUnitCircle * toolScatterRadius;
+            Vector3 spawnPos = center + new Vector3(scatter.x, 0f, scatter.y);
 
-    //     netObj.Spawn();
-    //     SpawnTracker.Instance.Register(netObj);
+            NetworkObject netObj = Instantiate(prefab, spawnPos, Quaternion.identity);
+            netObj.Spawn();
+        }
+    }
 
-    // }
 
     public void DrillPhysicsOn()
     {

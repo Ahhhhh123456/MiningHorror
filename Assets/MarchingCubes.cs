@@ -218,8 +218,8 @@ public class MarchingCubes : NetworkBehaviour
             Vector3 spawnPos = playerObj.GetComponent<PlayerSpawn>().spawnPosition.Value;
 
             // Mines cave out so drill is in cave
-            MineCaveServerRpc(spawnPos, radius: 9f, depth: 9f, ignoreHold: true, raiseAmount: 2f);
-            Collider[] hits = Physics.OverlapSphere(spawnPos, 9f);
+            MineCaveServerRpc(spawnPos, radius: 10f, depth: 10f, ignoreHold: true, raiseAmount: 2f);
+            Collider[] hits = Physics.OverlapSphere(spawnPos, 10f);
             foreach (var hit in hits)
             {
                 MineType ore = hit.GetComponent<MineType>();
@@ -1077,9 +1077,10 @@ public class MarchingCubes : NetworkBehaviour
         int z0 = Mathf.FloorToInt(adjustedPos.z / resolution);
 
         int half = Mathf.CeilToInt(halfSize / resolution);
+        int upLimit = Mathf.FloorToInt(half * 0.25f);
 
         for (int x = x0 - half; x <= x0 + half; x++)
-        for (int y = y0 - half; y <= y0 + half; y++)
+        for (int y = y0 - half; y <= y0 + upLimit; y++)
         for (int z = z0 - half; z <= z0 + half; z++)
         {
             if (x < 0 || x > caveWidth ||

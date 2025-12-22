@@ -14,7 +14,7 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 1
+  m_Fog: 0
   m_FogColor: {r: 0, g: 0, b: 0, a: 1}
   m_FogMode: 2
   m_FogDensity: 0.244
@@ -2726,6 +2726,14 @@ MonoBehaviour:
   jumpPadPrefab: {fileID: 2077810585110823769, guid: 49a16fa6aa75c7646bb437a7063e6a7c, type: 3}
   compassPrefab: {fileID: 4353041682771573972, guid: 72a18b3713e09c949aee814f24d7593e, type: 3}
   torchPrefab: {fileID: 6322023927707099240, guid: 41d490040f0676149b443f4a74dff0de, type: 3}
+  pickaxeCount: 2
+  shovelCount: 1
+  dynamiteCount: 5
+  jumpPadCount: 3
+  compassCount: 2
+  torchCount: 2
+  toolSpawnOffset: {x: 1.5, y: 0, z: 3}
+  toolScatterRadius: 0.6
   spawnPointPrefab: {fileID: 4604621007506595797, guid: 74441850448611c48b4dad96e63531fc, type: 3}
   brokenDrillPrefab: {fileID: 1967448739862797771, guid: 613a9faa5bdaa0b4fae57a000a981494, type: 3}
   drillBatteryPrefab: {fileID: 7110846980020226257, guid: ca8d8370e5decf9468aff31d712ef7fd, type: 3}

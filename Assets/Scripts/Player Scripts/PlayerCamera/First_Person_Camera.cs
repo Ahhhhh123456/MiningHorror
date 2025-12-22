@@ -38,7 +38,7 @@ public class First_Person_Camera : MonoBehaviour
             Debug.LogError("Head reference is missing!");
         
         // Disabled for testing purposes
-        ApplyDarkCaveSettings();
+        //ApplyDarkCaveSettings();
     }
     private void ApplyDarkCaveSettings()
     {

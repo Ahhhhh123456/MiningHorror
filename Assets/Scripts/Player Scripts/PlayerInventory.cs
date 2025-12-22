@@ -646,8 +646,8 @@ public class PlayerInventory : NetworkBehaviour
             // Apply fog correctly for empty slot
             if (IsOwner)
             {
-                ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
-                fog.ApplyDarkFog();
+                // ChangeFog fog = Camera.main.GetComponent<ChangeFog>();
+                // fog.ApplyDarkFog();
             }
 
             Debug.Log("Selected slot is empty.");

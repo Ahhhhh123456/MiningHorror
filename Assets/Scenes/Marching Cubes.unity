@@ -2595,10 +2595,10 @@ MonoBehaviour:
   noiseScale: 0.05
   isoLevel: 0.5
   resolution: 1
-  chunkSizeX: 32
-  chunkSizeY: 32
-  chunkSizeZ: 32
-  mineCooldown: 1
+  chunkSizeX: 16
+  chunkSizeY: 16
+  chunkSizeZ: 16
+  mineCooldown: 2
   caveParent: {fileID: 786366002}
   surface: {fileID: 1325947495}
   oreChance: 0.14

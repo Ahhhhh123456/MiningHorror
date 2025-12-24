@@ -34,8 +34,16 @@ public class MarchingCubes : NetworkBehaviour
     public int chunkSizeZ;
     private Dictionary<Vector3Int, GameObject> chunks = new Dictionary<Vector3Int, GameObject>();
 
-    private float lastMineTime = 0f;
-    public float mineCooldown = 1.25f; 
+    // Similar to MineType's holdCount
+    // private int holdCount = 0;
+
+    // private float lastMineTime = 0f;
+
+    Dictionary<ulong, int> holdCounts = new();
+    Dictionary<ulong, float> lastMineTimes = new();
+
+
+    public float mineCooldown; 
 
     public GameObject caveParent;
     public NavMeshSurface surface; 
@@ -48,8 +56,6 @@ public class MarchingCubes : NetworkBehaviour
 
     public float[,,] densityMap;
 
-    // Similar to MineType's holdCount
-    private int holdCount = 0;
 
     public ParticleSystem mineParticlePrefab; 
 
@@ -930,9 +936,55 @@ public class MarchingCubes : NetworkBehaviour
     }
 
 
+    // [ServerRpc(RequireOwnership = false)]
+    // public void MineCaveServerRpc(Vector3 worldPos,float radius,float depth,bool ignoreHold,float raiseAmount)
+    // {
+    //     bool cubeThisCall = false;
+
+    //     if (!drillSpawnArea)
+    //     {
+    //         drillSpawnArea = true;
+    //         cubeThisCall = true;
+    //         MineCaveCube(worldPos, radius, depth, raiseAmount);
+    //     }
+
+    //     MineCave(worldPos, radius, depth, ignoreHold, raiseAmount);
+
+    //     MineCaveClientRpc(worldPos, radius, depth, ignoreHold, raiseAmount, cubeThisCall );
+    // }
     [ServerRpc(RequireOwnership = false)]
-    public void MineCaveServerRpc(Vector3 worldPos,float radius,float depth,bool ignoreHold,float raiseAmount)
+    public void MineCaveServerRpc( Vector3 worldPos, float radius, float depth, bool ignoreHold, float raiseAmount, ServerRpcParams rpcParams = default)
     {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        Debug.Log($"Mine request from client {clientId}");
+
+
+        if (!ignoreHold)
+        {
+            // Init hold counter
+            if (!holdCounts.ContainsKey(clientId))
+                holdCounts[clientId] = 0;
+
+            holdCounts[clientId]++;
+
+            if (holdCounts[clientId] >= 50)
+                holdCounts[clientId] = 0;
+
+            // Only allow mining on first tick
+            if (holdCounts[clientId] != 1)
+                return;
+
+            // Init cooldown
+            if (!lastMineTimes.ContainsKey(clientId))
+                lastMineTimes[clientId] = -999f;
+
+            if (Time.time - lastMineTimes[clientId] < mineCooldown)
+                return;
+
+            lastMineTimes[clientId] = Time.time;
+        }
+
         bool cubeThisCall = false;
 
         if (!drillSpawnArea)
@@ -942,10 +994,14 @@ public class MarchingCubes : NetworkBehaviour
             MineCaveCube(worldPos, radius, depth, raiseAmount);
         }
 
-        MineCave(worldPos, radius, depth, ignoreHold, raiseAmount);
 
-        MineCaveClientRpc(worldPos, radius, depth, ignoreHold, raiseAmount, cubeThisCall );
+        MineCave(worldPos, radius, depth, true, raiseAmount);
+
+
+        MineCaveClientRpc( worldPos, radius, depth, true, raiseAmount, cubeThisCall
+        );
     }
+
 
     [ClientRpc]
     private void MineCaveClientRpc(Vector3 worldPos, float radius, float depth, bool ignoreHold, float raiseAmount, bool cubeWasUsed = false)
@@ -959,35 +1015,35 @@ public class MarchingCubes : NetworkBehaviour
 
     public void MineCave(Vector3 worldPos, float radius, float depth, bool ignoreHold = false, float raiseAmount = 0f)
     {
-        // --- Explosion bypasses all rate limits ---
-        if (!ignoreHold)
-        {
-            // HOLD SYSTEM FIRST
-            holdCount++;
-            Debug.Log($"HoldCount: {holdCount}");
+        // // --- Explosion bypasses all rate limits ---
+        // if (!ignoreHold)
+        // {
 
-            if (holdCount >= 50) holdCount = 0;
+        //     holdCount++;
+        //     Debug.Log($"HoldCount: {holdCount}");
 
-            // Only mine when holdCount hits 1
-            if (holdCount != 1)
-            {
-                Debug.Log("Hold system: skipping mining");
-                return;
-            }
+        //     if (holdCount >= 50) holdCount = 0;
 
-            // --- Now apply cooldown ---
-            if (Time.time - lastMineTime < mineCooldown)
-            {
-                Debug.Log("Cooldown active - skipping mining");
-                return;
-            }
+        //     // Only mine when holdCount hits 1
+        //     if (holdCount != 1)
+        //     {
+        //         Debug.Log("Hold system: skipping mining");
+        //         return;
+        //     }
 
-            lastMineTime = Time.time; // consume cooldown
-        }
-        else
-        {
-            Debug.Log("Explosion Mining Cave at " + worldPos);
-        }
+        //     // --- Now apply cooldown ---
+        //     if (Time.time - lastMineTime < mineCooldown)
+        //     {
+        //         Debug.Log("Cooldown active - skipping mining");
+        //         return;
+        //     }
+
+        //     lastMineTime = Time.time; // consume cooldown
+        // }
+        // else
+        // {
+        //     Debug.Log("Explosion Mining Cave at " + worldPos);
+        // }
 
         // --- SHIFT MINING UPWARD SO PLAYER DOESN'T FALL ---
         //float raiseAmount = radius * 1.25f;  // adjust if needed

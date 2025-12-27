@@ -48,7 +48,9 @@ public class PlayerInventory : NetworkBehaviour
 
     [Header("Inventory UI (Hotbar)")]
     public List<UnityEngine.UI.Image> hotbarSlotImages; // Put the slot images here
+    public List<UnityEngine.UI.RawImage> slotSelectionRawImages; // Raw images for slot selection
     public Sprite emptySlotSprite; // optional sprite to show when the slot is empty
+    public Sprite filledSlotSprite; // optional sprite to show when the slot is occupied
 
     public Color filledSlotColor = Color.green;
 
@@ -164,6 +166,16 @@ public class PlayerInventory : NetworkBehaviour
         }
 
         itemType = FindObjectOfType<ItemType>();
+        
+        // Initialize Raw Images as disabled
+        if (slotSelectionRawImages != null)
+        {
+            foreach (var rawImage in slotSelectionRawImages)
+            {
+                if (rawImage != null)
+                    rawImage.enabled = false;
+            }
+        }
     }
     public override void OnNetworkSpawn()
     {
@@ -549,26 +561,54 @@ public class PlayerInventory : NetworkBehaviour
                 itemName = NetworkItems[i].ToString();
             }
 
+            bool isSelected = (i == currentSlotIndex);
+            bool slotIsOccupied = !string.IsNullOrEmpty(itemName);
+            
+            // Handle Raw Image selection
+            UnityEngine.UI.RawImage selectionRawImage = null;
+            bool hasRawImages = (slotSelectionRawImages != null && slotSelectionRawImages.Count > i);
+            if (hasRawImages)
+            {
+                selectionRawImage = slotSelectionRawImages[i];
+            }
+
+            if (slotIsOccupied && isSelected && selectionRawImage != null)
+            {
+                // Occupied slot is selected - enable raw image
+                selectionRawImage.enabled = true;
+            }
+            else
+            {
+                // Disable raw image for empty slots or unselected slots
+                if (selectionRawImage != null)
+                    selectionRawImage.enabled = false;
+            }
+
+            // Handle slot image display
             if (string.IsNullOrEmpty(itemName))
             {
-                // Slot is EMPTY
-                hotbarSlotImages[i].sprite = emptySlotSprite; // Use empty sprite
-                hotbarSlotImages[i].enabled = (emptySlotSprite != null); // Hide if no empty sprite
+                // Slot is EMPTY - show empty slot sprite
+                hotbarSlotImages[i].enabled = (emptySlotSprite != null);
+                if (emptySlotSprite != null)
+                {
+                    hotbarSlotImages[i].sprite = emptySlotSprite;
+                }
                 hotbarSlotImages[i].color = Color.white;
             }
             else
             {
-                // Slot is FULL
-                // This is where you'll set the item's icon!
-                // We will add this 'icon' field in the next step.
-                // Sprite itemIcon = itemType.itemDatabase[itemName].icon; 
-                // hotbarSlotImages[i].sprite = itemIcon;
-
-                // --- Temporary (until we add icons) ---
-                hotbarSlotImages[i].enabled = true;
-                hotbarSlotImages[i].sprite = null; // Or a default sprite
-                hotbarSlotImages[i].color = filledSlotColor;
-
+                // Slot is FULL - show filled slot sprite if available
+                if (filledSlotSprite != null)
+                {
+                    hotbarSlotImages[i].enabled = true;
+                    hotbarSlotImages[i].sprite = filledSlotSprite;
+                    hotbarSlotImages[i].color = filledSlotColor;
+                }
+                else
+                {
+                    // No filled sprite assigned - hide slot image
+                    hotbarSlotImages[i].enabled = false;
+                }
             }
         }
     }
@@ -588,6 +628,7 @@ public class PlayerInventory : NetworkBehaviour
         currentSlotIndex = index;
         // Tell all clients to update visuals for this player
         UpdateHeldItemClientRpc(index);
+        UpdateHotbarUIClientRpc();
     }
 
     [ClientRpc]

@@ -44,6 +44,7 @@ public class PlayerInventory : NetworkBehaviour
     // Dictionary: key = item name, value = count
     [Header("Inventory UI (Ores)")]
     public TextMeshProUGUI OreText;
+    public TextMeshProUGUI WeightText;
     // public TextMeshProUGUI ItemText;
 
     [Header("Inventory UI (Hotbar)")]
@@ -73,7 +74,7 @@ public class PlayerInventory : NetworkBehaviour
     
     private Dictionary<string, GameObject> prefabLookup;
 
-    public float playerWeight = 0f;
+    public NetworkVariable<float> playerWeight = new NetworkVariable<float>(0f);
     public int currentSlotIndex = -1; // track currently held slot
 
     public int hotbarSize = 4; // can be set in inspector
@@ -87,6 +88,7 @@ public class PlayerInventory : NetworkBehaviour
 
     [Header("Prefab Assignments")]
     public List<ItemPrefabEntry> prefabEntries; // drag prefabs in Inspector
+    public List<OreData> oreDatabase; // All ore types for weight lookup
 
     [System.Serializable]
     public class ItemPrefabEntry
@@ -139,7 +141,7 @@ public class PlayerInventory : NetworkBehaviour
     {
         NetworkOres.Clear();
         NetworkItems.Clear();
-        playerWeight = 0;
+        playerWeight.Value = 0;
 
         // Clear held item
         currentSlotIndex = -1;
@@ -185,6 +187,7 @@ public class PlayerInventory : NetworkBehaviour
         // Subscribe to changes so UI updates automatically
         NetworkOres.OnListChanged += OnOresChanged;
         NetworkItems.OnListChanged += OnHotbarSlotsChanged;
+        playerWeight.OnValueChanged += OnPlayerWeightChanged;
 
         // SERVER: Initialize the hotbar slots
         if (IsServer)
@@ -212,6 +215,11 @@ public class PlayerInventory : NetworkBehaviour
         }
     }
 
+    private void OnPlayerWeightChanged(float previousValue, float newValue)
+    {
+        UpdateWeightText();
+    }
+
     private void OnOresChanged(NetworkListEvent<OreEntry> changeEvent)
     {
         UpdateOreUIText();
@@ -220,6 +228,7 @@ public class PlayerInventory : NetworkBehaviour
     private void OnHotbarSlotsChanged(NetworkListEvent<FixedString32Bytes> changeEvent)
     {
         UpdateHotbarUIText();
+        UpdateWeightText();
     }
 
 
@@ -253,7 +262,7 @@ public class PlayerInventory : NetworkBehaviour
                 });
             }
 
-            playerWeight += oreData.weight;
+            playerWeight.Value += oreData.weight;
 
             return true;
         }
@@ -269,7 +278,7 @@ public class PlayerInventory : NetworkBehaviour
                 {
                     // finds empty slot and fills
                     NetworkItems[i] = new FixedString32Bytes(itemName);
-                    playerWeight += itemType.itemDatabase[itemName].weight;
+                    playerWeight.Value += itemType.itemDatabase[itemName].weight;
                     slotFound = true;
                     Debug.Log($"Added {itemName} to slot {i}.");
                     break;
@@ -313,7 +322,7 @@ public class PlayerInventory : NetworkBehaviour
                     else
                         NetworkOres[i] = entry;
 
-                    playerWeight -= oreData.weight;
+                    playerWeight.Value -= oreData.weight;
                     Debug.Log($"Removed {oreData.oreName} from inventory. Total weight: {playerWeight}");
                     break;
                 }
@@ -329,7 +338,7 @@ public class PlayerInventory : NetworkBehaviour
                 NetworkItems[i] = new FixedString32Bytes("");
 
                 if (itemType.itemDatabase.ContainsKey(itemName))
-                    playerWeight -= itemType.itemDatabase[itemName].weight;
+                    playerWeight.Value -= itemType.itemDatabase[itemName].weight;
                 Debug.Log($"Removed {itemName} from inventory. Total weight: {playerWeight}");
                 break;
             }
@@ -369,7 +378,7 @@ public class PlayerInventory : NetworkBehaviour
         if (itemType.itemDatabase.ContainsKey(itemName))
         {
             float itemWeight = itemType.itemDatabase[itemName].weight;
-            playerWeight -= itemWeight;
+            playerWeight.Value -= itemWeight;
             if (playerMovement != null)
                 playerMovement.UpdateMoveSpeed(); // Tell player movement to update
         }
@@ -445,11 +454,11 @@ public class PlayerInventory : NetworkBehaviour
                 // Adjust weight if possible
                 if (mineType != null && mineType.oreData != null)
                 {
-                    playerWeight -= mineType.oreData.weight;
+                    playerWeight.Value -= mineType.oreData.weight;
                     if (playerMovement != null)
                         playerMovement.UpdateMoveSpeed();
 
-                    Debug.Log($"[Inventory] Dropped ore '{itemName}' (Weight {mineType.oreData.weight}). Total weight: {playerWeight}");
+                    Debug.Log($"[Inventory] Dropped ore '{itemName}' (Weight {mineType.oreData.weight}). Total weight: {playerWeight.Value}");
                 }
                 else
                 {
@@ -472,14 +481,14 @@ public class PlayerInventory : NetworkBehaviour
                 if (itemType != null && itemType.itemDatabase != null && itemType.itemDatabase.ContainsKey(itemName))
                 {
                     float itemWeight = itemType.itemDatabase[itemName].weight;
-                    playerWeight -= itemWeight;
+                    playerWeight.Value -= itemWeight;
                     if (playerMovement != null)
                         playerMovement.UpdateMoveSpeed();
                     holdTool = false;
                     holdPickaxe = false;
                     holdShovel = false;
                     IsHoldingCompass = false;
-                    Debug.Log($"[Inventory] Dropped '{itemName}' (Weight {itemWeight}). Total weight: {playerWeight}");
+                    Debug.Log($"[Inventory] Dropped '{itemName}' (Weight {itemWeight}). Total weight: {playerWeight.Value}");
 
                 }
                 else
@@ -502,6 +511,13 @@ public class PlayerInventory : NetworkBehaviour
 
         // Update visuals for this player
         ClearHeldItemClientRpc();
+    }
+
+    [ClientRpc]
+    private void UpdateWeightClientRpc()
+    {
+        Debug.Log($"[Weight] UpdateWeightClientRpc called on client {OwnerClientId}");
+        UpdateWeightText();
     }
 
     [ClientRpc]
@@ -535,14 +551,28 @@ public class PlayerInventory : NetworkBehaviour
         if (NetworkOres.Count == 0)
         {
             OreText.text = "No ores";
-            return;
+        }
+        else
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (var entry in NetworkOres)
+                sb.AppendLine($"{entry.oreName.ToString()} x{entry.count}");
+
+            OreText.text = sb.ToString();
         }
 
-        var sb = new System.Text.StringBuilder();
-        foreach (var entry in NetworkOres)
-            sb.AppendLine($"{entry.oreName.ToString()} x{entry.count}");
+        // Update weight display
+        UpdateWeightText();
+    }
 
-        OreText.text = sb.ToString();
+    private void UpdateWeightText()
+    {
+        if (WeightText == null) return;
+
+        // Use the NetworkVariable directly since it's synchronized across the network
+        float totalWeight = playerWeight.Value;
+        Debug.Log($"[Weight] Using NetworkVariable playerWeight: {totalWeight}");
+        WeightText.text = $"{totalWeight:F1}";
     }
 
     private void UpdateHotbarUIText()

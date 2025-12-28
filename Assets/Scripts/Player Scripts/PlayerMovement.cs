@@ -292,9 +292,9 @@ public class PlayerMovement : NetworkBehaviour
             return;
         }
 
-        if (inventory.playerWeight > 10f)
+        if (inventory.playerWeight.Value > 10f)
             moveSpeed = 3f;
-        else if (inventory.playerWeight > 5f)
+        else if (inventory.playerWeight.Value > 5f)
             moveSpeed = 4.5f;
         else
             moveSpeed = walkSpeed;
